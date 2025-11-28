@@ -497,6 +497,7 @@ function getSettingsContent() {
                         <span>${ex}</span>
                         <div class="flex-center gap-2">
                             <span>${((mult - 1) * 100).toFixed(1)}%</span>
+                            <button class="btn-secondary btn-sm" onclick="editExerciseSettings('${ex}')">Edit</button>
                             <button class="btn-secondary btn-sm" onclick="removeCustomMultiplier('${ex}')">Reset</button>
                         </div>
                     </div>
@@ -522,6 +523,25 @@ window.removeCustomMultiplier = (ex) => {
     delete state.settings.customMultipliers[ex];
     saveState();
     renderApp();
+};
+
+window.editExerciseSettings = (exerciseName) => {
+    const currentMult = getMultiplier(exerciseName);
+    const currentPct = ((currentMult - 1) * 100).toFixed(2);
+    
+    const newPct = prompt(`Enter overload percentage for ${exerciseName} (e.g., 2.5 for 2.5%). Current: ${currentPct}%`);
+    
+    if (newPct !== null) {
+        const pct = parseFloat(newPct);
+        if (!isNaN(pct) && pct >= 0) {
+            if (!state.settings.customMultipliers) state.settings.customMultipliers = {};
+            state.settings.customMultipliers[exerciseName] = 1 + (pct / 100);
+            saveState();
+            renderApp();
+        } else {
+            alert("Invalid number");
+        }
+    }
 };
 
 function getMultiplier(exerciseName) {
