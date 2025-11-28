@@ -27,155 +27,6 @@ const state = {
     settings: {
         multiplier: 1.025,
         customMultipliers: {} // { "Bench Press": 1.05 }
-    }
-};
-
-let db = null;
-let auth = null;
-let analytics = null;
-let unsubscribe = null;
-
-// --- DOM Elements ---
-const app = document.getElementById('app');
-
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        initFirebase();
-        init();
-    } catch (e) {
-        console.error("Initialization failed:", e);
-        app.innerHTML = `<div class="card"><h1>Error</h1><p>${e.message}</p></div>`;
-    }
-});
-
-function initFirebase() {
-    const appInstance = initializeApp(firebaseConfig);
-    analytics = getAnalytics(appInstance);
-    auth = getAuth(appInstance);
-    db = getFirestore(appInstance);
-    
-    // Enable offline persistence
-    enableIndexedDbPersistence(db).catch((err) => {
-        if (err.code == 'failed-precondition') {
-            console.warn("Persistence failed: Multiple tabs open");
-        } else if (err.code == 'unimplemented') {
-            console.warn("Persistence failed: Browser not supported");
-        }
-    });
-    
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            state.uid = user.uid;
-            state.user = user.displayName || user.email;
-            loadFromFirestore();
-        } else {
-            // If not logged in, ensure we show login screen
-            state.user = null;
-            state.uid = null;
-            if (unsubscribe) unsubscribe();
-            renderLogin();
-        }
-    });
-}
-
-function init() {
-    // We rely on onAuthStateChanged to trigger the flow
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-function loadState() {
-    const saved = localStorage.getItem('gymTrackerState');
-    if (saved) {
-        Object.assign(state, JSON.parse(saved));
-    }
-}
-
-function saveState() {
-    localStorage.setItem('gymTrackerState', JSON.stringify(state));
-    if (state.uid && db) {
-        setDoc(doc(db, 'users', state.uid), state, { merge: true });
-    }
-}
-
-function loadFromFirestore() {
-    if (!state.uid || !db) return;
-    
-    if (unsubscribe) {
-        unsubscribe();
-    }
-
-    const docRef = doc(db, 'users', state.uid);
-    
-    // Use onSnapshot for better offline support and real-time updates
-    unsubscribe = onSnapshot(docRef, 
-        (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                Object.assign(state, data);
-                if (data.settings) {
-                    state.settings = { ...state.settings, ...data.settings };
-                }
-                
-                // Only render if we are NOT in an active workout to prevent disruption
-                const activeWorkout = document.getElementById('active-workout');
-                if (!activeWorkout) {
-                    if (!state.plan) {
-                        renderSetup();
-                    } else {
-                        renderDashboard();
-                    }
-                }
-            } else {
-                renderSetup();
-            }
-        },
-        (error) => {
-            console.error("Error loading data:", error);
-            // Only show error if we have no data loaded at all
-            if (!state.plan) {
-                app.innerHTML = `
-                    <div class="card">
-                        <h2 style="color: var(--error)">Connection Issue</h2>
-                        <p>${error.message}</p>
-                        <p style="font-size: 0.8rem; margin-top: 10px;">Check your internet connection. The app will retry automatically.</p>
-                    </div>
-                `;
-            }
-        }
-    );
-}
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/**
- * Prodegi - Core Logic
- */
-
-// --- Configuration ---
-const firebaseConfig = {
-  apiKey: "AIzaSyAHLLbo6zbVryKiCH96r84dGX8cOXfzTHE",
-  authDomain: "progredi-1.firebaseapp.com",
-  projectId: "progredi-1",
-  storageBucket: "progredi-1.firebasestorage.app",
-  messagingSenderId: "603628930060",
-  appId: "1:603628930060:web:2336837d9f7be899771a29",
-  measurementId: "G-Z3PEPCMLN3"
-};
-
-// --- State Management ---
-const state = {
-    user: null, // Local user name or Auth User object
-    uid: null,  // Firebase User ID
-    plan: null,
-    workouts: [],
-    settings: {
-        multiplier: 1.025,
-        customMultipliers: {} // { "Bench Press": 1.05 }
     },
     currentView: 'dashboard', // dashboard, calendar, settings
     selectedDate: null
@@ -276,7 +127,7 @@ function loadFromFirestore() {
                     if (!state.plan) {
                         renderSetup();
                     } else {
-                        renderDashboard();
+                        renderDashboard(); // This now calls renderApp()
                     }
                 }
             } else {
@@ -298,8 +149,6 @@ function loadFromFirestore() {
         }
     );
 }
-
-// --- Views ---
 
 // --- Navigation ---
 function renderNavigation() {
