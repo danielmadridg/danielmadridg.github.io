@@ -29,7 +29,8 @@ const state = {
         customMultipliers: {} // { "Bench Press": 1.05 }
     },
     currentView: 'dashboard', // dashboard, calendar, settings
-    selectedDate: null
+    selectedDate: null,
+    calendarDate: new Date()
 };
 
 let db = null;
@@ -403,16 +404,31 @@ function getDashboardContent() {
 }
 
 function getCalendarContent() {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+    // Ensure calendarDate is a Date object (in case it came from JSON as string)
+    if (!(state.calendarDate instanceof Date)) {
+        state.calendarDate = new Date(state.calendarDate || Date.now());
+    }
+
+    const displayDate = state.calendarDate;
+    const currentMonth = displayDate.getMonth();
+    const currentYear = displayDate.getFullYear();
     
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sunday
     
+    const monthName = displayDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
     let calendarHTML = `
         <div class="card">
-            <h2 class="text-center" style="margin-bottom: 20px;">${today.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
+            <div class="flex-between" style="margin-bottom: 20px;">
+                <button class="btn-secondary btn-sm" onclick="changeMonth(-1)">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <h2 class="text-center" style="margin: 0;">${monthName}</h2>
+                <button class="btn-secondary btn-sm" onclick="changeMonth(1)">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
             
             <div class="calendar-grid">
                 <div class="calendar-day-header">Sun</div>
@@ -429,9 +445,12 @@ function getCalendarContent() {
         calendarHTML += `<div></div>`;
     }
 
+    const today = new Date();
+    
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = new Date(currentYear, currentMonth, day).toDateString();
-        const isToday = day === today.getDate();
+        const dateObj = new Date(currentYear, currentMonth, day);
+        const dateStr = dateObj.toDateString();
+        const isToday = dateObj.toDateString() === today.toDateString();
         
         // Check if workout exists on this day
         const hasWorkout = state.workouts.some(w => new Date(w.date).toDateString() === dateStr);
@@ -450,6 +469,13 @@ function getCalendarContent() {
     `;
     return calendarHTML;
 }
+
+window.changeMonth = (offset) => {
+    const newDate = new Date(state.calendarDate);
+    newDate.setMonth(newDate.getMonth() + offset);
+    state.calendarDate = newDate;
+    renderApp();
+};
 
 function getSettingsContent() {
     return `
