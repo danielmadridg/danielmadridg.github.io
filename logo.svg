@@ -1,0 +1,22 @@
+<svg width="512px" height="512px" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Logo Prodegi - P Minimalista</title>
+    <defs>
+        <style>
+            .gold-fill { fill: #BFA35F; } .dark-fill { fill: #2E2E2E; } </style>
+    </defs>
+    <g id="Logo-P" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M38,38 L62,38 C70.2842712,38 77,44.7157288 77,53 C77,61.2842712 70.2842712,68 62,68 L52,68 L52,52 L62,52 C62.5522847,52 63,51.5522847 63,51 C63,50.4477153 62.5522847,50 62,50 L38,50 L38,38 Z" id="Dark-Inner" class="dark-fill"></path>
+        
+        <path d="M32,32 L62,32 C73.5979797,32 83,41.4020203 83,53 C83,64.5979797 73.5979797,74 62,74 L52,74 L46,68 L62,68 C70.2842712,68 77,61.2842712 77,53 C77,44.7157288 70.2842712,38 62,38 L38,38 L38,85 L32,85 L32,32 Z" id="Gold-Frame" class="gold-fill"></path>
+        
+        <path d="M35,71 L56,50 L62,56 L72,46 V54 H78 V40 H64 V46 L56,54 L50,48 L29,69 L35,71 Z" id="Arrow" class="gold-fill"></path>
+        
+        <g id="Barbell" transform="translate(46.000000, 66.000000)" class="gold-fill">
+            <rect id="Bar-Center" x="8" y="0" width="4" height="16"></rect>
+            <rect id="Weight-L1" x="4" y="2" width="3" height="12"></rect>
+            <rect id="Weight-L2" x="0" y="4" width="3" height="8"></rect>
+            <rect id="Weight-R1" x="13" y="2" width="3" height="12"></rect>
+            <rect id="Weight-R2" x="17" y="4" width="3" height="8"></rect>
+        </g>
+    </g>
+</svg>

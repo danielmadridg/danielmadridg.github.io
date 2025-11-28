@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /**
  * Prodegi - Core Logic
@@ -54,6 +54,15 @@ function initFirebase() {
     auth = getAuth(appInstance);
     db = getFirestore(appInstance);
     
+    // Enable offline persistence
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code == 'failed-precondition') {
+            console.warn("Persistence failed: Multiple tabs open");
+        } else if (err.code == 'unimplemented') {
+            console.warn("Persistence failed: Browser not supported");
+        }
+    });
+    
     onAuthStateChanged(auth, (user) => {
         if (user) {
             state.uid = user.uid;
@@ -93,6 +102,7 @@ async function loadFromFirestore() {
     try {
         if (!state.uid || !db) return;
         const docRef = doc(db, 'users', state.uid);
+        // Try to get cached data first, or wait for network
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
@@ -114,6 +124,8 @@ async function loadFromFirestore() {
         }
     } catch (e) {
         console.error("Error loading data:", e);
+        // If offline and no cache, this might fail. 
+        // But with persistence enabled, it should work if previously loaded.
         app.innerHTML = `
             <div class="card">
                 <h2 style="color: var(--error)">Error Loading Data</h2>
@@ -129,6 +141,9 @@ async function loadFromFirestore() {
 function renderLogin() {
     app.innerHTML = `
         <div class="card text-center">
+            <div class="logo-container">
+                <img src="logo.svg" alt="Prodegi Logo" style="width: 100%; height: 100%;">
+            </div>
             <h1>Prodegi</h1>
             <p>Track your progress. Crush your goals.</p>
             
