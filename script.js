@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /**
  * Prodegi - Core Logic
@@ -33,6 +33,7 @@ const state = {
 let db = null;
 let auth = null;
 let analytics = null;
+let unsubscribe = null;
 
 // --- DOM Elements ---
 const app = document.getElementById('app');
@@ -72,6 +73,7 @@ function initFirebase() {
             // If not logged in, ensure we show login screen
             state.user = null;
             state.uid = null;
+            if (unsubscribe) unsubscribe();
             renderLogin();
         }
     });
@@ -98,42 +100,52 @@ function saveState() {
     }
 }
 
-async function loadFromFirestore() {
-    try {
-        if (!state.uid || !db) return;
-        const docRef = doc(db, 'users', state.uid);
-        // Try to get cached data first, or wait for network
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Merge deep to preserve defaults if new fields added
-            Object.assign(state, data);
-            // Ensure settings are merged correctly
-            if (data.settings) {
-                state.settings = { ...state.settings, ...data.settings };
-            }
-            
-            if (!state.plan) {
-                renderSetup();
-            } else {
-                renderDashboard();
-            }
-        } else {
-            // New user or no data in Firestore
-            renderSetup();
-        }
-    } catch (e) {
-        console.error("Error loading data:", e);
-        // If offline and no cache, this might fail. 
-        // But with persistence enabled, it should work if previously loaded.
-        app.innerHTML = `
-            <div class="card">
-                <h2 style="color: var(--error)">Error Loading Data</h2>
-                <p>${e.message}</p>
-                <button class="btn" onclick="location.reload()">Retry</button>
-            </div>
-        `;
+function loadFromFirestore() {
+    if (!state.uid || !db) return;
+    
+    if (unsubscribe) {
+        unsubscribe();
     }
+
+    const docRef = doc(db, 'users', state.uid);
+    
+    // Use onSnapshot for better offline support and real-time updates
+    unsubscribe = onSnapshot(docRef, 
+        (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                Object.assign(state, data);
+                if (data.settings) {
+                    state.settings = { ...state.settings, ...data.settings };
+                }
+                
+                // Only render if we are NOT in an active workout to prevent disruption
+                const activeWorkout = document.getElementById('active-workout');
+                if (!activeWorkout) {
+                    if (!state.plan) {
+                        renderSetup();
+                    } else {
+                        renderDashboard();
+                    }
+                }
+            } else {
+                renderSetup();
+            }
+        },
+        (error) => {
+            console.error("Error loading data:", error);
+            // Only show error if we have no data loaded at all
+            if (!state.plan) {
+                app.innerHTML = `
+                    <div class="card">
+                        <h2 style="color: var(--error)">Connection Issue</h2>
+                        <p>${error.message}</p>
+                        <p style="font-size: 0.8rem; margin-top: 10px;">Check your internet connection. The app will retry automatically.</p>
+                    </div>
+                `;
+            }
+        }
+    );
 }
 
 // --- Views ---
