@@ -25,7 +25,8 @@ const state = {
     plan: null,
     workouts: [],
     settings: {
-        multiplier: 1.025
+        multiplier: 1.025,
+        customMultipliers: {} // { "Bench Press": 1.05 }
     }
 };
 
@@ -77,8 +78,6 @@ function init() {
 function loadState() {
     const saved = localStorage.getItem('gymTrackerState');
     if (saved) {
-        // We can load local state, but we should prioritize Firestore if logged in
-        // For now, let's just load it to state, but onAuthStateChanged will overwrite if needed
         Object.assign(state, JSON.parse(saved));
     }
 }
@@ -91,19 +90,37 @@ function saveState() {
 }
 
 async function loadFromFirestore() {
-    if (!state.uid || !db) return;
-    const docRef = doc(db, 'users', state.uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        Object.assign(state, docSnap.data());
-        if (!state.plan) {
-            renderSetup();
+    try {
+        if (!state.uid || !db) return;
+        const docRef = doc(db, 'users', state.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Merge deep to preserve defaults if new fields added
+            Object.assign(state, data);
+            // Ensure settings are merged correctly
+            if (data.settings) {
+                state.settings = { ...state.settings, ...data.settings };
+            }
+            
+            if (!state.plan) {
+                renderSetup();
+            } else {
+                renderDashboard();
+            }
         } else {
-            renderDashboard();
+            // New user or no data in Firestore
+            renderSetup();
         }
-    } else {
-        // New user or no data in Firestore
-        renderSetup();
+    } catch (e) {
+        console.error("Error loading data:", e);
+        app.innerHTML = `
+            <div class="card">
+                <h2 style="color: var(--error)">Error Loading Data</h2>
+                <p>${e.message}</p>
+                <button class="btn" onclick="location.reload()">Retry</button>
+            </div>
+        `;
     }
 }
 
@@ -145,7 +162,7 @@ function renderSetup() {
                 </select>
             </div>
             <div class="input-group">
-                <label>Overload Multiplier</label>
+                <label>Default Overload Multiplier</label>
                 <select id="multiplier">
                     <option value="1.025">2.5% (Conservative)</option>
                     <option value="1.05">5% (Aggressive)</option>
@@ -161,6 +178,8 @@ window.handleSetupStep1 = () => {
     const mult = document.getElementById('multiplier').value;
     
     state.settings.multiplier = parseFloat(mult);
+    state.settings.customMultipliers = {};
+    
     // Initialize empty plan
     state.plan = {
         days: Array.from({length: parseInt(freq)}, (_, i) => ({
@@ -248,11 +267,12 @@ function renderDashboard() {
     }
     
     const nextWorkout = state.plan.days[nextDayIndex];
+    const userName = state.user ? state.user.split(' ')[0] : 'User';
 
     app.innerHTML = `
         <header class="flex-between" style="margin-bottom: 20px;">
             <div>
-                <h2>Hi, ${state.user.split(' ')[0]}</h2>
+                <h2>Hi, ${userName}</h2>
                 <p>Ready to lift?</p>
             </div>
             <div class="flex-center gap-2">
@@ -266,12 +286,21 @@ function renderDashboard() {
         <div class="card">
             <h3>Next Session: ${nextWorkout.name}</h3>
             <div class="workout-preview">
-                ${nextWorkout.exercises.map(ex => `
-                    <div class="exercise-item">
-                        <span>${ex}</span>
-                        <span style="color: var(--primary)">Target: ${getRecommendation(ex)}</span>
+                ${nextWorkout.exercises.map(ex => {
+                    const rec = getRecommendation(ex);
+                    const mult = getMultiplier(ex);
+                    return `
+                    <div class="exercise-item" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="display:block; font-weight:600;">${ex}</span>
+                            <span style="font-size:0.8rem; color: var(--text-muted);">Mult: ${((mult - 1) * 100).toFixed(1)}%</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="color: var(--primary); font-weight:bold; display:block;">Target: ${rec}</span>
+                            <button class="btn-sm btn-secondary" style="padding: 2px 8px; font-size: 0.7rem; margin-top:4px;" onclick="editExerciseSettings('${ex}')">Edit</button>
+                        </div>
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>
             <button class="btn" onclick="startWorkout(${nextDayIndex})">Start Workout</button>
         </div>
@@ -288,7 +317,35 @@ function renderDashboard() {
 }
 window.renderDashboard = renderDashboard;
 
+function getMultiplier(exerciseName) {
+    if (state.settings.customMultipliers && state.settings.customMultipliers[exerciseName]) {
+        return state.settings.customMultipliers[exerciseName];
+    }
+    return state.settings.multiplier;
+}
+
+window.editExerciseSettings = (exerciseName) => {
+    const currentMult = getMultiplier(exerciseName);
+    const currentPct = ((currentMult - 1) * 100).toFixed(2);
+    
+    const newPct = prompt(`Enter overload percentage for ${exerciseName} (e.g., 2.5 for 2.5%). Current: ${currentPct}%`);
+    
+    if (newPct !== null) {
+        const pct = parseFloat(newPct);
+        if (!isNaN(pct) && pct >= 0) {
+            if (!state.settings.customMultipliers) state.settings.customMultipliers = {};
+            state.settings.customMultipliers[exerciseName] = 1 + (pct / 100);
+            saveState();
+            renderDashboard();
+        } else {
+            alert("Invalid number");
+        }
+    }
+};
+
 function getRecommendation(exerciseName) {
+    const multiplier = getMultiplier(exerciseName);
+    
     for (let i = state.workouts.length - 1; i >= 0; i--) {
         const wo = state.workouts[i];
         const record = wo.exercises.find(e => e.name === exerciseName);
@@ -299,7 +356,7 @@ function getRecommendation(exerciseName) {
             } else {
                 bestWeight = record.weight;
             }
-            return `${(bestWeight * state.settings.multiplier).toFixed(1)}kg`;
+            return `${(bestWeight * multiplier).toFixed(1)}kg`;
         }
     }
     return "Start Base";
