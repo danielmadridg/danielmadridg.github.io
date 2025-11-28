@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /**
- * Gym Tracker Pro - Core Logic
+ * Prodegi - Core Logic
  */
 
 // --- Configuration ---
@@ -58,28 +58,27 @@ function initFirebase() {
             state.uid = user.uid;
             state.user = user.displayName || user.email;
             loadFromFirestore();
+        } else {
+            // If not logged in, ensure we show login screen
+            state.user = null;
+            state.uid = null;
+            renderLogin();
         }
     });
 }
 
 function init() {
-    loadState(); // Try local first
+    // We rely on onAuthStateChanged to trigger the flow
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
-    }
-    
-    if (!state.user) {
-        renderLogin();
-    } else if (!state.plan) {
-        renderSetup();
-    } else {
-        renderDashboard();
     }
 }
 
 function loadState() {
     const saved = localStorage.getItem('gymTrackerState');
     if (saved) {
+        // We can load local state, but we should prioritize Firestore if logged in
+        // For now, let's just load it to state, but onAuthStateChanged will overwrite if needed
         Object.assign(state, JSON.parse(saved));
     }
 }
@@ -97,7 +96,14 @@ async function loadFromFirestore() {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
         Object.assign(state, docSnap.data());
-        renderDashboard();
+        if (!state.plan) {
+            renderSetup();
+        } else {
+            renderDashboard();
+        }
+    } else {
+        // New user or no data in Firestore
+        renderSetup();
     }
 }
 
@@ -106,35 +112,18 @@ async function loadFromFirestore() {
 function renderLogin() {
     app.innerHTML = `
         <div class="card text-center">
-            <h1>Gym Tracker Pro</h1>
+            <h1>Prodegi</h1>
             <p>Track your progress. Crush your goals.</p>
             
-            <div class="input-group">
-                <label>Guest Access</label>
-                <input type="text" id="username" placeholder="Enter your name">
-                <button class="btn" onclick="handleLogin()">Continue as Guest</button>
+            <div style="margin: 40px 0;">
+                <button class="btn btn-secondary" onclick="handleGoogleLogin()">
+                    <i data-lucide="log-in" style="margin-right: 8px;"></i> Login with Google
+                </button>
             </div>
-
-            <div style="margin: 20px 0; border-top: 1px solid var(--border); position: relative;">
-                <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 0 10px; color: var(--text-muted); font-size: 0.8rem;">OR</span>
-            </div>
-
-            <button class="btn btn-secondary" onclick="handleGoogleLogin()">
-                <i data-lucide="log-in" style="margin-right: 8px;"></i> Login with Google
-            </button>
         </div>
     `;
     lucide.createIcons();
 }
-
-// Expose to window for HTML onclick
-window.handleLogin = () => {
-    const username = document.getElementById('username').value;
-    if (!username) return alert('Please enter a name');
-    state.user = username;
-    saveState();
-    renderSetup();
-};
 
 window.handleGoogleLogin = () => {
     if (!auth) return alert("Firebase not configured.");
