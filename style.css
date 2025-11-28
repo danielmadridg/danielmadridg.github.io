@@ -220,3 +220,92 @@ select:focus {
     height: 80px;
     margin: 0 auto 20px auto;
 }
+
+/* Navigation Bar */
+.nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.nav-item i {
+    margin-bottom: 4px;
+    width: 24px;
+    height: 24px;
+}
+
+.nav-item.active {
+    color: var(--primary);
+}
+
+/* Calendar */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 5px 0;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    background-color: #161616;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.calendar-day.today {
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.calendar-day.has-workout {
+    background-color: rgba(191, 163, 95, 0.1);
+}
+
+.workout-dot {
+    width: 4px;
+    height: 4px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 6px;
+}
+
+/* Adjust main content for bottom nav */
+#app {
+    padding-bottom: 80px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
