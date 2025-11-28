@@ -1,6 +1,5 @@
 import { state } from "../state.js";
 import { getAllExercises, getMultiplier } from "../logic.js";
-import { handleLogout } from "../services/firebase.js";
 
 export function getSettingsContent() {
     const allExercises = getAllExercises();

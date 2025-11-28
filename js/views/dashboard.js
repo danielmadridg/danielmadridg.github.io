@@ -1,6 +1,5 @@
 import { state } from "../state.js";
 import { getRecommendation, getMultiplier } from "../logic.js";
-import { renderApp, startWorkout } from "../app.js";
 
 export function getCalendarHTML() {
     // Ensure calendarDate is a Date object

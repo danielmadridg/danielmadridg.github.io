@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { state, loadFromFirestore, renderLogin } from "../app.js";
+import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAHLLbo6zbVryKiCH96r84dGX8cOXfzTHE",
@@ -16,7 +15,7 @@ const firebaseConfig = {
 
 let appInstance, analytics, auth, db;
 
-export function initFirebase() {
+export function initFirebase(onSignIn, onSignOut) {
     appInstance = initializeApp(firebaseConfig);
     analytics = getAnalytics(appInstance);
     auth = getAuth(appInstance);
@@ -32,13 +31,9 @@ export function initFirebase() {
     
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            state.uid = user.uid;
-            state.user = user.displayName || user.email;
-            loadFromFirestore();
+            if (onSignIn) onSignIn(user);
         } else {
-            state.user = null;
-            state.uid = null;
-            renderLogin();
+            if (onSignOut) onSignOut();
         }
     });
 }

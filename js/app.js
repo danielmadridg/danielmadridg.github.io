@@ -17,7 +17,8 @@ let unsubscribe = null;
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        initFirebase();
+        // Pass callbacks to avoid circular dependency
+        initFirebase(onAuthSuccess, onAuthFailure);
         init();
     } catch (e) {
         console.error("Initialization failed:", e);
@@ -29,6 +30,18 @@ function init() {
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+}
+
+function onAuthSuccess(user) {
+    state.uid = user.uid;
+    state.user = user.displayName || user.email;
+    loadFromFirestore();
+}
+
+function onAuthFailure() {
+    state.user = null;
+    state.uid = null;
+    renderLogin();
 }
 
 export function loadFromFirestore() {
