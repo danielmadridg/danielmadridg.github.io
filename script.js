@@ -1,17 +1,21 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 /**
  * Gym Tracker Pro - Core Logic
  */
 
 // --- Configuration ---
-// REPLACE WITH YOUR FIREBASE CONFIG
 const firebaseConfig = {
-    apiKey: "AIzaSyAHLLbo6zbVryKiCH96r84dGX8cOXfzTHE",
-    authDomain: "progredi-1.firebaseapp.com",
-    projectId: "progredi-1",
-    storageBucket: "progredi-1.firebasestorage.app",
-    messagingSenderId: "603628930060",
-    appId: "1:603628930060:web:2336837d9f7be899771a29",
-    measurementId: "G-Z3PEPCMLN3"
+  apiKey: "AIzaSyAHLLbo6zbVryKiCH96r84dGX8cOXfzTHE",
+  authDomain: "progredi-1.firebaseapp.com",
+  projectId: "progredi-1",
+  storageBucket: "progredi-1.firebasestorage.app",
+  messagingSenderId: "603628930060",
+  appId: "1:603628930060:web:2336837d9f7be899771a29",
+  measurementId: "G-Z3PEPCMLN3"
 };
 
 // --- State Management ---
@@ -27,6 +31,7 @@ const state = {
 
 let db = null;
 let auth = null;
+let analytics = null;
 
 // --- DOM Elements ---
 const app = document.getElementById('app');
@@ -43,19 +48,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initFirebase() {
-    if (true) {
-        firebase.initializeApp(firebaseConfig);
-        auth = firebase.auth();
-        db = firebase.firestore();
-        
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                state.uid = user.uid;
-                state.user = user.displayName;
-                loadFromFirestore();
-            }
-        });
-    }
+    const appInstance = initializeApp(firebaseConfig);
+    analytics = getAnalytics(appInstance);
+    auth = getAuth(appInstance);
+    db = getFirestore(appInstance);
+    
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            state.uid = user.uid;
+            state.user = user.displayName || user.email;
+            loadFromFirestore();
+        }
+    });
 }
 
 function init() {
@@ -83,15 +87,16 @@ function loadState() {
 function saveState() {
     localStorage.setItem('gymTrackerState', JSON.stringify(state));
     if (state.uid && db) {
-        db.collection('users').doc(state.uid).set(state, { merge: true });
+        setDoc(doc(db, 'users', state.uid), state, { merge: true });
     }
 }
 
 async function loadFromFirestore() {
     if (!state.uid || !db) return;
-    const doc = await db.collection('users').doc(state.uid).get();
-    if (doc.exists) {
-        Object.assign(state, doc.data());
+    const docRef = doc(db, 'users', state.uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        Object.assign(state, docSnap.data());
         renderDashboard();
     }
 }
@@ -117,14 +122,12 @@ function renderLogin() {
             <button class="btn btn-secondary" onclick="handleGoogleLogin()">
                 <i data-lucide="log-in" style="margin-right: 8px;"></i> Login with Google
             </button>
-            <p style="font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);">
-                (Requires Firebase Config in code)
-            </p>
         </div>
     `;
     lucide.createIcons();
 }
 
+// Expose to window for HTML onclick
 window.handleLogin = () => {
     const username = document.getElementById('username').value;
     if (!username) return alert('Please enter a name');
@@ -134,9 +137,9 @@ window.handleLogin = () => {
 };
 
 window.handleGoogleLogin = () => {
-    if (!auth) return alert("Firebase not configured. Please add your API keys to script.js");
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(error => alert(error.message));
+    if (!auth) return alert("Firebase not configured.");
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider).catch(error => alert(error.message));
 };
 
 function renderSetup() {
@@ -235,6 +238,7 @@ function renderExerciseSelection(dayIndex) {
         </div>
     `;
 }
+window.renderExerciseSelection = renderExerciseSelection;
 
 window.addExercise = (dayIndex) => {
     const input = document.getElementById('new-exercise');
@@ -293,12 +297,12 @@ function renderDashboard() {
     `;
     lucide.createIcons();
 }
+window.renderDashboard = renderDashboard;
 
 function getRecommendation(exerciseName) {
     for (let i = state.workouts.length - 1; i >= 0; i--) {
         const wo = state.workouts[i];
         const record = wo.exercises.find(e => e.name === exerciseName);
-        // Check if record has sets (new format) or is old format
         if (record) {
             let bestWeight = 0;
             if (record.sets) {
@@ -400,5 +404,3 @@ window.resetApp = () => {
         location.reload();
     }
 }
-
-
