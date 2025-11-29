@@ -76,7 +76,7 @@ const Progress: React.FC = () => {
   };
 
   return (
-    <div className="container">
+    <div>
       <h1>Progress</h1>
       <div className="card">
         <label>Select Exercise</label>

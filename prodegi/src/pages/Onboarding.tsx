@@ -14,6 +14,10 @@ const Onboarding: React.FC = () => {
   const [routine, setRoutineState] = useState<RoutineDay[]>(state.routine.length > 0 ? state.routine : []);
 
   const handleStart = () => {
+    if (daysCount < 1) {
+      alert('Please enter at least 1 day for your routine.');
+      return;
+    }
     const initialRoutine = Array.from({ length: daysCount }, (_, i) => ({
       id: `day-${i + 1}`,
       name: `Day ${i + 1}`,
@@ -67,13 +71,13 @@ const Onboarding: React.FC = () => {
         <div className="card">
           <h1 style={{ textAlign: 'center' }}>Welcome to Prodegi</h1>
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Let's set up your routine.</p>
-          <label>How many days per week do you train?</label>
-          <input 
-            type="number" 
-            value={daysCount} 
-            onChange={(e) => setDaysCount(Number(e.target.value))} 
-            min={1} 
-            max={7} 
+          <label>How many different days do you have in your routine?</label>
+          <input
+            type="number"
+            value={daysCount}
+            onChange={(e) => setDaysCount(Number(e.target.value))}
+            min={1}
+            max={7}
             style={{ width: '100%', marginBottom: '1rem', boxSizing: 'border-box' }}
           />
           <button className="btn-primary" onClick={handleStart}>Next</button>
@@ -115,28 +119,19 @@ const Onboarding: React.FC = () => {
                 <div className="flex-row">
                   <div>
                     <label>Sets</label>
-                    <input 
-                      type="number" 
-                      value={ex.sets} 
+                    <input
+                      type="number"
+                      value={ex.sets}
                       onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', Number(e.target.value))}
                       style={{ width: '60px' }}
                     />
                   </div>
                   <div>
                     <label>Target Reps</label>
-                    <input 
-                      type="number" 
-                      value={ex.targetReps} 
+                    <input
+                      type="number"
+                      value={ex.targetReps}
                       onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', Number(e.target.value))}
-                      style={{ width: '60px' }}
-                    />
-                  </div>
-                   <div>
-                    <label>Inc (kg)</label>
-                    <input 
-                      type="number" 
-                      value={ex.increment} 
-                      onChange={(e) => updateExercise(dayIndex, exIndex, 'increment', Number(e.target.value))}
                       style={{ width: '60px' }}
                     />
                   </div>

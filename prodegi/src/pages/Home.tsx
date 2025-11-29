@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
 import { Play, Check } from 'lucide-react';
@@ -7,6 +8,7 @@ import { format } from 'date-fns';
 
 const Home: React.FC = () => {
   const { state, addSession, getExerciseHistory } = useStore();
+  const { user } = useAuth();
   const [selectedDayId, setSelectedDayId] = useState<string>(state.routine[0]?.id || '');
   const [activeWorkout, setActiveWorkout] = useState<{
     dayId: string;
@@ -101,7 +103,7 @@ const Home: React.FC = () => {
 
   if (activeWorkout && selectedDay) {
     return (
-        <div className="container">
+        <div>
             <h2>{selectedDay.name}</h2>
             {selectedDay.exercises.map(ex => {
                 const exState = activeWorkout.exercises[ex.id];
@@ -156,10 +158,17 @@ const Home: React.FC = () => {
     );
   }
 
+  const getUserName = () => {
+    if (user?.displayName) {
+      return user.displayName.split(' ')[0]; // Get first name
+    }
+    return 'there';
+  };
+
   return (
-    <div className="container">
-      <h1>Dashboard</h1>
-      
+    <div>
+      <h1>Hi, {getUserName()}</h1>
+
       <div className="card">
         <label>Select Routine Day</label>
         <select 

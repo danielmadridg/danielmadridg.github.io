@@ -1,25 +1,28 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit } from 'lucide-react';
 
 const Settings: React.FC = () => {
   const { clearData } = useStore();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Are you sure you want to logout? This will clear all data.')) {
       clearData();
-      navigate('/onboarding');
+      await signOut();
+      navigate('/login');
     }
   };
 
   const handleEditRoutine = () => {
-    navigate('/onboarding');
+    navigate('/onboarding?edit=true');
   };
 
   return (
-    <div className="container">
+    <div>
       <h1>Settings</h1>
       <div className="card">
         <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)'}}>

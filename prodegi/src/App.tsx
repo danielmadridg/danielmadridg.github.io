@@ -1,65 +1,178 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { StoreProvider, useStore } from './context/StoreContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Home from './pages/Home';
 import Onboarding from './pages/Onboarding';
 import Progress from './pages/Progress';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
 import { Dumbbell, LineChart, Settings as SettingsIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const hideNav = location.pathname === '/onboarding';
+  const hideNav = location.pathname === '/onboarding' || location.pathname === '/login';
+
+  if (hideNav) {
+    return <>{children}</>;
+  }
 
   return (
-    <div className="container">
-      {!hideNav && (
-        <header style={{ padding: '1rem 0', textAlign: 'center', borderBottom: '1px solid #333', marginBottom: '1rem' }}>
-          <a href="/" style={{ textDecoration: 'none', color: 'var(--primary-color)', fontSize: '1.5rem', fontWeight: 'bold', letterSpacing: '2px' }}>
-            PRODEGI
-          </a>
-        </header>
-      )}
-      <div style={{ flex: 1 }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#000' }}>
+      {/* Sidebar */}
+      <div style={{
+        width: '250px',
+        background: '#000',
+        borderRight: '1px solid #333',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1rem 0'
+      }}>
+        {/* Logo */}
+        <Link to="/" style={{
+          padding: '1rem 1.5rem',
+          marginBottom: '2rem',
+          textDecoration: 'none'
+        }}>
+          <img src="/prodegilogo.png" alt="Prodegi" style={{
+            width: '120px',
+            height: 'auto'
+          }} />
+        </Link>
+
+        {/* Navigation */}
+        <nav style={{ flex: 1 }}>
+          <Link
+            to="/"
+            className={clsx('nav-item', location.pathname === '/' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/' ? '#fff' : '#888',
+              transition: 'color 0.2s'
+            }}
+          >
+            <Dumbbell size={24} />
+            <span style={{ fontSize: '1rem' }}>Workout</span>
+          </Link>
+          <Link
+            to="/progress"
+            className={clsx('nav-item', location.pathname === '/progress' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/progress' ? '#fff' : '#888',
+              transition: 'color 0.2s'
+            }}
+          >
+            <LineChart size={24} />
+            <span style={{ fontSize: '1rem' }}>Progress</span>
+          </Link>
+          <Link
+            to="/settings"
+            className={clsx('nav-item', location.pathname === '/settings' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/settings' ? '#fff' : '#888',
+              transition: 'color 0.2s'
+            }}
+          >
+            <SettingsIcon size={24} />
+            <span style={{ fontSize: '1rem' }}>Settings</span>
+          </Link>
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: '2rem'
+      }}>
         {children}
       </div>
-      {!hideNav && (
-        <nav className="nav-bar">
-          <a href="/" className={clsx('nav-item', location.pathname === '/' && 'active')}>
-            <Dumbbell size={24} />
-            <span>Workout</span>
-          </a>
-          <a href="/progress" className={clsx('nav-item', location.pathname === '/progress' && 'active')}>
-            <LineChart size={24} />
-            <span>Progress</span>
-          </a>
-          <a href="/settings" className={clsx('nav-item', location.pathname === '/settings' && 'active')}>
-            <SettingsIcon size={24} />
-            <span>Settings</span>
-          </a>
-        </nav>
-      )}
     </div>
   );
 };
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boolean }> = ({ children, requireRoutine = false }) => {
+  const { user, loading } = useAuth();
   const { state } = useStore();
-  if (state.routine.length === 0) {
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requireRoutine && state.routine.length === 0) {
     return <Navigate to="/onboarding" replace />;
   }
+
   return <>{children}</>;
 };
 
+const OnboardingRoute: React.FC = () => {
+  const { user } = useAuth();
+  const { state } = useStore();
+  const location = useLocation();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Allow editing if coming from settings with edit=true query param
+  const searchParams = new URLSearchParams(location.search);
+  const isEditing = searchParams.get('edit') === 'true';
+
+  // If user already has a routine and not in edit mode, redirect to home
+  if (state.routine.length > 0 && !isEditing) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Onboarding />;
+};
+
 const AppContent: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <Layout>
         <Routes>
-          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/login" element={
+            user ? <Navigate to="/" replace /> : <Login />
+          } />
+          <Route path="/onboarding" element={
+            <OnboardingRoute />
+          } />
           <Route path="/" element={
-            <ProtectedRoute>
+            <ProtectedRoute requireRoutine={true}>
               <Home />
             </ProtectedRoute>
           } />
@@ -81,9 +194,11 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <StoreProvider>
-      <AppContent />
-    </StoreProvider>
+    <AuthProvider>
+      <StoreProvider>
+        <AppContent />
+      </StoreProvider>
+    </AuthProvider>
   );
 };
 
