@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
-import { Play, Check, ArrowLeft } from 'lucide-react';
+import { Check, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import CustomSelect from '../components/CustomSelect';
 
@@ -25,10 +25,9 @@ const Home: React.FC = () => {
     const initialExercises: Record<string, { weight: string; reps: string[] }> = {};
     
     selectedDay.exercises.forEach(ex => {
-      const history = getExerciseHistory(ex.id);
+
       // history is sorted oldest to newest (based on how we push to array), but getExerciseHistory returns {result, date}
       // Let's assume the order is preserved from state.history which is chronological.
-      const lastSession = history.length > 0 ? history[history.length - 1].result : null;
 
       initialExercises[ex.id] = {
         weight: '',

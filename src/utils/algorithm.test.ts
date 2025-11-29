@@ -8,8 +8,7 @@ describe('Progressive Overload Algorithm', () => {
       currentWeight: 80,
       repsPerformed: [10, 8, 7],
       targetReps: 8,
-      increment: 2.5,
-      previousFailures: 0
+      roundTo: 2.5
     });
     
     // P_top = (10 - 8)/8 = 0.25 (>= 0.10) -> Increment
@@ -23,8 +22,7 @@ describe('Progressive Overload Algorithm', () => {
       currentWeight: 50,
       repsPerformed: [12, 12, 11],
       targetReps: 12,
-      increment: 2,
-      previousFailures: 0
+      roundTo: 2
     });
 
     // P_top = (12 - 12)/12 = 0
@@ -40,8 +38,7 @@ describe('Progressive Overload Algorithm', () => {
       currentWeight: 80,
       repsPerformed: [7, 6, 6],
       targetReps: 8,
-      increment: 2.5,
-      previousFailures: 3 // >= 2
+      roundTo: 2.5
     });
 
     // P_top = (7 - 8)/8 = -0.125 (<= -0.10)
@@ -52,7 +49,7 @@ describe('Progressive Overload Algorithm', () => {
 
   // Edge case: Volume increase
   test('Should increment if volume is high even if top set is normal', () => {
-     const result = calculateProgressiveOverload({
+     calculateProgressiveOverload({
       currentWeight: 100,
       repsPerformed: [10, 10, 10, 10], // 40 reps
       targetReps: 10, // Target 10 reps, say 3 sets? 
@@ -68,8 +65,7 @@ describe('Progressive Overload Algorithm', () => {
       // P_top = 0.
       // Vol = 34. Target Vol = 30.
       // P_vol = (34 - 30)/30 = 4/30 = 0.133 (>= 0.05) -> Increment
-      increment: 2.5,
-      previousFailures: 0
+      roundTo: 2.5
     });
     
     // However, in my test setup I need to be careful about what "Sets" means.
@@ -80,8 +76,7 @@ describe('Progressive Overload Algorithm', () => {
         currentWeight: 100,
         repsPerformed: [10, 12, 12],
         targetReps: 10,
-        increment: 5,
-        previousFailures: 0
+        roundTo: 5
     });
     
     expect(result2.nextWeight).toBe(105);
