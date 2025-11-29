@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  signInWithPopup,
+  signInWithRedirect,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile
@@ -20,15 +20,11 @@ const Login: React.FC = () => {
     try {
       setError(null);
       setLoading(true);
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
+      // Note: redirect will navigate away, so loading state won't be reset here
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError(null); // Don't show error if user just closed the popup
-      } else {
-        const errorMessage = getErrorMessage(err.code, false);
-        setError(errorMessage);
-      }
-    } finally {
+      const errorMessage = getErrorMessage(err.code, false);
+      setError(errorMessage);
       setLoading(false);
     }
   };
