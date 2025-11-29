@@ -52,6 +52,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load data on mount or when user changes
   useEffect(() => {
     const loadData = async () => {
+      console.log('[StoreContext] Loading data, user:', user?.uid);
       setIsLoaded(false);
       
       if (user) {
@@ -62,8 +63,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
           if (docSnap.exists()) {
             const data = docSnap.data() as UserState;
+            console.log('[StoreContext] Loaded from Firestore:', data);
             dispatch({ type: 'LOAD_DATA', payload: data });
           } else {
+            console.log('[StoreContext] No Firestore data, checking localStorage');
             // If no data in Firestore, check if we have local data to migrate
             // Or just start fresh/keep current state
             // Ideally, if we have local data and just signed up, we might want to upload it.
@@ -74,13 +77,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const localData = localStorage.getItem('prodegi_data');
             if (localData) {
                  const parsed = JSON.parse(localData);
+                 console.log('[StoreContext] Migrating localStorage to Firestore:', parsed);
                  // Optional: Merge or just use local data
                  dispatch({ type: 'LOAD_DATA', payload: parsed });
                  // We will save this to Firestore in the next effect
             }
           }
         } catch (e) {
-          console.error("Error loading from Firestore:", e);
+          console.error("[StoreContext] Error loading from Firestore:", e);
         }
       } else {
         // Fallback to localStorage for guest
@@ -88,11 +92,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (stored) {
           try {
             dispatch({ type: 'LOAD_DATA', payload: JSON.parse(stored) });
+            console.log('[StoreContext] Loaded from localStorage (guest)');
           } catch (e) {
             console.error("Failed to load local data", e);
           }
         } else {
             // Reset to initial if no local data and no user
+            console.log('[StoreContext] No data found, resetting to initial');
             dispatch({ type: 'CLEAR_DATA' });
         }
       }
@@ -109,13 +115,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const saveData = async () => {
       // Always save to localStorage as backup/cache
       localStorage.setItem('prodegi_data', JSON.stringify(state));
+      console.log('[StoreContext] Saved to localStorage:', state);
 
       if (user) {
         try {
           const docRef = doc(db, "users", user.uid);
           await setDoc(docRef, state);
+          console.log('[StoreContext] Saved to Firestore for user:', user.uid);
         } catch (e) {
-          console.error("Error saving to Firestore:", e);
+          console.error("[StoreContext] Error saving to Firestore:", e);
         }
       }
     };
