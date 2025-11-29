@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -50,6 +50,34 @@ export function handleGoogleLogin() {
     if (!auth) return alert("Firebase not configured.");
     const provider = new GoogleAuthProvider();
     signInWithPopup(auth, provider).catch(error => alert(error.message));
+}
+
+export function handleEmailSignup(email, password) {
+    if (!auth) return alert("Firebase not configured.");
+    return createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            console.log("User created:", userCredential.user);
+            return userCredential.user;
+        })
+        .catch((error) => {
+            console.error("Signup error:", error);
+            alert(error.message);
+            throw error;
+        });
+}
+
+export function handleEmailLogin(email, password) {
+    if (!auth) return alert("Firebase not configured.");
+    return signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            console.log("User logged in:", userCredential.user);
+            return userCredential.user;
+        })
+        .catch((error) => {
+            console.error("Login error:", error);
+            alert(error.message);
+            throw error;
+        });
 }
 
 export function handleLogout() {

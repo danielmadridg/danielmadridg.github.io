@@ -1,5 +1,5 @@
 import { state, loadState, saveState } from "./state.js";
-import { initFirebase, handleGoogleLogin, handleLogout, db } from "./services/firebase.js";
+import { initFirebase, handleGoogleLogin, handleEmailLogin, handleEmailSignup, handleLogout, db } from "./services/firebase.js";
 import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getDashboardContent } from "./views/dashboard.js";
 import { getProgressContent, renderProgressChart } from "./views/progress.js";
@@ -122,6 +122,9 @@ export function loadFromFirestore() {
 function renderNavigation() {
     return `
         <nav class="nav-bar">
+            <div class="nav-logo" onclick="window.switchView('dashboard')" style="cursor: pointer; margin-bottom: 20px;">
+                <img src="prodegilogo.png" alt="Prodegi" style="width: 40px; height: 40px; object-fit: contain;">
+            </div>
             <div class="nav-item ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="window.switchView('dashboard')">
                 <i data-lucide="layout-dashboard"></i>
                 <span>Home</span>
@@ -168,7 +171,12 @@ export function renderApp() {
             content = getDashboardContent();
     }
 
-    app.innerHTML = content + renderNavigation();
+    app.innerHTML = `
+        ${renderNavigation()}
+        <div class="main-content">
+            ${content}
+        </div>
+    `;
     lucide.createIcons();
 }
 
@@ -178,19 +186,45 @@ export function renderLogin() {
         console.error("App element is null in renderLogin!");
         return;
     }
+
+    const isSignup = state.showSignup || false;
+
     app.innerHTML = `
-        <div class="card text-center">
+        <div class="card text-center" style="max-width: 400px; margin: 50px auto;">
             <div class="logo-container">
                 <img src="prodegilogo.png" alt="Prodegi Logo" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
             <h1>Prodegi</h1>
             <p>Track your progress. Crush your goals.</p>
 
-            <div style="margin: 40px 0;">
-                <button class="btn btn-secondary" onclick="handleGoogleLogin()">
-                    <i data-lucide="log-in" style="margin-right: 8px;"></i> Login with Google
-                </button>
+            <h3 style="margin-top: 30px;">${isSignup ? 'Create Account' : 'Login'}</h3>
+
+            <div class="input-group" style="text-align: left; margin-top: 20px;">
+                <label>Email</label>
+                <input type="email" id="auth-email" placeholder="your@email.com" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main);">
             </div>
+
+            <div class="input-group" style="text-align: left; margin-top: 15px;">
+                <label>Password</label>
+                <input type="password" id="auth-password" placeholder="••••••••" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-color); color: var(--text-main);">
+            </div>
+
+            <button class="btn" style="width: 100%; margin-top: 20px;" onclick="window.handleEmailAuth(${isSignup})">
+                ${isSignup ? 'Sign Up' : 'Login'}
+            </button>
+
+            <div style="margin: 20px 0; color: var(--text-muted);">or</div>
+
+            <button class="btn btn-secondary" style="width: 100%;" onclick="handleGoogleLogin()">
+                <i data-lucide="log-in" style="margin-right: 8px;"></i> Continue with Google
+            </button>
+
+            <p style="margin-top: 30px; font-size: 0.9rem;">
+                ${isSignup ? 'Already have an account?' : "Don't have an account?"}
+                <a href="#" onclick="window.toggleAuthMode(); return false;" style="color: var(--primary); text-decoration: none;">
+                    ${isSignup ? 'Login' : 'Sign Up'}
+                </a>
+            </p>
         </div>
     `;
     if (typeof lucide !== 'undefined') {
@@ -199,46 +233,167 @@ export function renderLogin() {
     console.log("Login screen rendered");
 }
 
+window.handleEmailAuth = async (isSignup) => {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+
+    if (!email || !password) {
+        alert('Please enter email and password');
+        return;
+    }
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters');
+        return;
+    }
+
+    try {
+        if (isSignup) {
+            await handleEmailSignup(email, password);
+        } else {
+            await handleEmailLogin(email, password);
+        }
+    } catch (error) {
+        console.error('Auth error:', error);
+    }
+};
+
+window.toggleAuthMode = () => {
+    state.showSignup = !state.showSignup;
+    renderLogin();
+};
+
 // --- Setup Flow ---
 function renderSetup() {
-    app.innerHTML = `
-        <div class="card">
-            <h2>Setup Your Plan</h2>
-            <div class="input-group">
-                <label>Training Frequency</label>
-                <select id="frequency">
-                    <option value="3">3 Days</option>
-                    <option value="4">4 Days</option>
-                    <option value="5">5 Days</option>
-                    <option value="6">6 Days</option>
-                </select>
+    if (!state.setupStep) state.setupStep = 1;
+
+    if (state.setupStep === 1) {
+        // Step 1: How many days per week
+        app.innerHTML = `
+            <div class="card text-center">
+                <h2>Step 1: Training Frequency</h2>
+                <p>How many days per week do you train?</p>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 30px 0;">
+                    <button class="btn" onclick="window.setupFrequency(3)">3 Days</button>
+                    <button class="btn" onclick="window.setupFrequency(4)">4 Days</button>
+                    <button class="btn" onclick="window.setupFrequency(5)">5 Days</button>
+                    <button class="btn" onclick="window.setupFrequency(6)">6 Days</button>
+                </div>
             </div>
-            <div class="input-group">
-                <label>Default Overload Multiplier</label>
-                <select id="multiplier">
-                    <option value="1.025">2.5% (Conservative)</option>
-                    <option value="1.05">5% (Aggressive)</option>
-                </select>
+        `;
+    } else if (state.setupStep === 2) {
+        // Step 2: Select which days
+        app.innerHTML = `
+            <div class="card">
+                <h2>Step 2: Select Training Days</h2>
+                <p>Which ${state.setupFreq} days do you train?</p>
+                <div class="input-group">
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-mon" value="Monday">
+                        <span>Monday</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-tue" value="Tuesday">
+                        <span>Tuesday</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-wed" value="Wednesday">
+                        <span>Wednesday</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-thu" value="Thursday">
+                        <span>Thursday</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-fri" value="Friday">
+                        <span>Friday</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-sat" value="Saturday">
+                        <span>Saturday</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                        <input type="checkbox" id="day-sun" value="Sunday">
+                        <span>Sunday</span>
+                    </label>
+                </div>
+                <button class="btn" onclick="window.setupDays()">Next Step</button>
             </div>
-            <button class="btn" onclick="window.handleSetupStep1()">Next: Name Days</button>
-        </div>
-    `;
+        `;
+    } else if (state.setupStep === 3) {
+        // Step 3: Overload multiplier
+        app.innerHTML = `
+            <div class="card text-center">
+                <h2>Step 3: Overload Multiplier</h2>
+                <p>How much weight do you want to add each workout?</p>
+                <div class="input-group" style="margin: 40px 0;">
+                    <label style="font-size: 1.5rem; color: var(--primary);"><span id="mult-display">2.5%</span></label>
+                    <input type="range" id="multiplier" min="1" max="10" step="0.5" value="2.5"
+                        oninput="document.getElementById('mult-display').textContent = this.value + '%'"
+                        style="width: 100%; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">
+                        <span>1% (Conservative)</span>
+                        <span>10% (Aggressive)</span>
+                    </div>
+                </div>
+                <button class="btn" onclick="window.setupMultiplier()">Next Step</button>
+            </div>
+        `;
+    }
 }
 
-window.handleSetupStep1 = () => {
-    const freq = document.getElementById('frequency').value;
+// Setup step handlers
+window.setupFrequency = (freq) => {
+    state.setupFreq = freq;
+    state.setupStep = 2;
+    renderSetup();
+};
+
+window.setupDays = () => {
+    const dayIds = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+    const selectedDays = [];
+
+    dayIds.forEach(id => {
+        const checkbox = document.getElementById(`day-${id}`);
+        if (checkbox && checkbox.checked) {
+            selectedDays.push(checkbox.value);
+        }
+    });
+
+    if (selectedDays.length === 0) {
+        alert('Please select at least one training day');
+        return;
+    }
+
+    if (selectedDays.length !== state.setupFreq) {
+        alert(`Please select exactly ${state.setupFreq} days`);
+        return;
+    }
+
+    state.selectedDays = selectedDays;
+    state.setupStep = 3;
+    renderSetup();
+};
+
+window.setupMultiplier = () => {
     const mult = document.getElementById('multiplier').value;
-    
-    state.settings.multiplier = parseFloat(mult);
+    state.settings.multiplier = 1 + (parseFloat(mult) / 100);
     state.settings.customMultipliers = {};
-    
+
     state.plan = {
-        days: Array.from({length: parseInt(freq)}, (_, i) => ({
-            name: `Day ${i + 1}`,
-            exercises: []
+        days: state.selectedDays.map(dayName => ({
+            name: dayName,
+            exercises: [],
+            dayOfWeek: dayName
         }))
     };
-    renderDayNaming();
+
+    delete state.setupStep;
+    delete state.setupFreq;
+    delete state.selectedDays;
+
+    saveStateLocal();
+    renderExerciseSelection(0);
 };
 
 function renderDayNaming() {
@@ -318,9 +473,56 @@ window.changeMonth = (offset) => {
     renderApp();
 };
 
+window.showWorkoutDetails = (dateStr) => {
+    const workoutsOnDay = state.workouts.filter(w => new Date(w.date).toDateString() === dateStr);
+
+    if (workoutsOnDay.length === 0) return;
+
+    const workout = workoutsOnDay[0];
+    const dayName = state.plan.days[workout.dayIndex]?.name || 'Unknown';
+
+    app.innerHTML = `
+        <div class="card">
+            <div class="flex-between">
+                <h2>Workout on ${new Date(dateStr).toLocaleDateString()}</h2>
+                <button class="btn-cancel" onclick="window.location.reload()">Close</button>
+            </div>
+            <h3>${dayName}</h3>
+
+            ${workout.exercises.map(ex => `
+                <div class="card exercise-card" style="margin: 15px 0;">
+                    <h4>${ex.name}</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <th style="padding: 8px; text-align: left;">Set</th>
+                                <th style="padding: 8px; text-align: right;">Weight (kg)</th>
+                                <th style="padding: 8px; text-align: right;">Reps</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ex.sets.map((set, idx) => `
+                                <tr>
+                                    <td style="padding: 8px;">${idx + 1}</td>
+                                    <td style="padding: 8px; text-align: right;">${set.weight}</td>
+                                    <td style="padding: 8px; text-align: right;">${set.reps}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+};
+
 window.updateGlobalMultiplier = (val) => {
-    state.settings.multiplier = parseFloat(val);
+    state.settings.multiplier = 1 + (parseFloat(val) / 100);
     saveStateLocal();
+    renderApp();
 };
 
 window.removeCustomMultiplier = (ex) => {
@@ -355,7 +557,7 @@ window.startWorkout = (dayIndex) => {
         <div class="card">
             <div class="flex-between">
                 <h2>${day.name}</h2>
-                <button class="btn-cancel" onclick="renderApp()">Cancel</button>
+                <button class="btn-cancel" onclick="window.location.reload()">Cancel</button>
             </div>
             
             <div id="active-workout">

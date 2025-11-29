@@ -7,15 +7,6 @@ export function getSettingsContent() {
     return `
         <div class="card">
             <h2>Settings</h2>
-            
-            <div class="input-group">
-                <label>Default Overload Multiplier</label>
-                <select id="setting-multiplier" onchange="window.updateGlobalMultiplier(this.value)">
-                    <option value="1.025" ${state.settings.multiplier === 1.025 ? 'selected' : ''}>2.5% (Conservative)</option>
-                    <option value="1.05" ${state.settings.multiplier === 1.05 ? 'selected' : ''}>5% (Aggressive)</option>
-                </select>
-                <p style="font-size: 0.8rem; margin-top: 5px;">This applies to any exercise that doesn't have a custom multiplier.</p>
-            </div>
 
             <h3>Exercise Multipliers</h3>
             <p style="font-size: 0.8rem;">Set specific overload targets for each exercise.</p>

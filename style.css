@@ -221,38 +221,65 @@ select:focus {
     margin: 0 auto 20px auto;
 }
 
-/* Navigation Bar */
+/* Sidebar Navigation */
 .nav-bar {
     position: fixed;
-    bottom: 0;
+    top: 0;
     left: 0;
-    right: 0;
+    bottom: 0;
+    width: 70px;
     background-color: var(--card-bg);
-    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    gap: 10px;
     z-index: 100;
+    transition: width 0.3s ease;
+}
+
+.nav-bar:hover {
+    width: 200px;
 }
 
 .nav-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    gap: 15px;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.2s, background-color 0.2s;
+    padding: 12px 15px;
+    border-radius: 8px;
+    width: calc(100% - 20px);
+    margin: 0 10px;
+}
+
+.nav-item:hover {
+    background-color: rgba(191, 163, 95, 0.1);
 }
 
 .nav-item i {
-    margin-bottom: 4px;
     width: 24px;
     height: 24px;
+    min-width: 24px;
+}
+
+.nav-item span {
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nav-bar:hover .nav-item span {
+    opacity: 1;
 }
 
 .nav-item.active {
     color: var(--primary);
+    background-color: rgba(191, 163, 95, 0.15);
 }
 
 /* Calendar */
@@ -303,12 +330,18 @@ select:focus {
     bottom: 6px;
 }
 
-/* Adjust main content for bottom nav */
+/* Adjust main content for sidebar */
 #app {
-    padding-bottom: 80px;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding-top: 40px; /* Added spacing from top */
+    min-height: 100vh;
+}
+
+.main-content {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px;
+    padding-left: 90px;
+    max-width: 1100px;
+    transition: padding-left 0.3s ease;
 }
 
 /* Cancel Button */

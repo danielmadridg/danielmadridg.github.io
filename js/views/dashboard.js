@@ -3,8 +3,8 @@ import { getRecommendation, getMultiplier } from "../logic.js";
 
 export function getCalendarHTML() {
     // Ensure calendarDate is a Date object
-    if (!(state.calendarDate instanceof Date)) {
-        state.calendarDate = new Date(state.calendarDate || Date.now());
+    if (!(state.calendarDate instanceof Date) || isNaN(state.calendarDate)) {
+        state.calendarDate = new Date();
     }
 
     const displayDate = state.calendarDate;
@@ -48,11 +48,15 @@ export function getCalendarHTML() {
         const dateObj = new Date(currentYear, currentMonth, day);
         const dateStr = dateObj.toDateString();
         const isToday = dateObj.toDateString() === today.toDateString();
-        
-        const hasWorkout = state.workouts.some(w => new Date(w.date).toDateString() === dateStr);
-        
+
+        const workoutsOnDay = state.workouts.filter(w => new Date(w.date).toDateString() === dateStr);
+        const hasWorkout = workoutsOnDay.length > 0;
+
+        const clickHandler = hasWorkout ? `onclick="window.showWorkoutDetails('${dateStr}')"` : '';
+
         calendarHTML += `
-            <div class="calendar-day ${isToday ? 'today' : ''} ${hasWorkout ? 'has-workout' : ''}">
+            <div class="calendar-day ${isToday ? 'today' : ''} ${hasWorkout ? 'has-workout' : ''}"
+                 ${clickHandler} style="${hasWorkout ? 'cursor: pointer;' : ''}">
                 <span class="day-number">${day}</span>
                 ${hasWorkout ? '<div class="workout-dot"></div>' : ''}
             </div>
