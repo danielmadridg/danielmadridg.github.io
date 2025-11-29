@@ -17,6 +17,8 @@ let unsubscribe = null;
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     try {
+        // Load saved state first
+        loadState();
         // Pass callbacks to avoid circular dependency
         initFirebase(onAuthSuccess, onAuthFailure);
         init();

@@ -1,4 +1,4 @@
-import { state } from "../state.js";
+import { state } from "./state.js";
 
 export function getMultiplier(exerciseName) {
     if (state.settings.customMultipliers && state.settings.customMultipliers[exerciseName]) {
