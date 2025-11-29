@@ -22,9 +22,37 @@ const Login: React.FC = () => {
       setLoading(true);
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      setError(err.message);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError(null); // Don't show error if user just closed the popup
+      } else {
+        const errorMessage = getErrorMessage(err.code, false);
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getErrorMessage = (errorCode: string, isSignUp: boolean): string => {
+    switch (errorCode) {
+      case 'auth/invalid-credential':
+        return 'No existe una cuenta asociada a este correo electrónico.';
+      case 'auth/user-not-found':
+        return 'No existe una cuenta asociada a este correo electrónico.';
+      case 'auth/wrong-password':
+        return 'La contraseña es incorrecta.';
+      case 'auth/email-already-in-use':
+        return 'Ya existe una cuenta con este correo electrónico.';
+      case 'auth/weak-password':
+        return 'La contraseña debe tener al menos 6 caracteres.';
+      case 'auth/invalid-email':
+        return 'El correo electrónico no es válido.';
+      case 'auth/network-request-failed':
+        return 'Error de conexión. Verifica tu conexión a internet.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos fallidos. Por favor, intenta más tarde.';
+      default:
+        return isSignUp ? 'Error al crear la cuenta. Intenta de nuevo.' : 'Error al iniciar sesión. Intenta de nuevo.';
     }
   };
 
@@ -44,7 +72,8 @@ const Login: React.FC = () => {
         await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (err: any) {
-      setError(err.message);
+      const errorMessage = getErrorMessage(err.code, isSignUp);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

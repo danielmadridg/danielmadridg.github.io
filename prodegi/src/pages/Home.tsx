@@ -3,8 +3,9 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
-import { Play, Check } from 'lucide-react';
+import { Play, Check, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
+import CustomSelect from '../components/CustomSelect';
 
 const Home: React.FC = () => {
   const { state, addSession, getExerciseHistory } = useStore();
@@ -28,11 +29,9 @@ const Home: React.FC = () => {
       // history is sorted oldest to newest (based on how we push to array), but getExerciseHistory returns {result, date}
       // Let's assume the order is preserved from state.history which is chronological.
       const lastSession = history.length > 0 ? history[history.length - 1].result : null;
-      
-      const suggestedWeight = lastSession?.nextWeight ?? lastSession?.weight ?? '';
-      
+
       initialExercises[ex.id] = {
-        weight: suggestedWeight.toString(),
+        weight: '',
         reps: Array(ex.sets).fill('')
       };
     });
@@ -44,8 +43,27 @@ const Home: React.FC = () => {
     });
   };
 
+  const handleCancelWorkout = () => {
+    if (confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
+      setActiveWorkout(null);
+    }
+  };
+
   const handleFinishWorkout = () => {
     if (!activeWorkout || !selectedDay) return;
+
+    // Validate that all exercises have data
+    const hasEmptyData = selectedDay.exercises.some(ex => {
+      const input = activeWorkout.exercises[ex.id];
+      const weight = parseFloat(input.weight) || 0;
+      const reps = input.reps.map(r => parseInt(r) || 0);
+      return weight === 0 || reps.every(r => r === 0);
+    });
+
+    if (hasEmptyData) {
+      alert('Please complete all exercises with weight and reps before finishing the workout.');
+      return;
+    }
 
     const results: ExerciseResult[] = [];
 
@@ -53,32 +71,11 @@ const Home: React.FC = () => {
       const input = activeWorkout.exercises[ex.id];
       const weight = parseFloat(input.weight) || 0;
       const reps = input.reps.map(r => parseInt(r) || 0);
-      
-      const history = getExerciseHistory(ex.id).map(h => h.result);
-      
-      let failures = 0;
-      const reversedHistory = [...history].reverse();
-      for (const h of reversedHistory) {
-         const hSets = h.sets.length;
-         if (hSets === 0) continue;
-         const hTop = h.sets[0];
-         const hVol = h.sets.reduce((a, b) => a + b, 0);
-         const pTop = (hTop - ex.targetReps) / ex.targetReps;
-         const pVol = (hVol - (ex.targetReps * hSets)) / (ex.targetReps * hSets);
-         
-         if (pTop <= -0.10 || pVol <= -0.15) {
-             failures++;
-         } else {
-             break;
-         }
-      }
 
       const algoResult = calculateProgressiveOverload({
         currentWeight: weight,
         repsPerformed: reps,
-        targetReps: ex.targetReps,
-        increment: ex.increment,
-        previousFailures: failures
+        targetReps: ex.targetReps
       });
 
       results.push({
@@ -104,9 +101,29 @@ const Home: React.FC = () => {
   if (activeWorkout && selectedDay) {
     return (
         <div>
-            <h2>{selectedDay.name}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <button
+                    onClick={handleCancelWorkout}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        padding: '0.5rem',
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}
+                >
+                    <ArrowLeft size={24} />
+                </button>
+                <h2 style={{ margin: 0 }}>{selectedDay.name}</h2>
+            </div>
             {selectedDay.exercises.map(ex => {
                 const exState = activeWorkout.exercises[ex.id];
+                const history = getExerciseHistory(ex.id);
+                const lastSession = history.length > 0 ? history[history.length - 1].result : null;
+                const suggestedWeight = lastSession?.nextWeight ?? lastSession?.weight ?? 0;
+
                 return (
                     <div key={ex.id} className="card">
                         <div className="flex-row">
@@ -115,11 +132,28 @@ const Home: React.FC = () => {
                                 Goal: {ex.sets} x {ex.targetReps}
                             </div>
                         </div>
+
+                        {lastSession && (
+                            <div style={{
+                                marginBottom: '1rem',
+                                padding: '0.5rem',
+                                background: 'rgba(212, 175, 55, 0.1)',
+                                borderRadius: '4px',
+                                fontSize: '0.85rem',
+                                color: 'var(--text-secondary)'
+                            }}>
+                                Last session: {lastSession.weight} kg × {lastSession.sets.join(', ')} reps
+                                {lastSession.decision === 'incrementar' && ' → 📈 Increase weight'}
+                                {lastSession.decision === 'deload' && ' → 📉 Deload'}
+                            </div>
+                        )}
+
                         <div style={{marginBottom: '1rem'}}>
                             <label>Weight (kg)</label>
-                            <input 
-                                type="number" 
+                            <input
+                                type="number"
                                 value={exState.weight}
+                                placeholder={suggestedWeight > 0 ? `${suggestedWeight}` : 'Enter weight'}
                                 onChange={e => {
                                     const newExState = {...activeWorkout.exercises};
                                     newExState[ex.id].weight = e.target.value;
@@ -129,23 +163,30 @@ const Home: React.FC = () => {
                             />
                         </div>
                         <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
-                            {exState.reps.map((rep, i) => (
-                                <div key={i}>
-                                    <label style={{fontSize: '0.8rem'}}>Set {i+1}</label>
-                                    <input 
-                                        type="number"
-                                        value={rep}
-                                        onChange={e => {
-                                            const newExState = {...activeWorkout.exercises};
-                                            const newReps = [...newExState[ex.id].reps];
-                                            newReps[i] = e.target.value;
-                                            newExState[ex.id].reps = newReps;
-                                            setActiveWorkout({...activeWorkout, exercises: newExState});
-                                        }}
-                                        style={{width: '50px'}}
-                                    />
-                                </div>
-                            ))}
+                            {exState.reps.map((rep, i) => {
+                                const lastReps = lastSession?.sets[i];
+                                return (
+                                    <div key={i}>
+                                        <label style={{fontSize: '0.8rem'}}>
+                                            Set {i+1}
+                                            {lastReps && <span style={{color: 'var(--text-secondary)', marginLeft: '0.25rem'}}>({lastReps})</span>}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={rep}
+                                            placeholder={lastReps ? `${lastReps}` : ''}
+                                            onChange={e => {
+                                                const newExState = {...activeWorkout.exercises};
+                                                const newReps = [...newExState[ex.id].reps];
+                                                newReps[i] = e.target.value;
+                                                newExState[ex.id].reps = newReps;
+                                                setActiveWorkout({...activeWorkout, exercises: newExState});
+                                            }}
+                                            style={{width: '50px'}}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -165,25 +206,49 @@ const Home: React.FC = () => {
     return 'there';
   };
 
+  const getRandomGreeting = () => {
+    const hour = new Date().getHours();
+    const name = getUserName();
+
+    // Time-based greetings
+    let timeGreetings: string[] = [];
+    if (hour >= 5 && hour < 12) {
+      timeGreetings = [`Good morning, ${name}`, `Morning, ${name}`];
+    } else if (hour >= 12 && hour < 18) {
+      timeGreetings = [`Good afternoon, ${name}`, `Afternoon, ${name}`];
+    } else {
+      timeGreetings = [`Good evening, ${name}`, `Evening, ${name}`];
+    }
+
+    // General greetings
+    const generalGreetings = [
+      `Hi, ${name}`,
+      `Hello, ${name}`,
+      `Hey, ${name}`,
+      `Welcome back, ${name}`,
+    ];
+
+    // Combine all greetings
+    const allGreetings = [...timeGreetings, ...generalGreetings];
+
+    // Return random greeting
+    return allGreetings[Math.floor(Math.random() * allGreetings.length)];
+  };
+
   return (
     <div>
-      <h1>Hi, {getUserName()}</h1>
-
-      <div className="card">
-        <label>Select Routine Day</label>
-        <select 
-            value={selectedDayId} 
-            onChange={e => setSelectedDayId(e.target.value)}
-            style={{width: '100%', padding: '0.8rem', fontSize: '1rem'}}
-        >
-            {state.routine.map(day => (
-                <option key={day.id} value={day.id}>{day.name}</option>
-            ))}
-        </select>
-      </div>
+      <h1>{getRandomGreeting()}</h1>
 
       {selectedDay && (
           <div className="card">
+              <label style={{fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.75rem'}}>Select Routine Day</label>
+              <CustomSelect
+                  value={selectedDayId}
+                  onChange={setSelectedDayId}
+                  options={state.routine}
+                  style={{ marginBottom: '1rem' }}
+              />
+
               <h3>{selectedDay.name} Preview</h3>
               <ul style={{paddingLeft: '1.2rem', color: 'var(--text-secondary)'}}>
                   {selectedDay.exercises.map(ex => (
@@ -192,8 +257,8 @@ const Home: React.FC = () => {
                       </li>
                   ))}
               </ul>
-              <button className="btn-primary" onClick={handleStartWorkout}>
-                  <Play style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+              <button className="btn-primary" onClick={handleStartWorkout} style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem'}}>
+                  <img src="/favicon.svg" alt="" style={{width: '24px', height: '24px'}}/>
                   Start Workout
               </button>
           </div>
@@ -201,15 +266,64 @@ const Home: React.FC = () => {
       
       <div style={{marginTop: '2rem'}}>
           <h3>Recent Activity</h3>
-          {state.history.slice().reverse().slice(0, 5).map(session => {
+          {state.history.slice().reverse().slice(0, 5).map((session, idx, arr) => {
               const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
+
+              // Find previous session for the same day
+              const previousSessionIndex = arr.findIndex((s, i) => i > idx && s.dayId === session.dayId);
+              const previousSession = previousSessionIndex !== -1 ? arr[previousSessionIndex] : null;
+
               return (
                   <div key={session.id} className="card" style={{padding: '1rem'}}>
-                      <div className="flex-row">
+                      <div className="flex-row" style={{marginBottom: '0.5rem'}}>
                           <span style={{fontWeight: 'bold', color: 'var(--primary-color)'}}>{dayName}</span>
                           <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
-                              {format(new Date(session.date), 'MMM d, yyyy')}
+                              {format(new Date(session.date), 'MMM d, yyyy HH:mm')}
                           </span>
+                      </div>
+
+                      {/* Show exercise changes */}
+                      <div style={{marginTop: '0.5rem'}}>
+                          {session.exercises.map(ex => {
+                              const exerciseName = state.routine
+                                  .flatMap(d => d.exercises)
+                                  .find(e => e.id === ex.exerciseId)?.name || 'Unknown';
+
+                              const prevEx = previousSession?.exercises.find(e => e.exerciseId === ex.exerciseId);
+
+                              let weightChange = 0;
+                              let volumeChange = 0;
+
+                              if (prevEx) {
+                                  weightChange = ((ex.weight - prevEx.weight) / prevEx.weight) * 100;
+                                  const currentVolume = ex.weight * ex.sets.reduce((a, b) => a + b, 0);
+                                  const prevVolume = prevEx.weight * prevEx.sets.reduce((a, b) => a + b, 0);
+                                  volumeChange = ((currentVolume - prevVolume) / prevVolume) * 100;
+                              }
+
+                              return (
+                                  <div key={ex.exerciseId} style={{
+                                      fontSize: '0.85rem',
+                                      color: 'var(--text-secondary)',
+                                      marginBottom: '0.25rem',
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center'
+                                  }}>
+                                      <span>{exerciseName}: {ex.weight} kg × {ex.sets.join(', ')}</span>
+                                      {prevEx && (
+                                          <div style={{display: 'flex', gap: '0.5rem', fontSize: '0.75rem'}}>
+                                              <span style={{color: weightChange > 0 ? '#4CAF50' : weightChange < 0 ? '#f44336' : '#888'}}>
+                                                  W: {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)}%
+                                              </span>
+                                              <span style={{color: volumeChange > 0 ? '#4CAF50' : volumeChange < 0 ? '#f44336' : '#888'}}>
+                                                  V: {volumeChange > 0 ? '+' : ''}{volumeChange.toFixed(1)}%
+                                              </span>
+                                          </div>
+                                      )}
+                                  </div>
+                              );
+                          })}
                       </div>
                   </div>
               );

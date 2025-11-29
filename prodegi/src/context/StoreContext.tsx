@@ -43,7 +43,9 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [isLoaded, setIsLoaded] = React.useState(false);
 
+  // Load data from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem('prodegi_data');
     if (stored) {
@@ -53,16 +55,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         console.error("Failed to load data", e);
       }
     }
+    setIsLoaded(true);
   }, []);
 
+  // Save data to localStorage whenever state changes (but only after initial load)
   useEffect(() => {
-    // Only save if we have data or explicitly want to save empty state (though usually we load first)
-    // To avoid overwriting with empty state on initial load before effect runs:
-    // Actually, the first useEffect runs once. The second runs on state change.
-    // If state is initial, we might not want to save immediately if we haven't loaded yet?
-    // But LOAD_DATA triggers state change, so it will save back. That's fine.
-    localStorage.setItem('prodegi_data', JSON.stringify(state));
-  }, [state]);
+    if (isLoaded) {
+      localStorage.setItem('prodegi_data', JSON.stringify(state));
+    }
+  }, [state, isLoaded]);
 
   const setRoutine = (routine: RoutineDay[]) => dispatch({ type: 'SET_ROUTINE', payload: routine });
   const addSession = (session: WorkoutSession) => dispatch({ type: 'ADD_SESSION', payload: session });

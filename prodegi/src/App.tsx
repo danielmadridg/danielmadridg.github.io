@@ -19,24 +19,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#000' }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#0a0a0a' }}>
       {/* Sidebar */}
       <div style={{
-        width: '250px',
-        background: '#000',
-        borderRight: '1px solid #333',
+        width: '200px',
+        background: '#0a0a0a',
+        borderRight: '1px solid #1a1a1a',
         display: 'flex',
         flexDirection: 'column',
         padding: '1rem 0'
       }}>
         {/* Logo */}
         <Link to="/" style={{
-          padding: '1rem 1.5rem',
+          padding: '1rem 1rem',
           marginBottom: '2rem',
-          textDecoration: 'none'
+          textDecoration: 'none',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
         }}>
           <img src="/prodegilogo.png" alt="Prodegi" style={{
-            width: '120px',
+            width: '140px',
             height: 'auto'
           }} />
         </Link>
@@ -52,12 +55,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               gap: '1rem',
               padding: '0.75rem 1.5rem',
               textDecoration: 'none',
-              color: location.pathname === '/' ? '#fff' : '#888',
-              transition: 'color 0.2s'
+              color: location.pathname === '/' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
             }}
           >
-            <Dumbbell size={24} />
-            <span style={{ fontSize: '1rem' }}>Workout</span>
+            <Dumbbell size={22} />
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/' ? 500 : 400 }}>Workout</span>
           </Link>
           <Link
             to="/progress"
@@ -68,12 +73,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               gap: '1rem',
               padding: '0.75rem 1.5rem',
               textDecoration: 'none',
-              color: location.pathname === '/progress' ? '#fff' : '#888',
-              transition: 'color 0.2s'
+              color: location.pathname === '/progress' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/progress' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
             }}
           >
-            <LineChart size={24} />
-            <span style={{ fontSize: '1rem' }}>Progress</span>
+            <LineChart size={22} />
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/progress' ? 500 : 400 }}>Progress</span>
           </Link>
           <Link
             to="/settings"
@@ -84,12 +91,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               gap: '1rem',
               padding: '0.75rem 1.5rem',
               textDecoration: 'none',
-              color: location.pathname === '/settings' ? '#fff' : '#888',
-              transition: 'color 0.2s'
+              color: location.pathname === '/settings' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/settings' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
             }}
           >
-            <SettingsIcon size={24} />
-            <span style={{ fontSize: '1rem' }}>Settings</span>
+            <SettingsIcon size={22} />
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/settings' ? 500 : 400 }}>Settings</span>
           </Link>
         </nav>
       </div>

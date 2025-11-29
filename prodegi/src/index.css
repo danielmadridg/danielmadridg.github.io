@@ -1,11 +1,36 @@
 :root {
-  --bg-color: #121212;
-  --surface-color: #1e1e1e;
-  --primary-color: #d4af37;
+  --bg-color: #0a0a0a;
+  --surface-color: #141414;
+  --primary-color: #C8956B;
   --text-color: #ffffff;
-  --text-secondary: #b3b3b3;
+  --text-secondary: #8a8a8a;
   --danger-color: #cf6679;
   --success-color: #03dac6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #333333 #0a0a0a;
 }
 
 body {
@@ -26,15 +51,50 @@ input,
 select {
   background-color: var(--surface-color);
   color: var(--text-color);
-  border: 1px solid #333;
-  padding: 0.5rem;
-  border-radius: 4px;
+  border: 1px solid #252525;
+  padding: 0.75rem;
+  border-radius: 6px;
   font-size: 1rem;
+  transition: border-color 0.2s;
 }
 
 input:focus,
 select:focus {
-  outline: 2px solid var(--primary-color);
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Custom select dropdown styling */
+select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23C8956B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25rem;
+  padding-right: 2.5rem;
+  font-weight: 500;
+}
+
+select:hover {
+  border-color: #3a3a3a;
+}
+
+select option {
+  background-color: #0a0a0a;
+  color: var(--text-color);
+  padding: 1rem 0.75rem;
+  font-weight: 400;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: rgba(200, 149, 107, 0.15);
+  background: rgba(200, 149, 107, 0.15);
+  color: var(--primary-color);
 }
 
 .container {
@@ -49,30 +109,32 @@ select:focus {
 .btn-primary {
   background-color: var(--primary-color);
   color: #000;
-  font-weight: bold;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
   width: 100%;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   font-size: 1rem;
   margin-top: 1rem;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  background-color: #d4a576;
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
   background-color: transparent;
   border: 1px solid var(--primary-color);
   color: var(--primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  transition: all 0.2s;
+  font-weight: 500;
 }
 
 .btn-secondary:hover {
-  background-color: rgba(212, 175, 55, 0.1);
+  background-color: rgba(200, 149, 107, 0.1);
 }
 
 .btn-danger {
@@ -87,17 +149,33 @@ select:focus {
 .card {
   background-color: var(--surface-color);
   padding: 1.5rem;
-  border-radius: 12px;
+  border-radius: 16px;
   margin-bottom: 1rem;
-  border: 1px solid #333;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border: 1px solid #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-h1,
-h2,
-h3 {
-  color: var(--primary-color);
+h1 {
+  color: var(--text-color);
   margin-top: 0;
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  color: var(--text-color);
+  margin-top: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  color: var(--text-color);
+  margin-top: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 label {

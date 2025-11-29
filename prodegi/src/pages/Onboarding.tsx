@@ -2,23 +2,23 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import type { RoutineDay, ExerciseConfig } from '../types';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Edit } from 'lucide-react';
 
 const Onboarding: React.FC = () => {
   const { state, setRoutine } = useStore();
   const navigate = useNavigate();
   
   // Initialize state from context if available (Edit Mode)
-  const [daysCount, setDaysCount] = useState<number>(state.routine.length || 3);
+  const [daysCount, setDaysCount] = useState<number | ''>(state.routine.length || '');
   const [step, setStep] = useState<number>(state.routine.length > 0 ? 2 : 1);
   const [routine, setRoutineState] = useState<RoutineDay[]>(state.routine.length > 0 ? state.routine : []);
 
   const handleStart = () => {
-    if (daysCount < 1) {
+    if (!daysCount || daysCount < 1) {
       alert('Please enter at least 1 day for your routine.');
       return;
     }
-    const initialRoutine = Array.from({ length: daysCount }, (_, i) => ({
+    const initialRoutine = Array.from({ length: Number(daysCount) }, (_, i) => ({
       id: `day-${i + 1}`,
       name: `Day ${i + 1}`,
       exercises: []
@@ -33,7 +33,7 @@ const Onboarding: React.FC = () => {
       name: '',
       targetReps: 10,
       sets: 3,
-      increment: 2.5
+      increment: 2.5 // Kept for compatibility but not used by new algorithm
     };
     const newRoutine = [...routine];
     newRoutine[dayIndex].exercises.push(newExercise);
@@ -75,9 +75,10 @@ const Onboarding: React.FC = () => {
           <input
             type="number"
             value={daysCount}
-            onChange={(e) => setDaysCount(Number(e.target.value))}
+            onChange={(e) => setDaysCount(e.target.value === '' ? '' : Number(e.target.value))}
             min={1}
             max={7}
+            placeholder="3"
             style={{ width: '100%', marginBottom: '1rem', boxSizing: 'border-box' }}
           />
           <button className="btn-primary" onClick={handleStart}>Next</button>
@@ -91,15 +92,16 @@ const Onboarding: React.FC = () => {
       <h1>{state.routine.length > 0 ? 'Edit Routine' : 'Create Routine'}</h1>
       {routine.map((day, dayIndex) => (
         <div key={day.id} className="card">
-          <div className="flex-row">
-            <input 
-              value={day.name} 
+          <div className="flex-row" style={{ alignItems: 'center', gap: '0.5rem' }}>
+            <Edit size={16} style={{ color: 'var(--text-secondary)' }} />
+            <input
+              value={day.name}
               onChange={(e) => {
                 const newRoutine = [...routine];
                 newRoutine[dayIndex].name = e.target.value;
                 setRoutineState(newRoutine);
               }}
-              style={{ fontWeight: 'bold', border: 'none', background: 'transparent', fontSize: '1.2rem', padding: 0, color: 'var(--primary-color)' }}
+              style={{ fontWeight: 'bold', border: 'none', background: 'transparent', fontSize: '1.2rem', padding: 0, color: 'var(--primary-color)', flex: 1 }}
             />
           </div>
           <div style={{ marginTop: '1rem' }}>
