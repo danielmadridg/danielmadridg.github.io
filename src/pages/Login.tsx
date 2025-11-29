@@ -6,15 +6,33 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
+import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Chrome, User } from 'lucide-react';
 
 const Login: React.FC = () => {
+  const { processingRedirect } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Show loading while processing redirect
+  if (processingRedirect) {
+    return (
+      <div style={{
+        display: 'flex',
+        minHeight: '100vh',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000',
+        color: '#fff'
+      }}>
+        <div>Processing sign in...</div>
+      </div>
+    );
+  }
 
   const handleGoogleSignIn = async () => {
     try {

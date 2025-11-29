@@ -6,6 +6,7 @@ import { auth } from '../config/firebase';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  processingRedirect: boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processingRedirect, setProcessingRedirect] = useState(true);
 
   useEffect(() => {
     // Handle redirect result
@@ -26,6 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
       .catch((error) => {
         console.error('[AuthContext] Error handling redirect:', error);
+      })
+      .finally(() => {
+        setProcessingRedirect(false);
       });
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -57,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, processingRedirect, signOut, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
