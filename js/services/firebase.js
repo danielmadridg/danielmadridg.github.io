@@ -16,11 +16,16 @@ const firebaseConfig = {
 let appInstance, analytics, auth, db;
 
 export function initFirebase(onSignIn, onSignOut) {
+    console.log("Firebase init starting...");
     appInstance = initializeApp(firebaseConfig);
+    console.log("App initialized");
     analytics = getAnalytics(appInstance);
+    console.log("Analytics initialized");
     auth = getAuth(appInstance);
+    console.log("Auth initialized");
     db = getFirestore(appInstance);
-    
+    console.log("Firestore initialized");
+
     enableIndexedDbPersistence(db).catch((err) => {
         if (err.code == 'failed-precondition') {
             console.warn("Persistence failed: Multiple tabs open");
@@ -28,14 +33,17 @@ export function initFirebase(onSignIn, onSignOut) {
             console.warn("Persistence failed: Browser not supported");
         }
     });
-    
+
+    console.log("Setting up auth state listener...");
     onAuthStateChanged(auth, (user) => {
+        console.log("Auth state changed. User:", user);
         if (user) {
             if (onSignIn) onSignIn(user);
         } else {
             if (onSignOut) onSignOut();
         }
     });
+    console.log("Firebase init complete");
 }
 
 export function handleGoogleLogin() {

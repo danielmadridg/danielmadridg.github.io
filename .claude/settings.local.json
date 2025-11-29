@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(start index.html)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(start test-debug.html)",
+      "Bash(start http://localhost:8000)"
     ],
     "deny": [],
     "ask": []

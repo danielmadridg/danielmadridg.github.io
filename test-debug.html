@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>Debug Console</h1>
+    <div id="status">Loading...</div>
+    <pre id="errors" style="color: red;"></pre>
+
+    <script type="module">
+        const statusDiv = document.getElementById('status');
+        const errorsDiv = document.getElementById('errors');
+
+        window.addEventListener('error', (e) => {
+            errorsDiv.textContent += `Error: ${e.message}\n${e.filename}:${e.lineno}\n\n`;
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            errorsDiv.textContent += `Unhandled Promise Rejection: ${e.reason}\n\n`;
+        });
+
+        try {
+            statusDiv.textContent = 'Attempting to import modules...';
+
+            // Test imports one by one
+            import('./js/state.js').then(() => {
+                statusDiv.textContent += '\n✓ state.js loaded';
+                return import('./js/logic.js');
+            }).then(() => {
+                statusDiv.textContent += '\n✓ logic.js loaded';
+                return import('./js/services/firebase.js');
+            }).then(() => {
+                statusDiv.textContent += '\n✓ firebase.js loaded';
+                return import('./js/views/dashboard.js');
+            }).then(() => {
+                statusDiv.textContent += '\n✓ dashboard.js loaded';
+                return import('./js/views/progress.js');
+            }).then(() => {
+                statusDiv.textContent += '\n✓ progress.js loaded';
+                return import('./js/views/settings.js');
+            }).then(() => {
+                statusDiv.textContent += '\n✓ settings.js loaded';
+                return import('./js/app.js');
+            }).then(() => {
+                statusDiv.textContent += '\n✓ app.js loaded';
+                statusDiv.textContent += '\n\n✅ ALL MODULES LOADED SUCCESSFULLY!';
+            }).catch((err) => {
+                errorsDiv.textContent += `Module loading failed: ${err.message}\n${err.stack}\n`;
+            });
+
+        } catch(e) {
+            errorsDiv.textContent = `Error: ${e.message}\n${e.stack}`;
+        }
+    </script>
+</body>
+</html>

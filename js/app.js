@@ -11,20 +11,45 @@ window.handleGoogleLogin = handleGoogleLogin;
 window.handleLogout = handleLogout;
 window.renderProgressChart = renderProgressChart;
 
-const app = document.getElementById('app');
+let app = null;
 let unsubscribe = null;
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM Content Loaded");
+    app = document.getElementById('app');
+    console.log("App element:", app);
+
+    // Set a timeout to show error if stuck loading
+    setTimeout(() => {
+        if (app && app.innerHTML.includes('Loading...')) {
+            console.error("App stuck on loading screen");
+            app.innerHTML = `
+                <div class="card">
+                    <h1>Loading Error</h1>
+                    <p>The app is taking too long to load. Check the console for errors.</p>
+                    <button class="btn" onclick="location.reload()">Reload Page</button>
+                </div>
+            `;
+        }
+    }, 5000);
+
     try {
         // Load saved state first
+        console.log("Loading state...");
         loadState();
+        console.log("State loaded:", state);
+
         // Pass callbacks to avoid circular dependency
+        console.log("Initializing Firebase...");
         initFirebase(onAuthSuccess, onAuthFailure);
+        console.log("Firebase initialized");
+
         init();
+        console.log("Init complete");
     } catch (e) {
         console.error("Initialization failed:", e);
-        app.innerHTML = `<div class="card"><h1>Error</h1><p>${e.message}</p></div>`;
+        app.innerHTML = `<div class="card"><h1>Error</h1><p>${e.message}</p><pre>${e.stack}</pre></div>`;
     }
 });
 
@@ -35,12 +60,14 @@ function init() {
 }
 
 function onAuthSuccess(user) {
+    console.log("Auth Success - User:", user);
     state.uid = user.uid;
     state.user = user.displayName || user.email;
     loadFromFirestore();
 }
 
 function onAuthFailure() {
+    console.log("Auth Failure - No user logged in");
     state.user = null;
     state.uid = null;
     renderLogin();
@@ -146,6 +173,11 @@ export function renderApp() {
 }
 
 export function renderLogin() {
+    console.log("Rendering login screen...");
+    if (!app) {
+        console.error("App element is null in renderLogin!");
+        return;
+    }
     app.innerHTML = `
         <div class="card text-center">
             <div class="logo-container">
@@ -153,7 +185,7 @@ export function renderLogin() {
             </div>
             <h1>Prodegi</h1>
             <p>Track your progress. Crush your goals.</p>
-            
+
             <div style="margin: 40px 0;">
                 <button class="btn btn-secondary" onclick="handleGoogleLogin()">
                     <i data-lucide="log-in" style="margin-right: 8px;"></i> Login with Google
@@ -161,7 +193,10 @@ export function renderLogin() {
             </div>
         </div>
     `;
-    lucide.createIcons();
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    console.log("Login screen rendered");
 }
 
 // --- Setup Flow ---
