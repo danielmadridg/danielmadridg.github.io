@@ -1,5 +1,6 @@
 import { state } from "../state.js";
 import { getRecommendation, getMultiplier } from "../logic.js";
+import { getWorkoutStreak } from "../utils/stats.js";
 
 export function getCalendarHTML() {
     // Ensure calendarDate is a Date object
@@ -73,13 +74,14 @@ export function getCalendarHTML() {
 export function getDashboardContent() {
     const lastWorkout = state.workouts[state.workouts.length - 1];
     let nextDayIndex = 0;
-    
+
     if (lastWorkout) {
         nextDayIndex = (lastWorkout.dayIndex + 1) % state.plan.days.length;
     }
-    
+
     const nextWorkout = state.plan.days[nextDayIndex];
     const userName = state.user ? state.user.split(' ')[0] : 'User';
+    const streak = getWorkoutStreak();
 
     return `
         <header class="flex-between" style="margin-bottom: 20px;">
@@ -91,6 +93,17 @@ export function getDashboardContent() {
                 ${state.uid ? '<span style="font-size:0.8rem; color:var(--success)">Synced</span>' : ''}
             </div>
         </header>
+
+        <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div class="stat-card">
+                <div class="stat-value">${state.workouts.length}</div>
+                <div class="stat-label">Total Workouts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${streak}</div>
+                <div class="stat-label">Week Streak</div>
+            </div>
+        </div>
 
         <!-- Calendar Widget -->
         ${getCalendarHTML()}

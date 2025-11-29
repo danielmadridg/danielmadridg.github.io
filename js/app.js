@@ -4,7 +4,9 @@ import { doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7
 import { getDashboardContent } from "./views/dashboard.js";
 import { getProgressContent, renderProgressChart } from "./views/progress.js";
 import { getSettingsContent } from "./views/settings.js";
+import { getHistoryContent } from "./views/history.js";
 import { getMultiplier } from "./logic.js";
+import { showRestTimer } from "./components/timer.js";
 
 // --- Global Exports for HTML access ---
 window.handleGoogleLogin = handleGoogleLogin;
@@ -133,6 +135,10 @@ function renderNavigation() {
                 <i data-lucide="line-chart"></i>
                 <span>Progress</span>
             </div>
+            <div class="nav-item ${state.currentView === 'history' ? 'active' : ''}" onclick="window.switchView('history')">
+                <i data-lucide="history"></i>
+                <span>History</span>
+            </div>
             <div class="nav-item ${state.currentView === 'settings' ? 'active' : ''}" onclick="window.switchView('settings')">
                 <i data-lucide="settings"></i>
                 <span>Settings</span>
@@ -163,6 +169,9 @@ export function renderApp() {
             break;
         case 'progress':
             content = getProgressContent();
+            break;
+        case 'history':
+            content = getHistoryContent();
             break;
         case 'settings':
             content = getSettingsContent();
@@ -552,14 +561,19 @@ window.editExerciseSettings = (exerciseName) => {
 
 window.startWorkout = (dayIndex) => {
     const day = state.plan.days[dayIndex];
-    
+
     app.innerHTML = `
         <div class="card">
             <div class="flex-between">
                 <h2>${day.name}</h2>
-                <button class="btn-cancel" onclick="window.location.reload()">Cancel</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-secondary btn-sm" onclick="window.showRestTimer()">
+                        <i data-lucide="timer"></i>
+                    </button>
+                    <button class="btn-cancel" onclick="window.location.reload()">Cancel</button>
+                </div>
             </div>
-            
+
             <div id="active-workout">
                 ${day.exercises.map((ex, exIdx) => `
                     <div class="card exercise-card" data-exercise="${ex}">
@@ -580,6 +594,8 @@ window.startWorkout = (dayIndex) => {
     `;
     lucide.createIcons();
 };
+
+window.showRestTimer = showRestTimer;
 
 window.addSet = (exIdx) => {
     const container = document.getElementById(`sets-${exIdx}`);
