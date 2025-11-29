@@ -5,6 +5,7 @@ import { getDashboardContent } from "./views/dashboard.js";
 import { getProgressContent, renderProgressChart } from "./views/progress.js";
 import { getSettingsContent } from "./views/settings.js";
 import { getHistoryContent } from "./views/history.js";
+import { getExerciseCreatorContent } from "./views/exercise-creator.js";
 import { getMultiplier } from "./logic.js";
 import { showRestTimer } from "./components/timer.js";
 
@@ -175,6 +176,9 @@ export function renderApp() {
             break;
         case 'settings':
             content = getSettingsContent();
+            break;
+        case 'exercise-creator':
+            content = getExerciseCreatorContent();
             break;
         default:
             content = getDashboardContent();
