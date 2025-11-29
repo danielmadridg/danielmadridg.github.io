@@ -1,0 +1,37 @@
+export interface ExerciseConfig {
+  id: string;
+  name: string;
+  targetReps: number;
+  sets: number;
+  increment: number;
+}
+
+export interface RoutineDay {
+  id: string;
+  name: string;
+  exercises: ExerciseConfig[];
+}
+
+export interface ExerciseSetResult {
+  reps: number;
+}
+
+export interface ExerciseResult {
+  exerciseId: string;
+  weight: number;
+  sets: number[]; // Array of reps
+  nextWeight: number;
+  decision: 'incrementar' | 'mantener' | 'deload';
+}
+
+export interface WorkoutSession {
+  id: string;
+  date: string; // ISO string
+  dayId: string;
+  exercises: ExerciseResult[];
+}
+
+export interface UserState {
+  routine: RoutineDay[];
+  history: WorkoutSession[];
+}
