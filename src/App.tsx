@@ -202,8 +202,42 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boo
 
   if (loading || !isLoaded) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div>Loading...</div>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        background: '#0a0a0a'
+      }}>
+        <img 
+          src="/favicon.svg" 
+          alt="Prodegi" 
+          style={{
+            width: '120px',
+            height: 'auto',
+            marginBottom: '2rem',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}
+        />
+        <div style={{
+          color: '#CC8E51',
+          fontSize: '1.2rem',
+          fontWeight: '500',
+          animation: 'fadeInOut 1.5s ease-in-out infinite'
+        }}>
+          Loading...
+        </div>
+        <style>{`
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+          }
+          @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+          }
+        `}</style>
       </div>
     );
   }
