@@ -14,6 +14,7 @@ import {
 import { format } from 'date-fns';
 import CustomSelect from '../components/CustomSelect';
 import './Progress.css';
+import { useLanguage } from '../context/LanguageContext';
 
 ChartJS.register(
   CategoryScale,
@@ -26,6 +27,7 @@ ChartJS.register(
 );
 
 const Progress: React.FC = () => {
+  const { t } = useLanguage();
   const { state, getExerciseHistory } = useStore();
   const [viewMode, setViewMode] = useState<'exercise' | 'day'>('exercise');
   const allExercises = useMemo(() => {
@@ -72,7 +74,7 @@ const Progress: React.FC = () => {
     labels: exerciseHistory.map(h => format(new Date(h.date), 'MMM d')),
     datasets: [
       {
-        label: 'Weight (kg)',
+        label: t('weight_kg'),
         data: exerciseHistory.map(h => h.result.weight),
         borderColor: '#C8956B',
         backgroundColor: 'rgba(200, 149, 107, 0.2)',
@@ -81,7 +83,7 @@ const Progress: React.FC = () => {
         borderWidth: 2,
       },
       {
-        label: 'Volume (kg × reps)',
+        label: t('volume_kg_reps'),
         data: exerciseHistory.map(h => {
           const totalReps = h.result.sets.reduce((a, b) => a + b, 0);
           return h.result.weight * totalReps;
@@ -99,7 +101,7 @@ const Progress: React.FC = () => {
     labels: dayHistory.map(h => format(new Date(h.date), 'MMM d')),
     datasets: [
       {
-        label: 'Total Volume (kg × reps)',
+        label: t('total_volume_kg_reps'),
         data: dayHistory.map(h => h.totalVolume),
         borderColor: '#C8956B',
         backgroundColor: 'rgba(200, 149, 107, 0.2)',
@@ -108,7 +110,7 @@ const Progress: React.FC = () => {
         borderWidth: 2,
       },
       {
-        label: 'Average Weight (kg)',
+        label: t('average_weight_kg'),
         data: dayHistory.map(h => h.avgWeight),
         borderColor: '#03dac6',
         backgroundColor: 'rgba(3, 218, 198, 0.2)',
@@ -151,8 +153,8 @@ const Progress: React.FC = () => {
       title: {
         display: true,
         text: viewMode === 'exercise'
-          ? `${selectedExercise?.name || 'Exercise'} Progress`
-          : `${selectedDay?.name || 'Day'} Progress`,
+          ? `${selectedExercise?.name || t('exercise')} ${t('exercise_progress')}`
+          : `${selectedDay?.name || t('day')} ${t('day_progress')}`,
         color: '#FFF',
         font: { size: 16 }
       },
@@ -189,7 +191,7 @@ const Progress: React.FC = () => {
 
   return (
     <div className="progress-container">
-      <h1>Progress</h1>
+      <h1>{t('progress')}</h1>
 
       {/* View Mode Tabs */}
       <div className="view-mode-tabs">
@@ -199,7 +201,7 @@ const Progress: React.FC = () => {
           }}
           className={`view-mode-btn ${viewMode === 'exercise' ? 'active' : 'inactive'}`}
         >
-          By Exercise
+          {t('by_exercise')}
         </button>
         <button
           onClick={() => {
@@ -207,13 +209,13 @@ const Progress: React.FC = () => {
           }}
           className={`view-mode-btn ${viewMode === 'day' ? 'active' : 'inactive'}`}
         >
-          By Day
+          {t('by_day')}
         </button>
       </div>
 
       {/* Select Input */}
       <div className="card search-container">
-        <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
+        <label>{viewMode === 'exercise' ? t('select_exercise') : t('select_day')}</label>
         <CustomSelect
           value={viewMode === 'exercise' ? selectedExerciseId : selectedDayId}
           onChange={(value) => {
@@ -223,11 +225,11 @@ const Progress: React.FC = () => {
               handleSelectDay(value);
             }
           }}
-          options={viewMode === 'exercise' 
+          options={viewMode === 'exercise'
             ? allExercises.sort((a, b) => a.name.localeCompare(b.name))
             : state.routine.sort((a, b) => a.name.localeCompare(b.name))
           }
-          placeholder={`Select ${viewMode === 'exercise' ? 'Exercise' : 'Day'}`}
+          placeholder={viewMode === 'exercise' ? t('select_exercise') : t('select_day')}
         />
       </div>
 
@@ -240,12 +242,12 @@ const Progress: React.FC = () => {
             </div>
           ) : (
             <p className="no-data-message">
-              No data available for this {viewMode === 'exercise' ? 'exercise' : 'day'}.
+              {viewMode === 'exercise' ? t('no_data_available_exercise') : t('no_data_available_day')}
             </p>
           )
         ) : (
           <p className="no-data-message">
-            Please select {viewMode === 'exercise' ? 'an exercise' : 'a day'} to view progress.
+            {viewMode === 'exercise' ? t('please_select_exercise') : t('please_select_day')}
           </p>
         )}
       </div>

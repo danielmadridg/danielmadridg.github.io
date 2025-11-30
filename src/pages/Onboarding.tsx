@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
+import { useLanguage } from '../context/LanguageContext';
 import type { RoutineDay, ExerciseConfig } from '../types';
 import { Plus, Trash2, Edit, ArrowLeft } from 'lucide-react';
 
 const Onboarding: React.FC = () => {
   const { state, setRoutine } = useStore();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Initialize state from context if available (Edit Mode)
   const [daysCount, setDaysCount] = useState<number | ''>(state.routine.length || '');
@@ -112,7 +114,7 @@ const Onboarding: React.FC = () => {
         <div className="card">
           <h1 style={{ textAlign: 'center' }}>Welcome to Prodegi</h1>
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Let's set up your routine.</p>
-          <label>How many different days do you have in your routine?</label>
+          <label>{t('how_many_days')}</label>
           <input
             type="number"
             value={daysCount}
@@ -123,7 +125,7 @@ const Onboarding: React.FC = () => {
             spellCheck="false"
             style={{ width: '100%', marginBottom: '1rem', boxSizing: 'border-box' }}
           />
-          <button className="btn-primary" onClick={handleStart}>Next</button>
+          <button className="btn-primary" onClick={handleStart}>{t('next')}</button>
         </div>
       </div>
     );
@@ -146,7 +148,7 @@ const Onboarding: React.FC = () => {
         >
           <ArrowLeft size={24} />
         </button>
-        <h1 style={{ margin: 0 }}>{state.routine.length > 0 ? 'Edit Routine' : 'Create Routine'}</h1>
+        <h1 style={{ margin: 0 }}>{state.routine.length > 0 ? t('edit_routine_title') : t('create_routine')}</h1>
       </div>
       {routine.map((day, dayIndex) => (
         <div key={day.id} className="card">
@@ -181,7 +183,7 @@ const Onboarding: React.FC = () => {
               <div key={ex.id} style={{ marginBottom: '1rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <input
-                    placeholder="Exercise Name"
+                    placeholder={t('exercise_name')}
                     value={ex.name}
                     onChange={(e) => updateExercise(dayIndex, exIndex, 'name', e.target.value)}
                     spellCheck="false"
@@ -193,7 +195,7 @@ const Onboarding: React.FC = () => {
                 </div>
                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', boxSizing: 'border-box'}}>
                   <div style={{ boxSizing: 'border-box' }}>
-                    <label>Sets</label>
+                    <label>{t('sets')}</label>
                     <input
                       type="number"
                       value={ex.sets}
@@ -202,7 +204,7 @@ const Onboarding: React.FC = () => {
                     />
                   </div>
                   <div style={{ boxSizing: 'border-box' }}>
-                    <label>Target Reps</label>
+                    <label>{t('target_reps')}</label>
                     <input
                       type="number"
                       value={ex.targetReps}
@@ -214,15 +216,15 @@ const Onboarding: React.FC = () => {
               </div>
             ))}
             <button className="btn-secondary" onClick={() => addExercise(dayIndex)} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-              <Plus size={16} /> Add Exercise
+              <Plus size={16} /> {t('add_exercise')}
             </button>
           </div>
         </div>
       ))}
       <button className="btn-secondary" onClick={addDay} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <Plus size={16} /> Add Day
+        <Plus size={16} /> {t('add_day')}
       </button>
-      <button className="btn-primary" onClick={handleSave} style={{ marginBottom: '5rem' }}>Save Routine</button>
+      <button className="btn-primary" onClick={handleSave} style={{ marginBottom: '5rem' }}>{t('save')}</button>
     </div>
   );
 };

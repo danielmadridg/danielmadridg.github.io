@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { useWorkout } from '../App';
+import { useLanguage } from '../context/LanguageContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
+import { convertWeight } from '../utils/unitConversion';
 import { Check, Dumbbell, Edit } from 'lucide-react';
 import { format } from 'date-fns';
+import { es, fr, it } from 'date-fns/locale';
 import CustomSelect from '../components/CustomSelect';
 import './Home.css';
 
@@ -14,6 +17,7 @@ const Home: React.FC = () => {
   const { state, addSession, editSession, getExerciseHistory } = useStore();
   const { user } = useAuth();
   const { setWorkoutActive, setHandleCancelWorkout } = useWorkout();
+  const { t, language } = useLanguage();
   const [selectedDayId, setSelectedDayId] = useState<string>('');
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [filterByDayId, setFilterByDayId] = useState<string>('');
@@ -24,6 +28,20 @@ const Home: React.FC = () => {
   } | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const navigate = useNavigate();
+
+  // Get the appropriate locale for date-fns
+  const getDateLocale = () => {
+    switch (language) {
+      case 'es':
+        return es;
+      case 'fr':
+        return fr;
+      case 'it':
+        return it;
+      default:
+        return undefined; // English is the default in date-fns
+    }
+  };
 
   const selectedDay = state.routine.find(d => d.id === selectedDayId);
 
@@ -199,27 +217,16 @@ const Home: React.FC = () => {
     // Time-based greetings
     let timeGreetings: string[] = [];
     if (hour >= 5 && hour < 12) {
-      timeGreetings = [`Good morning, ${name}`, `Morning, ${name}`];
+      timeGreetings = [`${t('greeting_morning')}, ${name}`];
     } else if (hour >= 12 && hour < 18) {
-      timeGreetings = [`Good afternoon, ${name}`, `Afternoon, ${name}`];
+      timeGreetings = [`${t('greeting_afternoon')}, ${name}`];
     } else {
-      timeGreetings = [`Good evening, ${name}`, `Evening, ${name}`];
+      timeGreetings = [`${t('greeting_evening')}, ${name}`];
     }
 
-    // General greetings
-    const generalGreetings = [
-      `Hi, ${name}`,
-      `Hello, ${name}`,
-      `Hey, ${name}`,
-      `Welcome back, ${name}`,
-    ];
-
-    // Combine all greetings
-    const allGreetings = [...timeGreetings, ...generalGreetings];
-
     // Return random greeting
-    return allGreetings[Math.floor(Math.random() * allGreetings.length)];
-  }, [user?.displayName]);
+    return timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
+  }, [user?.displayName, t]);
 
   if (activeWorkout && selectedDay) {
     return (
@@ -249,31 +256,32 @@ const Home: React.FC = () => {
                 const exState = activeWorkout.exercises[ex.id];
                 const history = getExerciseHistory(ex.id);
                 const lastSession = history.length > 0 ? history[history.length - 1].result : null;
-                const suggestedWeight = lastSession?.nextWeight ?? lastSession?.weight ?? 0;
+                const suggestedWeightKg = lastSession?.nextWeight ?? lastSession?.weight ?? 0;
+                const suggestedWeight = convertWeight(suggestedWeightKg, 'kg', state.unitPreference || 'kg');
 
                 return (
                     <div key={ex.id} className="card exercise-card">
                         <div className="exercise-header">
                             <h3>{ex.name}</h3>
                             <div className="exercise-goal">
-                                Goal: {ex.sets} x {ex.targetReps}
+                                {t('goal')}: {ex.sets} x {ex.targetReps}
                             </div>
                         </div>
 
                         {lastSession && (
                             <div className="last-session-info">
-                                Last session: {lastSession.weight} kg × {lastSession.sets.join(', ')} reps
+                                {t('last_session')}: {convertWeight(lastSession.weight, 'kg', state.unitPreference || 'kg').toFixed(1)} {state.unitPreference || 'kg'} × {lastSession.sets.join(', ')} reps
                                 {lastSession.decision === 'incrementar' && ' → 📈 Increase weight'}
                                 {lastSession.decision === 'deload' && ' → 📉 Deload'}
                             </div>
                         )}
 
                         <div className="weight-input-container">
-                            <label>Weight (kg)</label>
+                            <label>{t('weight_label')} ({state.unitPreference || 'kg'})</label>
                             <input
                                 type="number"
                                 value={exState.weight}
-                                placeholder={suggestedWeight > 0 ? `${suggestedWeight}` : 'Enter weight'}
+                                placeholder={suggestedWeight > 0 ? `${suggestedWeight.toFixed(1)}` : 'Enter weight'}
                                 onChange={e => {
                                     const newExState = {...activeWorkout.exercises};
                                     newExState[ex.id].weight = e.target.value;
@@ -315,7 +323,7 @@ const Home: React.FC = () => {
             })}
             <button className="btn-primary" onClick={editingSession ? handleSaveEdit : handleFinishWorkout}>
                 <Check style={{verticalAlign: 'middle', marginRight: '8px'}}/>
-                {editingSession ? 'Save Changes' : 'Finish Workout'}
+                {editingSession ? t('save_changes') : t('finish_workout')}
             </button>
         </div>
     );
@@ -326,12 +334,12 @@ const Home: React.FC = () => {
       <h1>{greeting}</h1>
 
       <div className="card">
-        <label style={{fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.75rem'}}>Select Routine Day</label>
+        <label style={{fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.75rem'}}>{t('select_routine_day')}</label>
         <CustomSelect
           value={selectedDayId}
           onChange={setSelectedDayId}
           options={state.routine}
-          placeholder="Select Day"
+          placeholder={t('select_routine_day')}
           style={{ marginBottom: '1rem' }}
         />
 
@@ -347,7 +355,7 @@ const Home: React.FC = () => {
             </ul>
             <button className="btn-primary" onClick={handleStartWorkout}>
               <Dumbbell style={{verticalAlign: 'middle', marginRight: '8px'}}/>
-              Start Workout
+              {t('start_workout')}
             </button>
           </>
         )}
@@ -355,7 +363,7 @@ const Home: React.FC = () => {
       
       <div style={{marginTop: '2rem', marginBottom: '1rem'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap'}}>
-              <h3 style={{margin: 0}}>Recent Activity</h3>
+              <h3 style={{margin: 0}}>{t('recent_activity')}</h3>
               <select
                   value={filterByDayId}
                   onChange={(e) => setFilterByDayId(e.target.value)}
@@ -370,7 +378,7 @@ const Home: React.FC = () => {
                       transition: 'border-color 0.2s'
                   }}
               >
-                  <option value="">All Days</option>
+                  <option value="">{t('all_days')}</option>
                   {state.routine.map(day => (
                       <option key={day.id} value={day.id}>{day.name}</option>
                   ))}
@@ -411,7 +419,7 @@ const Home: React.FC = () => {
                               </button>
                           </div>
                           <span className="history-date">
-                              {format(new Date(session.date), 'MMM d, yyyy HH:mm')}
+                              {format(new Date(session.date), 'MMM d, yyyy HH:mm', { locale: getDateLocale() }).replace(/^./, (char) => char.toUpperCase())}
                           </span>
                       </div>
 
@@ -436,14 +444,14 @@ const Home: React.FC = () => {
 
                               return (
                                   <div key={ex.exerciseId} className="history-exercise-item">
-                                      <span>{exerciseName}: {ex.weight} kg × {ex.sets.join(', ')}</span>
+                                      <span>{exerciseName}: {convertWeight(ex.weight, 'kg', state.unitPreference || 'kg').toFixed(1)} {state.unitPreference || 'kg'} × {ex.sets.join(', ')}</span>
                                       {prevEx && (
                                           <div className="history-stats">
                                               <span style={{color: weightChange > 0 ? '#4CAF50' : weightChange < 0 ? '#f44336' : '#888'}}>
-                                                  W: {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)}%
+                                                  {t('weight_abbr')}: {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)}%
                                               </span>
                                               <span style={{color: volumeChange > 0 ? '#4CAF50' : volumeChange < 0 ? '#f44336' : '#888'}}>
-                                                  V: {volumeChange > 0 ? '+' : ''}{volumeChange.toFixed(1)}%
+                                                  {t('volume_abbr')}: {volumeChange > 0 ? '+' : ''}{volumeChange.toFixed(1)}%
                                               </span>
                                           </div>
                                       )}
@@ -479,10 +487,10 @@ const Home: React.FC = () => {
                               onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 149, 107, 0.1)'}
                               onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                           >
-                              See More
+                              {t('see_more')}
                           </button>
                       )}
-                      {filteredHistory.length === 0 && <p style={{color: 'var(--text-secondary)'}}>No workouts yet.</p>}
+                      {filteredHistory.length === 0 && <p style={{color: 'var(--text-secondary)'}}>{t('no_workouts')}</p>}
                   </>
               );
           })()}

@@ -16,7 +16,8 @@ type Action =
   | { type: 'ADD_SESSION'; payload: WorkoutSession }
   | { type: 'EDIT_SESSION'; payload: WorkoutSession }
   | { type: 'CLEAR_DATA' }
-  | { type: 'LOAD_DATA'; payload: UserState };
+  | { type: 'LOAD_DATA'; payload: UserState }
+  | { type: 'SET_UNIT_PREFERENCE'; payload: 'kg' | 'lbs' };
 
 // Reducer
 function reducer(state: UserState, action: Action): UserState {
@@ -34,6 +35,8 @@ function reducer(state: UserState, action: Action): UserState {
       return initialState;
     case 'LOAD_DATA':
       return action.payload;
+    case 'SET_UNIT_PREFERENCE':
+      return { ...state, unitPreference: action.payload };
     default:
       return state;
   }
@@ -47,6 +50,7 @@ interface StoreContextType {
   editSession: (session: WorkoutSession) => void;
   clearData: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
+  setUnitPreference: (unit: 'kg' | 'lbs') => void;
   isLoaded: boolean;
 }
 
@@ -167,8 +171,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .filter((item): item is { result: ExerciseResult; date: string } => item !== null);
   };
 
+  const setUnitPreference = (unit: 'kg' | 'lbs') => dispatch({ type: 'SET_UNIT_PREFERENCE', payload: unit });
+
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, getExerciseHistory, isLoaded }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, getExerciseHistory, setUnitPreference, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

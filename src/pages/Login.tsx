@@ -5,10 +5,14 @@ import {
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { auth, googleProvider } from '../config/firebase';
 import { Mail, Lock, Chrome, User, Eye, EyeOff } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Login: React.FC = () => {
+  const { t } = useLanguage();
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -20,11 +24,11 @@ const Login: React.FC = () => {
 
   const validatePassword = (pwd: string): string[] => {
     const errors: string[] = [];
-    if (!/[A-Z]/.test(pwd)) errors.push('Debe contener al menos una letra mayúscula');
-    if (!/[a-z]/.test(pwd)) errors.push('Debe contener al menos una letra minúscula');
-    if (!/[0-9]/.test(pwd)) errors.push('Debe contener al menos un número');
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push('Debe contener al menos un carácter especial');
-    if (pwd.length < 8) errors.push('Debe tener al menos 8 caracteres');
+    if (!/[A-Z]/.test(pwd)) errors.push(t('password_uppercase'));
+    if (!/[a-z]/.test(pwd)) errors.push(t('password_lowercase'));
+    if (!/[0-9]/.test(pwd)) errors.push(t('password_number'));
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push(t('password_special'));
+    if (pwd.length < 8) errors.push(t('password_length'));
     return errors;
   };
 
@@ -40,7 +44,19 @@ const Login: React.FC = () => {
     try {
       setError(null);
       setLoading(true);
-      await signInWithPopup(auth, googleProvider);
+
+      // Execute reCAPTCHA
+      if (!executeRecaptcha) {
+        setError(t('error_captcha_failed'));
+        return;
+      }
+
+      const token = await executeRecaptcha('google_signin');
+
+      // Store token for backend validation (can be sent to backend if needed)
+      if (token) {
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (err: any) {
       // Ignore if user just closed the popup
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
@@ -55,35 +71,35 @@ const Login: React.FC = () => {
   const getErrorMessage = (errorCode: string, isSignUp: boolean): string => {
     switch (errorCode) {
       case 'auth/invalid-credential':
-        return 'No existe una cuenta asociada a este correo electrónico.';
+        return t('error_no_account');
       case 'auth/user-not-found':
-        return 'No existe una cuenta asociada a este correo electrónico.';
+        return t('error_no_account');
       case 'auth/wrong-password':
-        return 'La contraseña es incorrecta.';
+        return t('error_wrong_password');
       case 'auth/email-already-in-use':
-        return 'Ya existe una cuenta con este correo electrónico.';
+        return t('error_email_in_use');
       case 'auth/weak-password':
-        return 'La contraseña no cumple con los requisitos de seguridad.';
+        return t('error_weak_password');
       case 'auth/invalid-email':
-        return 'El correo electrónico no es válido.';
+        return t('error_invalid_email');
       case 'auth/network-request-failed':
-        return 'Error de conexión. Verifica tu conexión a internet.';
+        return t('error_network');
       case 'auth/too-many-requests':
-        return 'Demasiados intentos fallidos. Por favor, intenta más tarde.';
+        return t('error_too_many_requests');
       default:
-        return isSignUp ? 'Error al crear la cuenta. Intenta de nuevo.' : 'Error al iniciar sesión. Intenta de nuevo.';
+        return isSignUp ? t('error_signup_generic') : t('error_signin_generic');
     }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate password on signup
     if (isSignUp) {
       const errors = validatePassword(password);
       if (errors.length > 0) {
         setPasswordErrors(errors);
-        setError('La contraseña no cumple con los requisitos de seguridad.');
+        setError(t('error_weak_password'));
         return;
       }
     }
@@ -91,6 +107,20 @@ const Login: React.FC = () => {
     try {
       setError(null);
       setLoading(true);
+
+      // Execute reCAPTCHA
+      if (!executeRecaptcha) {
+        setError(t('error_captcha_failed'));
+        return;
+      }
+
+      const token = await executeRecaptcha(isSignUp ? 'signup' : 'signin');
+
+      // Only proceed if token is received
+      if (!token) {
+        setError(t('error_captcha_failed'));
+        return;
+      }
 
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -165,7 +195,7 @@ const Login: React.FC = () => {
           color: '#888',
           fontSize: '0.9rem'
         }}>
-          {isSignUp ? 'Create your account' : 'Sign in to continue'}
+          {isSignUp ? t('create_account') : t('sign_in_continue')}
         </p>
 
         {error && (
@@ -206,7 +236,7 @@ const Login: React.FC = () => {
           }}
         >
           <Chrome size={20} />
-          Continue with Google
+          {t('continue_with_google')}
         </button>
 
         <div style={{
@@ -215,7 +245,7 @@ const Login: React.FC = () => {
           color: '#666',
           fontSize: '0.85rem'
         }}>
-          OR
+          {t('or')}
         </div>
 
         <form onSubmit={handleEmailAuth}>
@@ -230,7 +260,7 @@ const Login: React.FC = () => {
                 fontSize: '0.9rem'
               }}>
                 <User size={16} />
-                Name
+                {t('name')}
               </label>
               <input
                 type="text"
@@ -250,7 +280,7 @@ const Login: React.FC = () => {
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
-                placeholder="Your name"
+                placeholder={t('your_name')}
               />
             </div>
           )}
@@ -264,7 +294,7 @@ const Login: React.FC = () => {
               fontSize: '0.9rem'
             }}>
               <Mail size={16} />
-              Email
+              {t('email')}
             </label>
             <input
               type="email"
@@ -284,7 +314,7 @@ const Login: React.FC = () => {
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
-              placeholder="your@email.com"
+              placeholder={t('your_email')}
             />
           </div>
 
@@ -298,7 +328,7 @@ const Login: React.FC = () => {
               fontSize: '0.9rem'
             }}>
               <Lock size={16} />
-              Password
+              {t('password')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -351,7 +381,7 @@ const Login: React.FC = () => {
                     ))}
                   </ul>
                 ) : (
-                  <p style={{ margin: 0, color: '#4CAF50' }}>✓ La contraseña cumple con todos los requisitos</p>
+                  <p style={{ margin: 0, color: '#4CAF50' }}>{t('password_valid')}</p>
                 )}
               </div>
             )}
@@ -375,7 +405,7 @@ const Login: React.FC = () => {
               boxSizing: 'border-box'
             }}
           >
-            {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+            {loading ? t('please_wait') : (isSignUp ? t('sign_up') : t('sign_in'))}
           </button>
         </form>
 
@@ -385,7 +415,7 @@ const Login: React.FC = () => {
           fontSize: '0.9rem'
         }}>
           <span style={{ color: '#888' }}>
-            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            {isSignUp ? t('already_have_account') : t('dont_have_account')}
           </span>
           {' '}
           <button
@@ -403,7 +433,7 @@ const Login: React.FC = () => {
               fontSize: '0.9rem'
             }}
           >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
+            {isSignUp ? t('sign_in') : t('sign_up')}
           </button>
         </div>
       </div>

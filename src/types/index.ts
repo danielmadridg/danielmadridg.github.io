@@ -34,4 +34,5 @@ export interface WorkoutSession {
 export interface UserState {
   routine: RoutineDay[];
   history: WorkoutSession[];
+  unitPreference?: 'kg' | 'lbs';
 }

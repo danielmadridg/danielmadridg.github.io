@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Home from './pages/Home';
 import Onboarding from './pages/Onboarding';
 import Progress from './pages/Progress';
@@ -11,6 +13,9 @@ import { Dumbbell, LineChart, Settings as SettingsIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 import './App.css';
+
+// reCAPTCHA site key (configure in environment variables)
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
 
 // Context for tracking workout state
 interface WorkoutContextType {
@@ -32,6 +37,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const hideNav = location.pathname === '/onboarding' || location.pathname === '/login';
   const { isWorkoutActive, handleCancelWorkout } = useWorkout();
+  const { t } = useLanguage();
 
   if (hideNav) {
     return <>{children}</>;
@@ -98,7 +104,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             }}
           >
             <Dumbbell size={22} />
-            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/' ? 500 : 400 }}>Workout</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/' ? 500 : 400 }}>{t('workout')}</span>
           </Link>
           <Link
             to="/progress"
@@ -116,7 +122,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             }}
           >
             <LineChart size={22} />
-            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/progress' ? 500 : 400 }}>Progress</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/progress' ? 500 : 400 }}>{t('progress')}</span>
           </Link>
           <Link
             to="/settings"
@@ -134,7 +140,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             }}
           >
             <SettingsIcon size={22} />
-            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/settings' ? 500 : 400 }}>Settings</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/settings' ? 500 : 400 }}>{t('settings')}</span>
           </Link>
         </nav>
       </div>
@@ -155,7 +161,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           color: '#6a6a6a'
         }}>
           <p style={{ margin: '0 0 0.5rem 0' }}>
-            © 2025 Prodegi. All rights reserved.
+            © 2025 Prodegi. {t('all_rights_reserved')}
           </p>
           <p style={{ margin: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
             <a href="mailto:contact@prodegitracker.com" style={{ color: '#C8956B', textDecoration: 'none', transition: 'color 0.2s' }}
@@ -192,7 +198,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           }}
         >
           <Dumbbell size={20} />
-          <span>Workout</span>
+          <span>{t('workout')}</span>
         </Link>
         <Link
           to="/progress"
@@ -211,7 +217,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           }}
         >
           <LineChart size={20} />
-          <span>Progress</span>
+          <span>{t('progress')}</span>
         </Link>
         <Link
           to="/settings"
@@ -230,7 +236,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           }}
         >
           <SettingsIcon size={20} />
-          <span>Settings</span>
+          <span>{t('settings')}</span>
         </Link>
       </nav>
     </div>
@@ -417,11 +423,15 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <StoreProvider>
-        <AppContent />
-      </StoreProvider>
-    </AuthProvider>
+    <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_SITE_KEY}>
+      <AuthProvider>
+        <StoreProvider>
+          <LanguageProvider>
+            <AppContent />
+          </LanguageProvider>
+        </StoreProvider>
+      </AuthProvider>
+    </GoogleReCaptchaProvider>
   );
 };
 
