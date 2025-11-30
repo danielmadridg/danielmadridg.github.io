@@ -40,6 +40,7 @@ interface StoreContextType {
   addSession: (session: WorkoutSession) => void;
   clearData: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
+  isLoaded: boolean;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -148,7 +149,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, clearData, getExerciseHistory }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, clearData, getExerciseHistory, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

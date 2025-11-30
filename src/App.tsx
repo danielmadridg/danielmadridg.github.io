@@ -117,9 +117,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boolean }> = ({ children, requireRoutine = false }) => {
   const { user, loading } = useAuth();
-  const { state } = useStore();
+  const { state, isLoaded } = useStore();
 
-  if (loading) {
+  if (loading || !isLoaded) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <div>Loading...</div>
@@ -140,8 +140,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boo
 
 const OnboardingRoute: React.FC = () => {
   const { user } = useAuth();
-  const { state } = useStore();
+  const { state, isLoaded } = useStore();
   const location = useLocation();
+
+  if (!isLoaded) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
