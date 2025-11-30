@@ -5,12 +5,14 @@ interface ProfilePictureEditorProps {
   currentPhotoURL?: string;
   onSave: (photoURL: string) => Promise<void>;
   loading?: boolean;
+  compact?: boolean;
 }
 
 const ProfilePictureEditor: React.FC<ProfilePictureEditorProps> = ({
   currentPhotoURL,
   onSave,
-  loading = false
+  loading = false,
+  compact = false
 }) => {
   const [previewURL, setPreviewURL] = useState<string | undefined>(currentPhotoURL);
   const [error, setError] = useState<string | null>(null);
@@ -77,23 +79,29 @@ const ProfilePictureEditor: React.FC<ProfilePictureEditorProps> = ({
     fileInputRef.current?.click();
   };
 
+  const photoSize = compact ? '80px' : '120px';
+  const photoBorderWidth = compact ? '2px' : '2px';
+
   return (
     <div style={{
       display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem'
+      alignItems: 'center',
+      gap: compact ? '1rem' : '1.5rem',
+      flexWrap: 'wrap'
     }}>
       {/* Preview */}
       <div style={{
-        width: '120px',
-        height: '120px',
+        width: photoSize,
+        height: photoSize,
+        minWidth: photoSize,
         borderRadius: '50%',
         backgroundColor: '#222',
-        border: '2px solid #333',
+        border: `${photoBorderWidth} solid #333`,
         overflow: 'hidden',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        flexShrink: 0
       }}>
         {previewURL ? (
           <img
@@ -108,73 +116,82 @@ const ProfilePictureEditor: React.FC<ProfilePictureEditorProps> = ({
         ) : (
           <div style={{
             color: '#666',
-            fontSize: '0.9rem',
-            textAlign: 'center'
+            fontSize: compact ? '0.75rem' : '0.9rem',
+            textAlign: 'center',
+            padding: '0.5rem'
           }}>
             No photo
           </div>
         )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <div style={{
-          color: '#ff6b6b',
-          fontSize: '0.9rem'
-        }}>
-          {error}
-        </div>
-      )}
-
-      {/* Buttons */}
+      {/* Buttons container */}
       <div style={{
         display: 'flex',
-        gap: '0.75rem'
+        flexDirection: 'column',
+        gap: compact ? '0.5rem' : '0.75rem'
       }}>
-        <button
-          onClick={handleUploadClick}
-          disabled={loading || isSaving}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.75rem 1rem',
-            backgroundColor: '#C8956B',
-            color: '#000',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading || isSaving ? 'not-allowed' : 'pointer',
-            opacity: loading || isSaving ? 0.7 : 1,
-            fontSize: '0.9rem',
-            fontWeight: '600'
-          }}
-        >
-          <Upload size={16} />
-          {isSaving ? 'Saving...' : 'Upload'}
-        </button>
-
-        {previewURL && (
+        <div style={{
+          display: 'flex',
+          gap: compact ? '0.5rem' : '0.75rem'
+        }}>
           <button
-            onClick={handleRemovePhoto}
+            onClick={handleUploadClick}
             disabled={loading || isSaving}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              padding: '0.75rem 1rem',
-              backgroundColor: 'transparent',
-              color: '#ff6b6b',
-              border: '1px solid #ff6b6b',
+              padding: compact ? '0.5rem 0.75rem' : '0.75rem 1rem',
+              backgroundColor: '#C8956B',
+              color: '#000',
+              border: 'none',
               borderRadius: '4px',
               cursor: loading || isSaving ? 'not-allowed' : 'pointer',
               opacity: loading || isSaving ? 0.7 : 1,
-              fontSize: '0.9rem',
-              fontWeight: '600'
+              fontSize: compact ? '0.85rem' : '0.9rem',
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
           >
-            <Trash2 size={16} />
-            Remove
+            <Upload size={16} />
+            {isSaving ? 'Saving...' : 'Upload'}
           </button>
+
+          {previewURL && (
+            <button
+              onClick={handleRemovePhoto}
+              disabled={loading || isSaving}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: compact ? '0.5rem 0.75rem' : '0.75rem 1rem',
+                backgroundColor: 'transparent',
+                color: '#ff6b6b',
+                border: '1px solid #ff6b6b',
+                borderRadius: '4px',
+                cursor: loading || isSaving ? 'not-allowed' : 'pointer',
+                opacity: loading || isSaving ? 0.7 : 1,
+                fontSize: compact ? '0.85rem' : '0.9rem',
+                fontWeight: '600',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Trash2 size={16} />
+              Remove
+            </button>
+          )}
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div style={{
+            color: '#ff6b6b',
+            fontSize: compact ? '0.8rem' : '0.9rem'
+          }}>
+            {error}
+          </div>
         )}
       </div>
 

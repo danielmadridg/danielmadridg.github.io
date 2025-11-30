@@ -95,25 +95,27 @@ const Settings: React.FC = () => {
       <h1>{t('settings')}</h1>
 
       <div className="card" style={{marginBottom: '1rem'}}>
-        <div>
+        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>Profile</h2>
+
+        <div style={{marginBottom: '1.5rem'}}>
           <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>{t('username')}</label>
-          
+
           {!showEditNameDialog ? (
             // Display mode
             <div style={{
-              display: 'flex', 
-              gap: '0.75rem', 
+              display: 'flex',
+              gap: '0.75rem',
               alignItems: 'stretch',
               flexDirection: isMobile ? 'column' : 'row'
             }}>
               <span style={{
-                flex: 1, 
-                padding: '0.75rem', 
-                background: 'var(--surface-color)', 
-                borderRadius: '6px', 
-                minHeight: '44px', 
-                display: 'flex', 
-                alignItems: 'center', 
+                flex: 1,
+                padding: '0.75rem',
+                background: 'var(--surface-color)',
+                borderRadius: '6px',
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
                 fontSize: '1rem',
                 border: '1px solid #252525'
               }}>
@@ -123,7 +125,7 @@ const Settings: React.FC = () => {
                 className="btn-secondary"
                 onClick={() => setShowEditNameDialog(true)}
                 style={{
-                  minHeight: '44px', 
+                  minHeight: '44px',
                   padding: '0.75rem 1.25rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -188,21 +190,20 @@ const Settings: React.FC = () => {
               </div>
             </>
           )}
-          
+
           {showSuccessMessage && !showEditNameDialog && (
             <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
               ✓ Username updated successfully
             </p>
           )}
         </div>
-      </div>
 
-      <div className="card" style={{marginBottom: '1rem'}}>
         <div>
           <label style={{display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem'}}>Profile Picture</label>
           <ProfilePictureEditor
             currentPhotoURL={user?.photoURL || undefined}
             onSave={(photoURL) => updateProfile({ photoURL })}
+            compact={true}
           />
         </div>
       </div>
