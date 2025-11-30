@@ -6,7 +6,8 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { auth, googleProvider } from '../config/firebase';
+import { auth, googleProvider, functions } from '../config/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { Mail, Lock, Chrome, User, Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -55,6 +56,16 @@ const Login: React.FC = () => {
 
       // Store token for backend validation (can be sent to backend if needed)
       if (token) {
+        // Verify token with backend
+        const verifyRecaptchaFn = httpsCallable(functions, 'verifyRecaptcha');
+        const result = await verifyRecaptchaFn({ token });
+        const data = result.data as { success: boolean; score?: number };
+
+        if (!data.success) {
+          setError(t('error_captcha_failed'));
+          return;
+        }
+
         await signInWithPopup(auth, googleProvider);
       }
     } catch (err: any) {
@@ -118,6 +129,16 @@ const Login: React.FC = () => {
 
       // Only proceed if token is received
       if (!token) {
+        setError(t('error_captcha_failed'));
+        return;
+      }
+
+      // Verify token with backend
+      const verifyRecaptchaFn = httpsCallable(functions, 'verifyRecaptcha');
+      const result = await verifyRecaptchaFn({ token });
+      const data = result.data as { success: boolean; score?: number };
+
+      if (!data.success) {
         setError(t('error_captcha_failed'));
         return;
       }

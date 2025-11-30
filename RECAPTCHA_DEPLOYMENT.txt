@@ -88,25 +88,29 @@ DEPLOYMENT INSTRUCTIONS:
       # Deploy dist/ folder to your hosting
 
 ================================================================================
-NEXT STEPS - BACKEND IMPLEMENTATION REQUIRED:
+NEXT STEPS - BACKEND IMPLEMENTATION STATUS:
 ================================================================================
 
-To fully secure your application, implement server-side token validation:
+✓ Backend Code Created:
+   - functions/src/index.ts created with verifyRecaptcha Cloud Function
+   - functions/package.json and tsconfig.json created
 
-1. Create a backend endpoint that:
-   - Receives reCAPTCHA token from client
-   - Validates token with Google's siteverify API
-   - Uses the secret key for validation
-   - Returns success/failure to client
+✓ Frontend Integration:
+   - src/pages/Login.tsx updated to call verifyRecaptcha before auth
+   - src/config/firebase.ts updated to export functions instance
 
-2. Examples provided in RECAPTCHA_SETUP.md:
-   - Firebase Cloud Functions
-   - Express.js/Node.js
+TO DO - DEPLOYMENT REQUIRED:
 
-3. Integrate validation into:
-   - Firebase Authentication (if using Cloud Functions)
-   - Custom backend API
-   - Middleware for route protection
+1. Install functions dependencies:
+   cd functions
+   npm install
+
+2. Deploy to Firebase:
+   firebase deploy --only functions
+
+3. Set Secret Key in Firebase Environment:
+   firebase functions:config:set recaptcha.secret="6LeI5BwsAAAAAFWR_dtUnzfIpXNHU0RtY4i8J1Dq"
+   (Or use the fallback in code for testing)
 
 ================================================================================
 TESTING:

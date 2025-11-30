@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -26,5 +27,6 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 export const db = getFirestore(app);
+export const functions = getFunctions(app);
 
 export { app };
