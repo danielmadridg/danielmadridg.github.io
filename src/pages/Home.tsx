@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, ArrowLeft, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import CustomSelect from '../components/CustomSelect';
 
@@ -256,8 +256,8 @@ const Home: React.FC = () => {
                       </li>
                   ))}
               </ul>
-              <button className="btn-primary" onClick={handleStartWorkout} style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem'}}>
-                  <img src="/favicon.svg" alt="" style={{width: '24px', height: '24px'}}/>
+              <button className="btn-primary" onClick={handleStartWorkout}>
+                  <Play style={{verticalAlign: 'middle', marginRight: '8px'}}/>
                   Start Workout
               </button>
           </div>
