@@ -145,7 +145,7 @@ const Progress: React.FC = () => {
     },
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: 'right' as const,
         labels: {
           color: '#FFF',
           font: { size: window.innerWidth <= 768 ? 12 : 14 }
