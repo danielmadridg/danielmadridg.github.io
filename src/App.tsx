@@ -10,6 +10,8 @@ import Login from './pages/Login';
 import { Dumbbell, LineChart, Settings as SettingsIcon } from 'lucide-react';
 import clsx from 'clsx';
 
+import './App.css';
+
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const hideNav = location.pathname === '/onboarding' || location.pathname === '/login';
@@ -19,29 +21,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      background: '#0a0a0a'
-    }}>
-      {/* Desktop Sidebar - Hidden on mobile */}
-      <div style={{
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        width: '160px',
-        height: '100vh',
-        background: '#0a0a0a',
-        borderRight: '1px solid #1a1a1a',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '1rem 0',
-        zIndex: 100,
-        '@media (max-width: 768px)': {
-          display: 'none'
-        }
-      } as any}>
+    <div className="app-container">
+      {/* Desktop Sidebar - Hidden on mobile via CSS */}
+      <div className="desktop-sidebar">
         {/* Logo */}
         <Link to="/" style={{
           padding: '1rem 1rem',
@@ -61,70 +43,30 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <nav style={{ flex: 1 }}>
           <Link
             to="/"
-            className={clsx('nav-item', location.pathname === '/' && 'active')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              padding: '0.75rem 1.5rem',
-              textDecoration: 'none',
-              color: location.pathname === '/' ? '#C8956B' : '#6a6a6a',
-              transition: 'all 0.2s',
-              borderRadius: '8px',
-              background: location.pathname === '/' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
-            }}
+            className={clsx('nav-link', location.pathname === '/' && 'active')}
           >
             <Dumbbell size={22} />
-            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/' ? 500 : 400 }}>Workout</span>
+            <span>Workout</span>
           </Link>
           <Link
             to="/progress"
-            className={clsx('nav-item', location.pathname === '/progress' && 'active')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              padding: '0.75rem 1.5rem',
-              textDecoration: 'none',
-              color: location.pathname === '/progress' ? '#C8956B' : '#6a6a6a',
-              transition: 'all 0.2s',
-              borderRadius: '8px',
-              background: location.pathname === '/progress' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
-            }}
+            className={clsx('nav-link', location.pathname === '/progress' && 'active')}
           >
             <LineChart size={22} />
-            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/progress' ? 500 : 400 }}>Progress</span>
+            <span>Progress</span>
           </Link>
           <Link
             to="/settings"
-            className={clsx('nav-item', location.pathname === '/settings' && 'active')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              padding: '0.75rem 1.5rem',
-              textDecoration: 'none',
-              color: location.pathname === '/settings' ? '#C8956B' : '#6a6a6a',
-              transition: 'all 0.2s',
-              borderRadius: '8px',
-              background: location.pathname === '/settings' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
-            }}
+            className={clsx('nav-link', location.pathname === '/settings' && 'active')}
           >
             <SettingsIcon size={22} />
-            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/settings' ? 500 : 400 }}>Settings</span>
+            <span>Settings</span>
           </Link>
         </nav>
       </div>
 
       {/* Main Content */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '2rem 1rem',
-        marginLeft: window.innerWidth <= 768 ? '0' : '160px',
-        display: 'flex',
-        flexDirection: 'column'
-      }} id="main-content">
+      <div className="main-content" id="main-content">
         <div style={{ flex: 1 }}>
           {children}
         </div>
@@ -156,6 +98,67 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           </p>
         </footer>
       </div>
+
+      {/* Mobile Bottom Navigation - Shown only on mobile via CSS */}
+      <nav className="mobile-nav">
+        <Link
+          to="/"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <Dumbbell size={20} />
+          <span>Workout</span>
+        </Link>
+        <Link
+          to="/progress"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/progress' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <LineChart size={20} />
+          <span>Progress</span>
+        </Link>
+        <Link
+          to="/settings"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/settings' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <SettingsIcon size={20} />
+          <span>Settings</span>
+        </Link>
+      </nav>
     </div>
   );
 };

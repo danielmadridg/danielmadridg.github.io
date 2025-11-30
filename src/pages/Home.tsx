@@ -6,6 +6,7 @@ import { calculateProgressiveOverload } from '../utils/algorithm';
 import { Check, ArrowLeft, Dumbbell } from 'lucide-react';
 import { format } from 'date-fns';
 import CustomSelect from '../components/CustomSelect';
+import './Home.css';
 
 const Home: React.FC = () => {
   const { state, addSession, getExerciseHistory } = useStore();
@@ -25,10 +26,6 @@ const Home: React.FC = () => {
     const initialExercises: Record<string, { weight: string; reps: string[] }> = {};
     
     selectedDay.exercises.forEach(ex => {
-
-      // history is sorted oldest to newest (based on how we push to array), but getExerciseHistory returns {result, date}
-      // Let's assume the order is preserved from state.history which is chronological.
-
       initialExercises[ex.id] = {
         weight: '',
         reps: Array(ex.sets).fill('')
@@ -136,7 +133,7 @@ const Home: React.FC = () => {
   if (activeWorkout && selectedDay) {
     return (
         <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <div className="workout-header">
                 <button
                     onClick={handleCancelWorkout}
                     style={{
@@ -151,7 +148,7 @@ const Home: React.FC = () => {
                 >
                     <ArrowLeft size={24} />
                 </button>
-                <h2 style={{ margin: 0 }}>{selectedDay.name}</h2>
+                <h2>{selectedDay.name}</h2>
             </div>
             {selectedDay.exercises.map(ex => {
                 const exState = activeWorkout.exercises[ex.id];
@@ -160,30 +157,23 @@ const Home: React.FC = () => {
                 const suggestedWeight = lastSession?.nextWeight ?? lastSession?.weight ?? 0;
 
                 return (
-                    <div key={ex.id} className="card">
-                        <div className="flex-row">
+                    <div key={ex.id} className="card exercise-card">
+                        <div className="exercise-header">
                             <h3>{ex.name}</h3>
-                            <div style={{fontSize: '0.9rem', color: 'var(--text-secondary)'}}>
+                            <div className="exercise-goal">
                                 Goal: {ex.sets} x {ex.targetReps}
                             </div>
                         </div>
 
                         {lastSession && (
-                            <div style={{
-                                marginBottom: '1rem',
-                                padding: '0.5rem',
-                                background: 'rgba(212, 175, 55, 0.1)',
-                                borderRadius: '4px',
-                                fontSize: '0.85rem',
-                                color: 'var(--text-secondary)'
-                            }}>
+                            <div className="last-session-info">
                                 Last session: {lastSession.weight} kg × {lastSession.sets.join(', ')} reps
                                 {lastSession.decision === 'incrementar' && ' → 📈 Increase weight'}
                                 {lastSession.decision === 'deload' && ' → 📉 Deload'}
                             </div>
                         )}
 
-                        <div style={{marginBottom: '1rem'}}>
+                        <div className="weight-input-container">
                             <label>Weight (kg)</label>
                             <input
                                 type="number"
@@ -195,17 +185,17 @@ const Home: React.FC = () => {
                                     setActiveWorkout({...activeWorkout, exercises: newExState});
                                 }}
                                 spellCheck="false"
-                                style={{width: '100px'}}
+                                className="weight-input"
                             />
                         </div>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem'}}>
+                        <div className="sets-grid">
                             {exState.reps.map((rep, i) => {
                                 const lastReps = lastSession?.sets[i];
                                 return (
-                                    <div key={i}>
-                                        <label style={{fontSize: '0.8rem'}}>
+                                    <div key={i} className="set-input-container">
+                                        <label className="set-label">
                                             Set {i+1}
-                                            {lastReps && <span style={{color: 'var(--text-secondary)', marginLeft: '0.25rem'}}>({lastReps})</span>}
+                                            {lastReps && <span style={{marginLeft: '0.25rem'}}>({lastReps})</span>}
                                         </label>
                                         <input
                                             type="number"
@@ -275,10 +265,10 @@ const Home: React.FC = () => {
               const previousSession = previousSessionIndex !== -1 ? arr[previousSessionIndex] : null;
 
               return (
-                  <div key={session.id} className="card" style={{padding: '1rem'}}>
-                      <div className="flex-row" style={{marginBottom: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row', alignItems: window.innerWidth <= 480 ? 'flex-start' : 'center', gap: window.innerWidth <= 480 ? '0.25rem' : '1rem'}}>
-                          <span style={{fontWeight: 'bold', color: 'var(--primary-color)'}}>{dayName}</span>
-                          <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
+                  <div key={session.id} className="card history-card">
+                      <div className="history-header">
+                          <span className="history-day-name">{dayName}</span>
+                          <span className="history-date">
                               {format(new Date(session.date), 'MMM d, yyyy HH:mm')}
                           </span>
                       </div>
@@ -303,19 +293,10 @@ const Home: React.FC = () => {
                               }
 
                               return (
-                                  <div key={ex.exerciseId} style={{
-                                      fontSize: window.innerWidth <= 480 ? '0.8rem' : '0.85rem',
-                                      color: 'var(--text-secondary)',
-                                      marginBottom: '0.25rem',
-                                      display: 'flex',
-                                      flexDirection: window.innerWidth <= 480 && prevEx ? 'column' : 'row',
-                                      justifyContent: 'space-between',
-                                      alignItems: window.innerWidth <= 480 && prevEx ? 'flex-start' : 'center',
-                                      gap: window.innerWidth <= 480 ? '0.25rem' : '0.5rem'
-                                  }}>
+                                  <div key={ex.exerciseId} className="history-exercise-item">
                                       <span>{exerciseName}: {ex.weight} kg × {ex.sets.join(', ')}</span>
                                       {prevEx && (
-                                          <div style={{display: 'flex', gap: '0.5rem', fontSize: '0.7rem', flexWrap: 'wrap'}}>
+                                          <div className="history-stats">
                                               <span style={{color: weightChange > 0 ? '#4CAF50' : weightChange < 0 ? '#f44336' : '#888'}}>
                                                   W: {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)}%
                                               </span>
