@@ -16,38 +16,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [processingRedirect, setProcessingRedirect] = useState(true);
+  const [processingRedirect, setProcessingRedirect] = useState(false);
 
   useEffect(() => {
-    let unsubscribe: () => void;
+    // Set up auth state listener immediately
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('[AuthContext] Auth state changed:', user?.uid || 'null');
+      setUser(user);
+      setLoading(false);
+    });
 
-    // Handle redirect result FIRST, then set up auth state listener
+    // Handle redirect result in parallel (doesn't block auth state)
+    // This only returns a result if we just came back from a redirect
+    setProcessingRedirect(true);
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
           console.log('[AuthContext] Redirect sign-in successful:', result.user.uid);
+          // User will be set by onAuthStateChanged above
+        } else {
+          console.log('[AuthContext] No redirect result (normal page load)');
         }
       })
       .catch((error) => {
         console.error('[AuthContext] Error handling redirect:', error);
       })
       .finally(() => {
-        console.log('[AuthContext] Redirect processing complete');
+        console.log('[AuthContext] Redirect check complete');
         setProcessingRedirect(false);
-        
-        // NOW set up the auth state listener
-        unsubscribe = onAuthStateChanged(auth, (user) => {
-          console.log('[AuthContext] Auth state changed:', user?.uid || 'null');
-          setUser(user);
-          setLoading(false);
-        });
       });
 
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+    return unsubscribe;
   }, []);
 
   const signOut = async () => {
