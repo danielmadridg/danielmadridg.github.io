@@ -84,10 +84,22 @@ const Onboarding: React.FC = () => {
     navigate('/');
   };
 
+  const hasChanges = () => {
+    // Check if routine has been modified from the original state
+    if (state.routine.length === 0) return false; // No changes if no original routine
+    return JSON.stringify(routine) !== JSON.stringify(state.routine);
+  };
+
   const handleCancel = () => {
     if (state.routine.length > 0) {
-      // In edit mode, discard changes and go back
-      navigate('/');
+      // In edit mode, ask for confirmation if there are unsaved changes
+      if (hasChanges()) {
+        if (confirm('You have unsaved changes. Are you sure you want to discard them?')) {
+          navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
     } else {
       // In create mode, go back to step 1
       setStep(1);
