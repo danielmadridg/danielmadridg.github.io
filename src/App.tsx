@@ -43,24 +43,57 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <nav style={{ flex: 1 }}>
           <Link
             to="/"
-            className={clsx('nav-link', location.pathname === '/' && 'active')}
+            className={clsx('nav-item', location.pathname === '/' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
+            }}
           >
             <Dumbbell size={22} />
-            <span>Workout</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/' ? 500 : 400 }}>Workout</span>
           </Link>
           <Link
             to="/progress"
-            className={clsx('nav-link', location.pathname === '/progress' && 'active')}
+            className={clsx('nav-item', location.pathname === '/progress' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/progress' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/progress' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
+            }}
           >
             <LineChart size={22} />
-            <span>Progress</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/progress' ? 500 : 400 }}>Progress</span>
           </Link>
           <Link
             to="/settings"
-            className={clsx('nav-link', location.pathname === '/settings' && 'active')}
+            className={clsx('nav-item', location.pathname === '/settings' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/settings' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/settings' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
+            }}
           >
             <SettingsIcon size={22} />
-            <span>Settings</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/settings' ? 500 : 400 }}>Settings</span>
           </Link>
         </nav>
       </div>
