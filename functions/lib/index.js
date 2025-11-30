@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
+exports.checkUsernameAvailability = exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const axios_1 = require("axios");
@@ -8,17 +8,25 @@ const nodemailer = require("nodemailer");
 // Initialize Firebase Admin
 admin.initializeApp();
 // Access the secret key from environment variables
-const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || '6LeI5BwsAAAAAFWR_dtUnzfIpXNHU0RtY4i8J1Dq';
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || '6LesKB0sAAAAACxKFPKmX8So69EbFLyl5Zvp8L4o';
 // Configure email transporter using Firebase's SMTP
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: 'noreply@prodegitracker.com',
-        pass: process.env.EMAIL_PASSWORD || '', // Set via: firebase functions:config:set email.password="YOUR_APP_PASSWORD"
-    },
-});
+function getEmailTransporter() {
+    var _a;
+    const emailPassword = ((_a = functions.config().email) === null || _a === void 0 ? void 0 : _a.password) || process.env.EMAIL_PASSWORD || '';
+    if (!emailPassword) {
+        console.error('EMAIL_PASSWORD not found in config or environment variables');
+    }
+    return nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+            user: 'progredicontact@gmail.com', // Your actual Gmail account
+            pass: emailPassword,
+        },
+    });
+}
+let transporter = getEmailTransporter();
 // Generate a 6-digit code
 function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -52,11 +60,16 @@ exports.verifyRecaptcha = functions.https.onCall(async (data, context) => {
 });
 // Send verification code via email
 exports.sendVerificationCode = functions.https.onCall(async (data, context) => {
+    var _a, _b;
     const { email, name } = data;
     if (!email) {
         return { success: false, error: 'Email is required' };
     }
     try {
+        // Refresh transporter to get latest config
+        transporter = getEmailTransporter();
+        const emailPassword = ((_a = functions.config().email) === null || _a === void 0 ? void 0 : _a.password) || process.env.EMAIL_PASSWORD || '';
+        console.log(`sendVerificationCode: Email: progredicontact@gmail.com, Password from config: ${!!((_b = functions.config().email) === null || _b === void 0 ? void 0 : _b.password)}, Password from env: ${!!process.env.EMAIL_PASSWORD}, Password length: ${emailPassword.length}`);
         // Generate 6-digit code
         const code = generateVerificationCode();
         // Store code in Firestore with 10-minute expiration
@@ -82,9 +95,9 @@ exports.sendVerificationCode = functions.https.onCall(async (data, context) => {
             .logo { text-align: center; font-size: 32px; font-weight: 700; color: #C8956B; margin-bottom: 30px; letter-spacing: 1px; }
             .code-box { background-color: #1a1a1a; border: 2px solid #C8956B; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; }
             .code { font-size: 48px; font-weight: 700; color: #C8956B; letter-spacing: 8px; font-family: 'Courier New', monospace; }
-            .message { font-size: 16px; line-height: 1.6; color: #cccccc; margin: 20px 0; }
-            .footer { text-align: center; font-size: 14px; color: #6a6a6a; margin-top: 40px; padding-top: 20px; border-top: 1px solid #1a1a1a; }
-            .warning { background-color: rgba(207, 102, 121, 0.1); border-left: 4px solid #cf6679; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; }
+            .message { font-size: 16px; line-height: 1.6; color: #e0e0e0; margin: 20px 0; }
+            .footer { text-align: center; font-size: 14px; color: #999999; margin-top: 40px; padding-top: 20px; border-top: 1px solid #1a1a1a; }
+            .warning { background-color: rgba(207, 102, 121, 0.1); border-left: 4px solid #cf6679; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #e0e0e0; }
           </style>
         </head>
         <body>
@@ -167,6 +180,23 @@ exports.verifyCode = functions.https.onCall(async (data, context) => {
     catch (error) {
         console.error('Error verifying code:', error);
         return { success: false, error: 'Verification failed' };
+    }
+});
+// Check username availability
+exports.checkUsernameAvailability = functions.https.onCall(async (data, context) => {
+    const { username } = data;
+    if (!username) {
+        return { available: false, error: 'Username is required' };
+    }
+    try {
+        const db = admin.firestore();
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('username', '==', username).get();
+        return { available: snapshot.empty };
+    }
+    catch (error) {
+        console.error('Error checking username:', error);
+        return { available: false, error: 'Failed to check username availability' };
     }
 });
 //# sourceMappingURL=index.js.map

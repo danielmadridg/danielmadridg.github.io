@@ -7,7 +7,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc } from 'firebase/firestore';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { auth, googleProvider, functions, db } from '../config/firebase';
 import { httpsCallable } from 'firebase/functions';
@@ -164,14 +164,22 @@ const Login: React.FC = () => {
   };
 
   const checkUsernameAvailability = async (usernameToCheck: string) => {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('username', '==', usernameToCheck));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.empty;
+    const checkUsernameFn = httpsCallable(functions, 'checkUsernameAvailability');
+    const result = await checkUsernameFn({ username: usernameToCheck });
+    const data = result.data as { available: boolean; error?: string };
+    if (data.error) throw new Error(data.error);
+    return data.available;
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Manual email validation since we disabled native validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError(t('error_invalid_email'));
+      return;
+    }
 
     if (isSignUp) {
       const errors = validatePassword(password);
@@ -267,8 +275,13 @@ const Login: React.FC = () => {
           await updateProfile(userCredential.user, {
             displayName: name
           });
-          
-          alert("We encourage you to take each set as close to failure as possible to ensure accurate progress through progressive overload.");
+
+          // Show different alert based on device
+          if (isMobileDevice()) {
+            alert("We encourage you to take each set as close to failure as possible to ensure accurate progress through progressive overload.");
+          } else {
+            setError("We encourage you to take each set as close to failure as possible to ensure accurate progress through progressive overload.");
+          }
         } else {
           await signInWithEmailAndPassword(auth, email, password);
         }
@@ -450,7 +463,7 @@ const Login: React.FC = () => {
           {t('or')}
         </div>
 
-        <form onSubmit={handleEmailAuth}>
+        <form onSubmit={handleEmailAuth} noValidate>
           {isSignUp && (
             <>
               <div style={{ marginBottom: '1rem' }}>

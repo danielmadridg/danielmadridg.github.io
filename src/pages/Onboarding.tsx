@@ -145,11 +145,11 @@ const Onboarding: React.FC = () => {
 
   if (step === 1) {
     return (
-      <div className="container" style={{ justifyContent: 'center' }}>
-        <div className="card">
-          <h1 style={{ textAlign: 'center' }}>Welcome to Prodegi</h1>
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Let's set up your routine.</p>
-          <label>{t('how_many_days')}</label>
+      <div className="container" style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+          <h1 style={{ textAlign: 'center', marginTop: 0 }}>Welcome to Prodegi</h1>
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Let's set up your routine.</p>
+          <label style={{ marginTop: '1.5rem' }}>{t('how_many_days')}</label>
           <input
             type="number"
             value={daysCount}
@@ -160,14 +160,14 @@ const Onboarding: React.FC = () => {
             spellCheck="false"
             style={{ width: '100%', marginBottom: '1rem', boxSizing: 'border-box' }}
           />
-          <button className="btn-primary" onClick={handleStart}>{t('next')}</button>
+          <button className="btn-primary" onClick={handleStart} style={{ marginTop: 0 }}>{t('next')}</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container">
+    <div className="container" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
         <button
           onClick={handleCancel}

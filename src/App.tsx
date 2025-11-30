@@ -15,7 +15,7 @@ import clsx from 'clsx';
 import './App.css';
 
 // reCAPTCHA site key (configure in environment variables)
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeI5BwsAAAAAGMtS2CM8KyfybN32SPX__eiHR0T';
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LdnxBwsAAAAAGvXZsVdRwEiuKMvq9svrqahcGt_';
 
 // Context for tracking workout state
 interface WorkoutContextType {
@@ -431,6 +431,7 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  console.log('[App] Using reCAPTCHA Site Key:', RECAPTCHA_SITE_KEY);
   return (
     <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_SITE_KEY}>
       <AuthProvider>

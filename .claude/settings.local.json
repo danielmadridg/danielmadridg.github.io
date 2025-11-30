@@ -9,7 +9,11 @@
       "Bash(npx tsc:*)",
       "Bash(dir \"c:\\ALL\\Coding\\prodegi\")",
       "Bash(findstr:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(firebase functions:config:set:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase functions:log:*)",
+      "Bash(firebase functions:config:get:*)"
     ],
     "deny": [],
     "ask": []
