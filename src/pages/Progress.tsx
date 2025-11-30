@@ -204,11 +204,11 @@ const Progress: React.FC = () => {
   const hasData = viewMode === 'exercise' ? exerciseHistory.length > 0 : dayHistory.length > 0;
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
       <h1>Progress</h1>
 
       {/* View Mode Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', maxWidth: '900px', width: '100%' }}>
         <button
           onClick={() => {
             setViewMode('exercise');
@@ -262,7 +262,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Search/Select Input */}
-      <div className="card" style={{ position: 'relative', zIndex: 10 }}>
+      <div className="card" style={{ position: 'relative', zIndex: 10, maxWidth: '900px', width: '100%' }}>
         <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
         <input
           type="text"
@@ -355,7 +355,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '2rem', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '2rem', overflow: 'hidden', width: '100%', maxWidth: '900px', boxSizing: 'border-box' }}>
         {hasData ? (
           <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '500px' : '700px', width: '100%' }}>
             <Line options={chartOptions} data={currentData} />
