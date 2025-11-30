@@ -119,6 +119,14 @@ const Progress: React.FC = () => {
     ],
   };
 
+  const currentData = viewMode === 'exercise' ? exerciseData : dayData;
+  const hasSelection = viewMode === 'exercise' ? !!selectedExerciseId : !!selectedDayId;
+  const hasData = viewMode === 'exercise' ? exerciseHistory.length > 0 : dayHistory.length > 0;
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const legendPosition = isMobile ? 'bottom' : 'right';
+  const legendPadding = isMobile ? 15 : 25;
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: true,
@@ -128,12 +136,12 @@ const Progress: React.FC = () => {
     },
     plugins: {
       legend: {
-        position: (typeof window !== 'undefined' && window.innerWidth <= 768 ? 'bottom' : 'right') as const,
+        position: legendPosition as 'bottom' | 'right',
         align: 'center' as const,
         labels: {
           color: '#FFF',
           font: { size: 14, weight: 500 as const },
-          padding: typeof window !== 'undefined' && window.innerWidth <= 768 ? 15 : 25,
+          padding: legendPadding,
           usePointStyle: true,
           pointStyle: 'circle',
           boxWidth: 10,
@@ -178,10 +186,6 @@ const Progress: React.FC = () => {
       }
     }
   };
-
-  const currentData = viewMode === 'exercise' ? exerciseData : dayData;
-  const hasSelection = viewMode === 'exercise' ? !!selectedExerciseId : !!selectedDayId;
-  const hasData = viewMode === 'exercise' ? exerciseHistory.length > 0 : dayHistory.length > 0;
 
   return (
     <div className="progress-container">
