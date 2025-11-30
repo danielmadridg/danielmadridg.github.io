@@ -461,7 +461,7 @@ const Settings: React.FC = () => {
         <button
           className="btn-danger"
           onClick={() => setShowDeleteDialog(!showDeleteDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1.5rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1rem'}}
         >
           <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
           {t('delete_account')}
