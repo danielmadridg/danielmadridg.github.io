@@ -128,12 +128,12 @@ const Progress: React.FC = () => {
     },
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: (typeof window !== 'undefined' && window.innerWidth <= 768 ? 'bottom' : 'right') as const,
         align: 'center' as const,
         labels: {
           color: '#FFF',
           font: { size: 14, weight: 500 as const },
-          padding: 25,
+          padding: typeof window !== 'undefined' && window.innerWidth <= 768 ? 15 : 25,
           usePointStyle: true,
           pointStyle: 'circle',
           boxWidth: 10,
