@@ -114,7 +114,7 @@ const Login: React.FC = () => {
           fontSize: window.innerWidth <= 768 ? '2rem' : '3rem',
           marginBottom: window.innerWidth <= 768 ? '1.5rem' : '3rem',
           color: '#fff',
-          fontFamily: 'cursive',
+          fontFamily: "'Syne', sans-serif",
           letterSpacing: '1px'
         }}>
           Prodegi

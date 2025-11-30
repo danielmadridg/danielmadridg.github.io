@@ -11,10 +11,14 @@ const Settings: React.FC = () => {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditNameDialog, setShowEditNameDialog] = useState(false);
-  const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
+  const [newDisplayName, setNewDisplayName] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  useEffect(() => {
+    setNewDisplayName(user?.displayName || '');
+  }, [user?.displayName]);
 
   useEffect(() => {
     return () => {
