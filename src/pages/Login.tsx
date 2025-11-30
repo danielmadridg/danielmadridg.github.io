@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile
@@ -27,6 +29,26 @@ const Login: React.FC = () => {
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
 
+  // Handle redirect result from Google Sign-In on mobile
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          // Successfully signed in via redirect
+          console.log('[Login] Redirect result received, user authenticated');
+        }
+      } catch (err: any) {
+        console.error('[Login] Redirect result error:', err);
+        if (err.code && err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+          setError(err.message || 'An error occurred during sign-in');
+        }
+      }
+    };
+
+    handleRedirectResult();
+  }, []);
+
   const validatePassword = (pwd: string): string[] => {
     const errors: string[] = [];
     if (!/[A-Z]/.test(pwd)) errors.push(t('password_uppercase'));
@@ -43,6 +65,10 @@ const Login: React.FC = () => {
     if (isSignUp) {
       setPasswordErrors(validatePassword(newPassword));
     }
+  };
+
+  const isMobileDevice = () => {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   };
 
   const handleGoogleSignIn = async () => {
@@ -67,7 +93,12 @@ const Login: React.FC = () => {
           return;
         }
 
-        await signInWithPopup(auth, googleProvider);
+        // Use signInWithRedirect on mobile, signInWithPopup on desktop
+        if (isMobileDevice()) {
+          await signInWithRedirect(auth, googleProvider);
+        } else {
+          await signInWithPopup(auth, googleProvider);
+        }
       }
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
