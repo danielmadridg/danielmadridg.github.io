@@ -14,6 +14,7 @@ const Settings: React.FC = () => {
   const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [confirmText, setConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -63,7 +64,8 @@ const Settings: React.FC = () => {
     try {
       await updateProfile({ displayName: newDisplayName.trim() });
       setShowEditNameDialog(false);
-      alert('Display name updated successfully.');
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
     } catch (error) {
       alert('Failed to update display name.');
     }
@@ -88,6 +90,11 @@ const Settings: React.FC = () => {
               <Edit size={18} />
             </button>
           </div>
+          {showSuccessMessage && (
+            <p style={{marginTop: '0.5rem', color: '#4CAF50', fontSize: '0.85rem', margin: '0.5rem 0 0 0'}}>
+              Display name updated successfully.
+            </p>
+          )}
         </div>
 
         {showEditNameDialog && (
