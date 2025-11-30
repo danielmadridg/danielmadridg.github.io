@@ -120,11 +120,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (user) {
         try {
           const docRef = doc(db, "users", user.uid);
+          console.log('[StoreContext] Saving to Firestore for user:', user.uid, 'Data:', state);
           await setDoc(docRef, state);
-          console.log('[StoreContext] Saved to Firestore for user:', user.uid);
+          console.log('[StoreContext] Successfully saved to Firestore');
         } catch (e) {
           console.error("[StoreContext] Error saving to Firestore:", e);
         }
+      } else {
+        console.log('[StoreContext] Not saving to Firestore (no user logged in)');
       }
     };
 
