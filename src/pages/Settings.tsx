@@ -88,7 +88,7 @@ const Settings: React.FC = () => {
         <div style={{marginBottom: '1rem'}}>
           <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Display Name</label>
           <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
-            <span style={{flex: 1, padding: '0.75rem', background: 'var(--surface-color)', borderRadius: '6px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>
+            <span style={{flex: 1, padding: '0.5rem 0.75rem', background: 'var(--surface-color)', borderRadius: '6px', minHeight: '36px', display: 'flex', alignItems: 'center', fontSize: '0.95rem'}}>
               {user?.displayName || 'Not set'}
             </span>
             <button

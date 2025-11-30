@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Line } from 'react-chartjs-2';
 import {
@@ -28,6 +28,20 @@ const Progress: React.FC = () => {
   const [viewMode, setViewMode] = useState<'exercise' | 'day'>('exercise');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showDropdown]);
 
   const allExercises = useMemo(() => {
     return state.routine.flatMap(day => day.exercises);
@@ -47,8 +61,8 @@ const Progress: React.FC = () => {
     );
   }, [state.routine, searchQuery]);
 
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string>(allExercises[0]?.id || '');
-  const [selectedDayId, setSelectedDayId] = useState<string>(state.routine[0]?.id || '');
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
+  const [selectedDayId, setSelectedDayId] = useState<string>('');
 
   const selectedExercise = allExercises.find(ex => ex.id === selectedExerciseId);
   const selectedDay = state.routine.find(day => day.id === selectedDayId);
@@ -153,7 +167,7 @@ const Progress: React.FC = () => {
         align: 'center' as const,
         labels: {
           color: '#FFF',
-          font: { size: window.innerWidth <= 768 ? 14 : 16, weight: '500' as const },
+          font: { size: window.innerWidth <= 768 ? 14 : 16, weight: 500 as const },
           padding: 25,
           usePointStyle: true,
           pointStyle: 'circle',
@@ -201,14 +215,15 @@ const Progress: React.FC = () => {
   };
 
   const currentData = viewMode === 'exercise' ? exerciseData : dayData;
+  const hasSelection = viewMode === 'exercise' ? !!selectedExerciseId : !!selectedDayId;
   const hasData = viewMode === 'exercise' ? exerciseHistory.length > 0 : dayHistory.length > 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
       <h1>Progress</h1>
 
       {/* View Mode Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', maxWidth: '900px', width: '100%' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', width: '100%' }}>
         <button
           onClick={() => {
             setViewMode('exercise');
@@ -262,7 +277,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Search/Select Input */}
-      <div className="card" style={{ position: 'relative', zIndex: 10, maxWidth: '900px', width: '100%' }}>
+      <div ref={dropdownRef} className="card" style={{ position: 'relative', zIndex: 10, width: '100%', padding: window.innerWidth <= 480 ? '0.5rem 0.75rem 1rem 0.75rem' : '0.75rem 2rem 1.25rem 2rem', boxSizing: 'border-box' }}>
         <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
         <input
           type="text"
@@ -355,32 +370,24 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '2rem', overflow: 'hidden', width: '100%', maxWidth: '900px', boxSizing: 'border-box' }}>
-        {hasData ? (
-          <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '500px' : '700px', width: '100%' }}>
-            <Line options={chartOptions} data={currentData} />
-          </div>
+      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '2rem', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+        {hasSelection ? (
+          hasData ? (
+            <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '500px' : '700px', width: '100%' }}>
+              <Line options={chartOptions} data={currentData} />
+            </div>
+          ) : (
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              No data available for this {viewMode === 'exercise' ? 'exercise' : 'day'}.
+            </p>
+          )
         ) : (
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            No data available for this {viewMode === 'exercise' ? 'exercise' : 'day'}.
+            Please select {viewMode === 'exercise' ? 'an exercise' : 'a day'} to view progress.
           </p>
         )}
       </div>
 
-      {/* Click outside to close dropdown */}
-      {showDropdown && (
-        <div
-          onClick={() => setShowDropdown(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999
-          }}
-        />
-      )}
     </div>
   );
 };
