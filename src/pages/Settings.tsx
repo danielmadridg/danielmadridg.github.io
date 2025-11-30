@@ -75,6 +75,10 @@ const Settings: React.FC = () => {
       await updateProfile({ displayName: newDisplayName.trim() });
       setShowEditNameDialog(false);
       setShowSuccessMessage(true);
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
     } catch (error) {
       alert('Failed to update username.');
     }
@@ -134,6 +138,8 @@ const Settings: React.FC = () => {
             <>
               <input
                 type="text"
+                name="username"
+                id="username-input"
                 value={newDisplayName}
                 onChange={(e) => {
                   const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
@@ -146,6 +152,7 @@ const Settings: React.FC = () => {
                 autoCorrect="off"
                 autoCapitalize="off"
                 inputMode="text"
+                data-form-type="other"
                 style={{
                   width: '100%', 
                   marginBottom: '0.75rem', 
