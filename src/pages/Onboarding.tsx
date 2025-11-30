@@ -173,29 +173,29 @@ const Onboarding: React.FC = () => {
                     value={ex.name}
                     onChange={(e) => updateExercise(dayIndex, exIndex, 'name', e.target.value)}
                     spellCheck="false"
-                    style={{ flex: 1 }}
+                    style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box' }}
                   />
-                  <button onClick={() => removeExercise(dayIndex, exIndex)} className="btn-danger" style={{ height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
+                  <button onClick={() => removeExercise(dayIndex, exIndex)} className="btn-danger" style={{ height: '44px', width: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
                     <Trash2 size={16} />
                   </button>
                 </div>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem'}}>
-                  <div>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', boxSizing: 'border-box'}}>
+                  <div style={{ boxSizing: 'border-box' }}>
                     <label>Sets</label>
                     <input
                       type="number"
                       value={ex.sets}
                       onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', Number(e.target.value))}
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
                     />
                   </div>
-                  <div>
+                  <div style={{ boxSizing: 'border-box' }}>
                     <label>Target Reps</label>
                     <input
                       type="number"
                       value={ex.targetReps}
                       onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', Number(e.target.value))}
-                      style={{ width: '100%' }}
+                      style={{ width: '100%', boxSizing: 'border-box' }}
                     />
                   </div>
                 </div>

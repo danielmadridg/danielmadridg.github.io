@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -12,9 +12,26 @@ import clsx from 'clsx';
 
 import './App.css';
 
+// Context for tracking workout state
+interface WorkoutContextType {
+  isWorkoutActive: boolean;
+  setWorkoutActive: (active: boolean) => void;
+  handleCancelWorkout?: () => void;
+  setHandleCancelWorkout?: (handler: (() => void) | undefined) => void;
+}
+
+const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
+
+export const useWorkout = () => {
+  const context = useContext(WorkoutContext);
+  if (!context) throw new Error('useWorkout must be used within WorkoutProvider');
+  return context;
+};
+
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const hideNav = location.pathname === '/onboarding' || location.pathname === '/login';
+  const { isWorkoutActive, handleCancelWorkout } = useWorkout();
 
   if (hideNav) {
     return <>{children}</>;
@@ -25,19 +42,43 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Desktop Sidebar - Hidden on mobile via CSS */}
       <div className="desktop-sidebar">
         {/* Logo */}
-        <Link to="/" style={{
-          padding: '1rem 1rem',
-          marginBottom: '2rem',
-          textDecoration: 'none',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          <img src="/favicon.svg" alt="Prodegi" style={{
-            width: '3.5rem',
-            height: 'auto'
-          }} />
-        </Link>
+        {isWorkoutActive ? (
+          <button
+            onClick={handleCancelWorkout}
+            style={{
+              padding: '1rem 1rem',
+              marginBottom: '2rem',
+              textDecoration: 'none',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit'
+            }}
+            title="Exit workout"
+          >
+            <img src="/favicon.svg" alt="Prodegi" style={{
+              width: '3.5rem',
+              height: 'auto'
+            }} />
+          </button>
+        ) : (
+          <Link to="/" style={{
+            padding: '1rem 1rem',
+            marginBottom: '2rem',
+            textDecoration: 'none',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <img src="/favicon.svg" alt="Prodegi" style={{
+              width: '3.5rem',
+              height: 'auto'
+            }} />
+          </Link>
+        )}
 
         {/* Navigation */}
         <nav style={{ flex: 1 }}>
@@ -318,6 +359,22 @@ const OnboardingRoute: React.FC = () => {
   return <Onboarding />;
 };
 
+const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isWorkoutActive, setWorkoutActive] = useState(false);
+  const [handleCancelWorkout, setHandleCancelWorkout] = useState<(() => void) | undefined>(undefined);
+
+  return (
+    <WorkoutContext.Provider value={{
+      isWorkoutActive,
+      setWorkoutActive,
+      handleCancelWorkout,
+      setHandleCancelWorkout
+    }}>
+      {children}
+    </WorkoutContext.Provider>
+  );
+};
+
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
 
@@ -327,8 +384,9 @@ const AppContent: React.FC = () => {
 
   return (
     <Router>
-      <Layout>
-        <Routes>
+      <WorkoutProvider>
+        <Layout>
+          <Routes>
           <Route path="/login" element={
             user ? <Navigate to="/" replace /> : <Login />
           } />
@@ -351,7 +409,8 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           } />
         </Routes>
-      </Layout>
+        </Layout>
+      </WorkoutProvider>
     </Router>
   );
 };

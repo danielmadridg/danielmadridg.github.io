@@ -1,30 +1,51 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
+import { useWorkout } from '../App';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
-import { Check, ArrowLeft, Dumbbell } from 'lucide-react';
+import { Check, Dumbbell, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import CustomSelect from '../components/CustomSelect';
 import './Home.css';
 
 const Home: React.FC = () => {
-  const { state, addSession, getExerciseHistory } = useStore();
+  const { state, addSession, editSession, getExerciseHistory } = useStore();
   const { user } = useAuth();
+  const { setWorkoutActive, setHandleCancelWorkout } = useWorkout();
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const [activeWorkout, setActiveWorkout] = useState<{
     dayId: string;
     startTime: string;
     exercises: Record<string, { weight: string; reps: string[] }>;
   } | null>(null);
+  const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
+  const navigate = useNavigate();
 
   const selectedDay = state.routine.find(d => d.id === selectedDayId);
 
+  const handleCancelWorkout = () => {
+    if (confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
+      setActiveWorkout(null);
+      setWorkoutActive(false);
+      navigate('/');
+    }
+  };
+
+  // Update the context with the handleCancelWorkout function
+  useEffect(() => {
+    if (setHandleCancelWorkout) {
+      setHandleCancelWorkout(() => handleCancelWorkout);
+    }
+  }, [setHandleCancelWorkout]);
+
   const handleStartWorkout = () => {
     if (!selectedDay) return;
-    
+
     const initialExercises: Record<string, { weight: string; reps: string[] }> = {};
-    
+
     selectedDay.exercises.forEach(ex => {
       initialExercises[ex.id] = {
         weight: '',
@@ -37,12 +58,7 @@ const Home: React.FC = () => {
       startTime: new Date().toISOString(),
       exercises: initialExercises
     });
-  };
-
-  const handleCancelWorkout = () => {
-    if (confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
-      setActiveWorkout(null);
-    }
+    setWorkoutActive(true);
   };
 
   const handleFinishWorkout = () => {
@@ -92,6 +108,80 @@ const Home: React.FC = () => {
 
     addSession(session);
     setActiveWorkout(null);
+    setWorkoutActive(false);
+  };
+
+  const handleEditSession = (session: WorkoutSession) => {
+    const day = state.routine.find(d => d.id === session.dayId);
+    if (!day) return;
+
+    setEditingSession(session);
+    setSelectedDayId(session.dayId);
+
+    const exercises: Record<string, { weight: string; reps: string[] }> = {};
+    session.exercises.forEach(ex => {
+      exercises[ex.exerciseId] = {
+        weight: ex.weight.toString(),
+        reps: ex.sets.map(r => r.toString())
+      };
+    });
+
+    setActiveWorkout({
+      dayId: session.dayId,
+      startTime: session.date,
+      exercises
+    });
+    setWorkoutActive(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!activeWorkout || !editingSession || !selectedDay) return;
+
+    const hasEmptyData = selectedDay.exercises.some(ex => {
+      const input = activeWorkout.exercises[ex.id];
+      const weight = parseFloat(input.weight) || 0;
+      const reps = input.reps.map(r => parseInt(r) || 0);
+      return weight === 0 || reps.every(r => r === 0);
+    });
+
+    if (hasEmptyData) {
+      alert('Please complete all exercises with weight and reps.');
+      return;
+    }
+
+    const results: ExerciseResult[] = [];
+
+    selectedDay.exercises.forEach(ex => {
+      const input = activeWorkout.exercises[ex.id];
+      const weight = parseFloat(input.weight) || 0;
+      const reps = input.reps.map(r => parseInt(r) || 0);
+
+      const algoResult = calculateProgressiveOverload({
+        currentWeight: weight,
+        repsPerformed: reps,
+        targetReps: ex.targetReps
+      });
+
+      results.push({
+        exerciseId: ex.id,
+        weight,
+        sets: reps,
+        nextWeight: algoResult.nextWeight,
+        decision: algoResult.decision
+      });
+    });
+
+    const updatedSession: WorkoutSession = {
+      id: editingSession.id,
+      date: editingSession.date,
+      dayId: editingSession.dayId,
+      exercises: results
+    };
+
+    editSession(updatedSession);
+    setActiveWorkout(null);
+    setEditingSession(null);
+    setWorkoutActive(false);
   };
 
   const getUserName = () => {
@@ -133,22 +223,26 @@ const Home: React.FC = () => {
   if (activeWorkout && selectedDay) {
     return (
         <div>
-            <div className="workout-header">
-                <button
-                    onClick={handleCancelWorkout}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        padding: '0.5rem',
-                        display: 'flex',
-                        alignItems: 'center'
-                    }}
-                >
-                    <ArrowLeft size={24} />
-                </button>
-                <h2>{selectedDay.name}</h2>
+            <div className="workout-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button
+                        onClick={handleCancelWorkout}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            padding: '0.5rem',
+                            display: 'flex',
+                            alignItems: 'center'
+                        }}
+                        title="Go back"
+                    >
+                        ← Back
+                    </button>
+                </div>
+                <h2 style={{ margin: 0, flex: 1, textAlign: 'center' }}>{selectedDay.name} {editingSession && '(Editing)'}</h2>
+                <div style={{ width: '60px' }}></div>
             </div>
             {selectedDay.exercises.map(ex => {
                 const exState = activeWorkout.exercises[ex.id];
@@ -218,9 +312,9 @@ const Home: React.FC = () => {
                     </div>
                 );
             })}
-            <button className="btn-primary" onClick={handleFinishWorkout}>
+            <button className="btn-primary" onClick={editingSession ? handleSaveEdit : handleFinishWorkout}>
                 <Check style={{verticalAlign: 'middle', marginRight: '8px'}}/>
-                Finish Workout
+                {editingSession ? 'Save Changes' : 'Finish Workout'}
             </button>
         </div>
     );
@@ -260,17 +354,38 @@ const Home: React.FC = () => {
       
       <div style={{marginTop: '2rem', marginBottom: '1rem'}}>
           <h3 style={{marginBottom: '1rem'}}>Recent Activity</h3>
-          {state.history.slice().reverse().slice(0, 5).map((session, idx, arr) => {
-              const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
+          {(() => {
+              const fullHistory = state.history.slice().reverse();
+              const displayedHistory = showAllHistory ? fullHistory : fullHistory.slice(0, 5);
 
-              // Find previous session for the same day
-              const previousSessionIndex = arr.findIndex((s, i) => i > idx && s.dayId === session.dayId);
-              const previousSession = previousSessionIndex !== -1 ? arr[previousSessionIndex] : null;
+              return displayedHistory.map((session, idx) => {
+                  const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
+
+                  // Find previous session for the same day in FULL history, not just displayed
+                  const previousSessionIndex = fullHistory.findIndex((s, i) => i > idx && s.dayId === session.dayId);
+                  const previousSession = previousSessionIndex !== -1 ? fullHistory[previousSessionIndex] : null;
 
               return (
                   <div key={session.id} className="card history-card">
                       <div className="history-header">
                           <span className="history-day-name">{dayName}</span>
+                          <button
+                              onClick={() => handleEditSession(session)}
+                              style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: 'var(--primary-color)',
+                                  cursor: 'pointer',
+                                  padding: '0.5rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  flexShrink: 0,
+                                  marginLeft: 'auto'
+                              }}
+                              title="Edit workout"
+                          >
+                              <Edit size={18} />
+                          </button>
                           <span className="history-date">
                               {format(new Date(session.date), 'MMM d, yyyy HH:mm')}
                           </span>
@@ -314,7 +429,29 @@ const Home: React.FC = () => {
                       </div>
                   </div>
               );
-          })}
+              });
+          })()}
+          {!showAllHistory && state.history.length > 5 && (
+              <button
+                  onClick={() => setShowAllHistory(true)}
+                  style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      marginTop: '1rem',
+                      background: 'none',
+                      border: '1px solid var(--primary-color)',
+                      color: 'var(--primary-color)',
+                      cursor: 'pointer',
+                      borderRadius: '8px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 149, 107, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+              >
+                  See More
+              </button>
+          )}
           {state.history.length === 0 && <p style={{color: 'var(--text-secondary)'}}>No workouts yet.</p>}
       </div>
     </div>

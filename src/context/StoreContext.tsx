@@ -14,6 +14,7 @@ const initialState: UserState = {
 type Action =
   | { type: 'SET_ROUTINE'; payload: RoutineDay[] }
   | { type: 'ADD_SESSION'; payload: WorkoutSession }
+  | { type: 'EDIT_SESSION'; payload: WorkoutSession }
   | { type: 'CLEAR_DATA' }
   | { type: 'LOAD_DATA'; payload: UserState };
 
@@ -24,6 +25,11 @@ function reducer(state: UserState, action: Action): UserState {
       return { ...state, routine: action.payload };
     case 'ADD_SESSION':
       return { ...state, history: [...state.history, action.payload] };
+    case 'EDIT_SESSION':
+      return {
+        ...state,
+        history: state.history.map(s => s.id === action.payload.id ? action.payload : s)
+      };
     case 'CLEAR_DATA':
       return initialState;
     case 'LOAD_DATA':
@@ -38,6 +44,7 @@ interface StoreContextType {
   state: UserState;
   setRoutine: (routine: RoutineDay[]) => void;
   addSession: (session: WorkoutSession) => void;
+  editSession: (session: WorkoutSession) => void;
   clearData: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
   isLoaded: boolean;
@@ -144,6 +151,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setRoutine = (routine: RoutineDay[]) => dispatch({ type: 'SET_ROUTINE', payload: routine });
   const addSession = (session: WorkoutSession) => dispatch({ type: 'ADD_SESSION', payload: session });
+  const editSession = (session: WorkoutSession) => dispatch({ type: 'EDIT_SESSION', payload: session });
   const clearData = () => {
       localStorage.removeItem('prodegi_data');
       dispatch({ type: 'CLEAR_DATA' });
@@ -160,7 +168,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, clearData, getExerciseHistory, isLoaded }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, getExerciseHistory, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );
