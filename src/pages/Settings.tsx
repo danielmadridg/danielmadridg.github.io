@@ -56,6 +56,10 @@ const Settings: React.FC = () => {
       alert('Please enter a name.');
       return;
     }
+    if (!/^[a-zA-Z]+$/.test(newDisplayName.trim())) {
+      alert('Name can only contain letters (A-Z). No spaces or special characters allowed.');
+      return;
+    }
     try {
       await updateProfile({ displayName: newDisplayName.trim() });
       setShowEditNameDialog(false);
@@ -92,7 +96,10 @@ const Settings: React.FC = () => {
             <input
               type="text"
               value={newDisplayName}
-              onChange={(e) => setNewDisplayName(e.target.value)}
+              onChange={(e) => {
+                const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
+                setNewDisplayName(filtered);
+              }}
               placeholder="Your first name"
               spellCheck="false"
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
