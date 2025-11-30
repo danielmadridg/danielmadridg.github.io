@@ -197,7 +197,7 @@ const Progress: React.FC = () => {
       <h1>Progress</h1>
 
       {/* View Mode Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <button
           onClick={() => {
             setViewMode('exercise');
@@ -205,13 +205,14 @@ const Progress: React.FC = () => {
           }}
           style={{
             flex: 1,
+            minWidth: '120px',
             padding: '0.75rem',
             background: viewMode === 'exercise' ? 'var(--primary-color)' : 'var(--surface-color)',
             color: viewMode === 'exercise' ? '#000' : 'var(--text-secondary)',
             border: viewMode === 'exercise' ? 'none' : '1px solid #333',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '1rem',
+            fontSize: 'clamp(0.85rem, 2vw, 1rem)',
             fontWeight: viewMode === 'exercise' ? 'bold' : 'normal',
             transition: 'all 0.2s'
           }}
@@ -225,13 +226,14 @@ const Progress: React.FC = () => {
           }}
           style={{
             flex: 1,
+            minWidth: '120px',
             padding: '0.75rem',
             background: viewMode === 'day' ? 'var(--primary-color)' : 'var(--surface-color)',
             color: viewMode === 'day' ? '#000' : 'var(--text-secondary)',
             border: viewMode === 'day' ? 'none' : '1px solid #333',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: '1rem',
+            fontSize: 'clamp(0.85rem, 2vw, 1rem)',
             fontWeight: viewMode === 'day' ? 'bold' : 'normal',
             transition: 'all 0.2s'
           }}

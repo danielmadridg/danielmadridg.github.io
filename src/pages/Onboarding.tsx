@@ -118,14 +118,14 @@ const Onboarding: React.FC = () => {
                     <Trash2 size={16} />
                   </button>
                 </div>
-                <div className="flex-row">
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem'}}>
                   <div>
                     <label>Sets</label>
                     <input
                       type="number"
                       value={ex.sets}
                       onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', Number(e.target.value))}
-                      style={{ width: '60px' }}
+                      style={{ width: '100%' }}
                     />
                   </div>
                   <div>
@@ -134,7 +134,7 @@ const Onboarding: React.FC = () => {
                       type="number"
                       value={ex.targetReps}
                       onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', Number(e.target.value))}
-                      style={{ width: '60px' }}
+                      style={{ width: '100%' }}
                     />
                   </div>
                 </div>

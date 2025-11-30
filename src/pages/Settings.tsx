@@ -54,13 +54,13 @@ const Settings: React.FC = () => {
       <h1>Settings</h1>
 
       <div className="card">
-        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)'}}>
-          <Edit style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+          <Edit style={{width: '18px', height: '18px'}}/>
           Edit Routine
         </button>
 
-        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', padding: '0.75rem', fontSize: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)'}}>
-          <LogOut style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', padding: '0.75rem', fontSize: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
+          <LogOut style={{width: '18px', height: '18px'}}/>
           Logout
         </button>
       </div>

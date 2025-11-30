@@ -19,16 +19,29 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#0a0a0a' }}>
-      {/* Sidebar */}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      background: '#0a0a0a'
+    }}>
+      {/* Desktop Sidebar - Hidden on mobile */}
       <div style={{
+        position: 'fixed',
+        left: 0,
+        top: 0,
         width: '200px',
+        height: '100vh',
         background: '#0a0a0a',
         borderRight: '1px solid #1a1a1a',
         display: 'flex',
         flexDirection: 'column',
-        padding: '1rem 0'
-      }}>
+        padding: '1rem 0',
+        zIndex: 100,
+        '@media (max-width: 768px)': {
+          display: 'none'
+        }
+      } as any}>
         {/* Logo */}
         <Link to="/" style={{
           padding: '1rem 1rem',
@@ -107,10 +120,84 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        padding: '2rem'
-      }}>
+        padding: '2rem 1rem',
+        marginLeft: '200px',
+        marginBottom: '80px'
+      }} id="main-content">
         {children}
       </div>
+
+      {/* Mobile Bottom Navigation - Shown only on mobile */}
+      <nav style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        justifyContent: 'space-around',
+        background: '#0a0a0a',
+        borderTop: '1px solid #1a1a1a',
+        padding: '0.5rem 0',
+        zIndex: 100
+      }}>
+        <Link
+          to="/"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <Dumbbell size={20} />
+          <span>Workout</span>
+        </Link>
+        <Link
+          to="/progress"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/progress' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <LineChart size={20} />
+          <span>Progress</span>
+        </Link>
+        <Link
+          to="/settings"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/settings' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <SettingsIcon size={20} />
+          <span>Settings</span>
+        </Link>
+      </nav>
     </div>
   );
 };

@@ -82,36 +82,37 @@ const Login: React.FC = () => {
     <div style={{
       display: 'flex',
       minHeight: '100vh',
-      background: '#000'
+      background: '#000',
+      flexDirection: 'column'
     }}>
-      {/* Left side - Logo */}
+      {/* Top side - Logo (shown on mobile, left on desktop) */}
       <div style={{
-        flex: 1,
+        flex: window.innerWidth <= 768 ? 0 : 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem'
+        padding: window.innerWidth <= 768 ? '1.5rem 1rem' : '2rem'
       }}>
         <img src="/prodegilogo.png" alt="Prodegi" style={{
-          maxWidth: '400px',
+          maxWidth: window.innerWidth <= 768 ? '200px' : '400px',
           width: '100%',
           height: 'auto'
         }} />
       </div>
 
-      {/* Right side - Login form */}
+      {/* Bottom side - Login form */}
       <div style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem'
+        padding: window.innerWidth <= 768 ? '1rem' : '2rem'
       }}>
         {/* App name at top */}
         <h1 style={{
-          fontSize: '3rem',
-          marginBottom: '3rem',
+          fontSize: window.innerWidth <= 768 ? '2rem' : '3rem',
+          marginBottom: window.innerWidth <= 768 ? '1.5rem' : '3rem',
           color: '#fff',
           fontFamily: 'cursive',
           letterSpacing: '1px'

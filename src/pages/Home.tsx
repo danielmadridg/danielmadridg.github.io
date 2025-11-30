@@ -161,7 +161,7 @@ const Home: React.FC = () => {
                                 style={{width: '100px'}}
                             />
                         </div>
-                        <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))', gap: '0.5rem'}}>
                             {exState.reps.map((rep, i) => {
                                 const lastReps = lastSession?.sets[i];
                                 return (
@@ -181,7 +181,7 @@ const Home: React.FC = () => {
                                                 newExState[ex.id].reps = newReps;
                                                 setActiveWorkout({...activeWorkout, exercises: newExState});
                                             }}
-                                            style={{width: '50px'}}
+                                            style={{width: '100%'}}
                                         />
                                     </div>
                                 );
