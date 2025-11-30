@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut as firebaseSignOut, deleteUser, getRedirectResult } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut, deleteUser } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  processingRedirect: boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
@@ -16,35 +15,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [processingRedirect, setProcessingRedirect] = useState(false);
 
   useEffect(() => {
-    // Set up auth state listener immediately
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('[AuthContext] Auth state changed:', user?.uid || 'null');
       setUser(user);
       setLoading(false);
     });
-
-    // Handle redirect result in parallel (doesn't block auth state)
-    // This only returns a result if we just came back from a redirect
-    setProcessingRedirect(true);
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          console.log('[AuthContext] Redirect sign-in successful:', result.user.uid);
-          // User will be set by onAuthStateChanged above
-        } else {
-          console.log('[AuthContext] No redirect result (normal page load)');
-        }
-      })
-      .catch((error) => {
-        console.error('[AuthContext] Error handling redirect:', error);
-      })
-      .finally(() => {
-        console.log('[AuthContext] Redirect check complete');
-        setProcessingRedirect(false);
-      });
 
     return unsubscribe;
   }, []);
@@ -69,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, processingRedirect, signOut, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, signOut, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

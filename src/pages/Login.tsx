@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import {
-  signInWithRedirect,
+  signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
-import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Chrome, User } from 'lucide-react';
 
 const Login: React.FC = () => {
-  const { processingRedirect } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -18,31 +16,18 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Show loading while processing redirect
-  if (processingRedirect) {
-    return (
-      <div style={{
-        display: 'flex',
-        minHeight: '100vh',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#000',
-        color: '#fff'
-      }}>
-        <div>Processing sign in...</div>
-      </div>
-    );
-  }
-
   const handleGoogleSignIn = async () => {
     try {
       setError(null);
       setLoading(true);
-      await signInWithRedirect(auth, googleProvider);
-      // Note: redirect will navigate away, so loading state won't be reset here
+      await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      const errorMessage = getErrorMessage(err.code, false);
-      setError(errorMessage);
+      // Ignore if user just closed the popup
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        const errorMessage = getErrorMessage(err.code, false);
+        setError(errorMessage);
+      }
+    } finally {
       setLoading(false);
     }
   };
