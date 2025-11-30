@@ -29,4 +29,9 @@ googleProvider.setCustomParameters({
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
+// Connect to emulator if running locally
+// if (window.location.hostname === 'localhost') {
+//   connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+// }
+
 export { app };
