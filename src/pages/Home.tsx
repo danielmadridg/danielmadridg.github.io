@@ -16,6 +16,7 @@ const Home: React.FC = () => {
   const { setWorkoutActive, setHandleCancelWorkout } = useWorkout();
   const [selectedDayId, setSelectedDayId] = useState<string>('');
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [filterByDayId, setFilterByDayId] = useState<string>('');
   const [activeWorkout, setActiveWorkout] = useState<{
     dayId: string;
     startTime: string;
@@ -353,10 +354,32 @@ const Home: React.FC = () => {
       </div>
       
       <div style={{marginTop: '2rem', marginBottom: '1rem'}}>
-          <h3 style={{marginBottom: '1rem'}}>Recent Activity</h3>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap'}}>
+              <h3 style={{margin: 0}}>Recent Activity</h3>
+              <select
+                  value={filterByDayId}
+                  onChange={(e) => setFilterByDayId(e.target.value)}
+                  style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #252525',
+                      background: 'var(--surface-color)',
+                      color: 'var(--text-color)',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.2s'
+                  }}
+              >
+                  <option value="">All Days</option>
+                  {state.routine.map(day => (
+                      <option key={day.id} value={day.id}>{day.name}</option>
+                  ))}
+              </select>
+          </div>
           {(() => {
               const fullHistory = state.history.slice().reverse();
-              const displayedHistory = showAllHistory ? fullHistory : fullHistory.slice(0, 5);
+              const filteredHistory = filterByDayId ? fullHistory.filter(s => s.dayId === filterByDayId) : fullHistory;
+              const displayedHistory = showAllHistory ? filteredHistory : filteredHistory.slice(0, 5);
 
               return displayedHistory.map((session, idx) => {
                   const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
@@ -368,24 +391,25 @@ const Home: React.FC = () => {
               return (
                   <div key={session.id} className="card history-card">
                       <div className="history-header">
-                          <span className="history-day-name">{dayName}</span>
-                          <button
-                              onClick={() => handleEditSession(session)}
-                              style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'var(--primary-color)',
-                                  cursor: 'pointer',
-                                  padding: '0.5rem',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  flexShrink: 0,
-                                  marginLeft: 'auto'
-                              }}
-                              title="Edit workout"
-                          >
-                              <Edit size={18} />
-                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between', width: '100%' }}>
+                              <span className="history-day-name">{dayName}</span>
+                              <button
+                                  onClick={() => handleEditSession(session)}
+                                  style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--primary-color)',
+                                      cursor: 'pointer',
+                                      padding: '0.5rem',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      flexShrink: 0
+                                  }}
+                                  title="Edit workout"
+                              >
+                                  <Edit size={18} />
+                              </button>
+                          </div>
                           <span className="history-date">
                               {format(new Date(session.date), 'MMM d, yyyy HH:mm')}
                           </span>
@@ -431,28 +455,37 @@ const Home: React.FC = () => {
               );
               });
           })()}
-          {!showAllHistory && state.history.length > 5 && (
-              <button
-                  onClick={() => setShowAllHistory(true)}
-                  style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      marginTop: '1rem',
-                      background: 'none',
-                      border: '1px solid var(--primary-color)',
-                      color: 'var(--primary-color)',
-                      cursor: 'pointer',
-                      borderRadius: '8px',
-                      fontWeight: '500',
-                      transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 149, 107, 0.1)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-              >
-                  See More
-              </button>
-          )}
-          {state.history.length === 0 && <p style={{color: 'var(--text-secondary)'}}>No workouts yet.</p>}
+          {(() => {
+              const fullHistory = state.history.slice().reverse();
+              const filteredHistory = filterByDayId ? fullHistory.filter(s => s.dayId === filterByDayId) : fullHistory;
+
+              return (
+                  <>
+                      {!showAllHistory && filteredHistory.length > 5 && (
+                          <button
+                              onClick={() => setShowAllHistory(true)}
+                              style={{
+                                  width: '100%',
+                                  padding: '0.75rem 1rem',
+                                  marginTop: '1rem',
+                                  background: 'none',
+                                  border: '1px solid var(--primary-color)',
+                                  color: 'var(--primary-color)',
+                                  cursor: 'pointer',
+                                  borderRadius: '8px',
+                                  fontWeight: '500',
+                                  transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 149, 107, 0.1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                          >
+                              See More
+                          </button>
+                      )}
+                      {filteredHistory.length === 0 && <p style={{color: 'var(--text-secondary)'}}>No workouts yet.</p>}
+                  </>
+              );
+          })()}
       </div>
     </div>
   );
