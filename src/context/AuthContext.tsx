@@ -50,9 +50,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('No user logged in');
-      await updateProfile(currentUser, updates);
+
+      // Filter out empty strings from updates
+      const cleanedUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([, value]) => value !== '')
+      );
+
+      await updateProfile(currentUser, cleanedUpdates);
       // Refresh user state to reflect changes
-      setUser({ ...currentUser, ...updates } as User);
+      setUser({ ...currentUser, ...cleanedUpdates } as User);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;

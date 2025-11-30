@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit, Trash2 } from 'lucide-react';
+import ProfilePictureEditor from '../components/ProfilePictureEditor';
 
 const Settings: React.FC = () => {
   const { clearData, state, setUnitPreference } = useStore();
@@ -193,6 +194,16 @@ const Settings: React.FC = () => {
               ✓ Username updated successfully
             </p>
           )}
+        </div>
+      </div>
+
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <div>
+          <label style={{display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem'}}>Profile Picture</label>
+          <ProfilePictureEditor
+            currentPhotoURL={user?.photoURL || undefined}
+            onSave={(photoURL) => updateProfile({ photoURL })}
+          />
         </div>
       </div>
 
