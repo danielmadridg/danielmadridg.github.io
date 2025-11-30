@@ -95,10 +95,11 @@ const Progress: React.FC = () => {
       {
         label: 'Weight (kg)',
         data: exerciseHistory.map(h => h.result.weight),
-        borderColor: '#D4AF37',
-        backgroundColor: 'rgba(212, 175, 55, 0.5)',
+        borderColor: '#C8956B',
+        backgroundColor: 'rgba(200, 149, 107, 0.2)',
         tension: 0.3,
         yAxisID: 'y',
+        borderWidth: 2,
       },
       {
         label: 'Volume (kg × reps)',
@@ -106,10 +107,11 @@ const Progress: React.FC = () => {
           const totalReps = h.result.sets.reduce((a, b) => a + b, 0);
           return h.result.weight * totalReps;
         }),
-        borderColor: '#03DAC6',
-        backgroundColor: 'rgba(3, 218, 198, 0.5)',
+        borderColor: '#03dac6',
+        backgroundColor: 'rgba(3, 218, 198, 0.2)',
         tension: 0.3,
         yAxisID: 'y1',
+        borderWidth: 2,
       },
     ],
   };
@@ -120,18 +122,20 @@ const Progress: React.FC = () => {
       {
         label: 'Total Volume (kg × reps)',
         data: dayHistory.map(h => h.totalVolume),
-        borderColor: '#D4AF37',
-        backgroundColor: 'rgba(212, 175, 55, 0.5)',
+        borderColor: '#C8956B',
+        backgroundColor: 'rgba(200, 149, 107, 0.2)',
         tension: 0.3,
         yAxisID: 'y',
+        borderWidth: 2,
       },
       {
         label: 'Average Weight (kg)',
         data: dayHistory.map(h => h.avgWeight),
-        borderColor: '#03DAC6',
-        backgroundColor: 'rgba(3, 218, 198, 0.5)',
+        borderColor: '#03dac6',
+        backgroundColor: 'rgba(3, 218, 198, 0.2)',
         tension: 0.3,
         yAxisID: 'y1',
+        borderWidth: 2,
       },
     ],
   };
@@ -146,9 +150,15 @@ const Progress: React.FC = () => {
     plugins: {
       legend: {
         position: 'right' as const,
+        align: 'center' as const,
         labels: {
           color: '#FFF',
-          font: { size: window.innerWidth <= 768 ? 12 : 14 }
+          font: { size: window.innerWidth <= 768 ? 12 : 14, weight: '500' as const },
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8
         }
       },
       title: {
