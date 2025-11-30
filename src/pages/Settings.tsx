@@ -349,78 +349,30 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="card" style={{marginTop: '2rem'}}>
-        <h3 style={{color: '#f44336', marginBottom: '1rem'}}>{t('danger_zone')}</h3>
+        <h3 style={{color: '#f44336', marginBottom: '1.5rem'}}>{t('danger_zone')}</h3>
 
         {/* Logout Section */}
         <button
           className="btn-secondary"
           onClick={handleLogout}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}
         >
           <LogOut style={{verticalAlign: 'middle'}}/>
           {t('logout')}
         </button>
 
-        {/* Reset Data Section */}
-        <button
-          className="btn-danger"
-          onClick={() => setShowResetDialog(!showResetDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem'}}
-        >
-          <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
-          {t('reset_all_data')}
-        </button>
-
-        {showResetDialog && (
-          <div style={{marginTop: '0', marginBottom: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
-            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
-              {t('reset_warning')}
-            </p>
-            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>
-              {t('type_confirm_reset')}
-            </label>
-            <input
-              type="text"
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="Type confirm"
-              spellCheck={false}
-              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
-            />
-            <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
-              <button
-                className="btn-danger"
-                onClick={handleResetData}
-                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
-              >
-                {t('confirm_reset')}
-              </button>
-              <button
-                className="btn-secondary"
-                onClick={() => {
-                  setShowResetDialog(false);
-                  setConfirmText('');
-                }}
-                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
-              >
-                {t('cancel')}
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Clear History Section */}
         <button
           className="btn-danger"
           onClick={() => setShowClearHistoryDialog(!showClearHistoryDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem'}}
         >
           <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
           Clear Workout History
         </button>
 
         {showClearHistoryDialog && (
-          <div style={{marginTop: '0', marginBottom: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+          <div style={{marginTop: '0', marginBottom: '1.5rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
             <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
               This will permanently delete all your workout records, but your routine settings will be preserved.
             </p>
@@ -457,11 +409,59 @@ const Settings: React.FC = () => {
           </div>
         )}
 
+        {/* Reset Data Section */}
+        <button
+          className="btn-danger"
+          onClick={() => setShowResetDialog(!showResetDialog)}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem'}}
+        >
+          <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+          {t('reset_all_data')}
+        </button>
+
+        {showResetDialog && (
+          <div style={{marginTop: '0', marginBottom: '1.5rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
+              {t('reset_warning')}
+            </p>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>
+              {t('type_confirm_reset')}
+            </label>
+            <input
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="Type confirm"
+              spellCheck={false}
+              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
+            />
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
+              <button
+                className="btn-danger"
+                onClick={handleResetData}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+              >
+                {t('confirm_reset')}
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setShowResetDialog(false);
+                  setConfirmText('');
+                }}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Delete Account Section */}
         <button
           className="btn-danger"
           onClick={() => setShowDeleteDialog(!showDeleteDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1.5rem'}}
         >
           <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
           {t('delete_account')}
