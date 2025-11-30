@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,12 @@ const Settings: React.FC = () => {
   const [confirmText, setConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      setShowSuccessMessage(false);
+    };
+  }, []);
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -65,7 +71,6 @@ const Settings: React.FC = () => {
       await updateProfile({ displayName: newDisplayName.trim() });
       setShowEditNameDialog(false);
       setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
     } catch (error) {
       alert('Failed to update display name.');
     }
@@ -91,8 +96,8 @@ const Settings: React.FC = () => {
             </button>
           </div>
           {showSuccessMessage && (
-            <p style={{marginTop: '0.5rem', color: '#4CAF50', fontSize: '0.85rem', margin: '0.5rem 0 0 0'}}>
-              Display name updated successfully.
+            <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
+              ✓ Display name updated successfully
             </p>
           )}
         </div>
