@@ -16,6 +16,7 @@ type Action =
   | { type: 'ADD_SESSION'; payload: WorkoutSession }
   | { type: 'EDIT_SESSION'; payload: WorkoutSession }
   | { type: 'CLEAR_DATA' }
+  | { type: 'CLEAR_HISTORY' }
   | { type: 'LOAD_DATA'; payload: UserState }
   | { type: 'SET_UNIT_PREFERENCE'; payload: 'kg' | 'lbs' };
 
@@ -33,6 +34,8 @@ function reducer(state: UserState, action: Action): UserState {
       };
     case 'CLEAR_DATA':
       return initialState;
+    case 'CLEAR_HISTORY':
+      return { ...state, history: [] };
     case 'LOAD_DATA':
       return action.payload;
     case 'SET_UNIT_PREFERENCE':
@@ -49,6 +52,7 @@ interface StoreContextType {
   addSession: (session: WorkoutSession) => void;
   editSession: (session: WorkoutSession) => void;
   clearData: () => void;
+  clearHistory: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
   setUnitPreference: (unit: 'kg' | 'lbs') => void;
   isLoaded: boolean;
@@ -161,6 +165,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       dispatch({ type: 'CLEAR_DATA' });
   };
 
+  const clearHistory = () => {
+      dispatch({ type: 'CLEAR_HISTORY' });
+  };
+
   const getExerciseHistory = (exerciseId: string) => {
     // Return history with dates
     return state.history
@@ -174,7 +182,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setUnitPreference = (unit: 'kg' | 'lbs') => dispatch({ type: 'SET_UNIT_PREFERENCE', payload: unit });
 
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, getExerciseHistory, setUnitPreference, isLoaded }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

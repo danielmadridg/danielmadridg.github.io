@@ -7,15 +7,17 @@ import { LogOut, Edit, Trash2 } from 'lucide-react';
 import ProfilePictureEditor from '../components/ProfilePictureEditor';
 
 const Settings: React.FC = () => {
-  const { clearData, state, setUnitPreference } = useStore();
+  const { clearData, clearHistory, state, setUnitPreference } = useStore();
   const { signOut, deleteAccount, user, updateProfile } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditNameDialog, setShowEditNameDialog] = useState(false);
   const [newDisplayName, setNewDisplayName] = useState('');
   const [confirmText, setConfirmText] = useState('');
+  const [clearHistoryConfirmText, setClearHistoryConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const currentUnit = state.unitPreference || 'kg';
@@ -45,6 +47,17 @@ const Settings: React.FC = () => {
       alert('All data has been reset successfully.');
     } else {
       alert('Please type "confirm" to reset your data.');
+    }
+  };
+
+  const handleClearHistory = () => {
+    if (clearHistoryConfirmText.toLowerCase() === 'confirm') {
+      clearHistory();
+      setShowClearHistoryDialog(false);
+      setClearHistoryConfirmText('');
+      alert('Workout history has been cleared successfully.');
+    } else {
+      alert('Please type "confirm" to clear your history.');
     }
   };
 
@@ -208,7 +221,9 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      <div className="card">
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>Preferences</h2>
+
         <div style={{marginBottom: '1.5rem'}}>
           <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>{t('weight_unit')}</label>
           <div style={{display: 'flex', gap: '0.5rem'}}>
@@ -327,14 +342,9 @@ const Settings: React.FC = () => {
           </div>
         </div>
 
-        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minHeight: '44px', width: '100%', padding: '0.75rem', fontSize: isMobile ? '0.9rem' : '1rem', flexWrap: 'wrap'}}>
+        <button className="btn-primary" onClick={handleEditRoutine} style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: isMobile ? '0.9rem' : '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap'}}>
           <Edit style={{width: '18px', height: '18px', flexShrink: 0}}/>
           {t('edit_routine')}
-        </button>
-
-        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: isMobile ? '0.9rem' : '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap'}}>
-          <LogOut style={{width: '18px', height: '18px', flexShrink: 0}}/>
-          {t('logout')}
         </button>
       </div>
 
@@ -388,6 +398,64 @@ const Settings: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Clear History Section */}
+        <button
+          className="btn-danger"
+          onClick={() => setShowClearHistoryDialog(!showClearHistoryDialog)}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1rem'}}
+        >
+          <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+          Clear Workout History
+        </button>
+
+        {showClearHistoryDialog && (
+          <div style={{marginTop: '0', marginBottom: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
+              This will permanently delete all your workout records, but your routine settings will be preserved.
+            </p>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>
+              {t('type_confirm_reset')}
+            </label>
+            <input
+              type="text"
+              value={clearHistoryConfirmText}
+              onChange={(e) => setClearHistoryConfirmText(e.target.value)}
+              placeholder="Type confirm"
+              spellCheck={false}
+              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
+            />
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
+              <button
+                className="btn-danger"
+                onClick={handleClearHistory}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+              >
+                Clear History
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setShowClearHistoryDialog(false);
+                  setClearHistoryConfirmText('');
+                }}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+              >
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Logout Section */}
+        <button
+          className="btn-danger"
+          onClick={handleLogout}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1rem', backgroundColor: '#ff9800', border: 'none'}}
+        >
+          <LogOut style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+          {t('logout')}
+        </button>
 
         {/* Delete Account Section */}
         <button
