@@ -31,6 +31,15 @@ const Progress: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const checkIOS = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      return /iphone|ipad|ipod/.test(userAgent);
+    };
+    setIsIOS(checkIOS());
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
@@ -251,60 +260,89 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Search/Select Input */}
-      <div ref={dropdownRef} className="card search-container">
-        <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
-        <input
-          type="text"
-          placeholder={viewMode === 'exercise' ? 'Search exercises...' : 'Search days...'}
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowDropdown(true);
-          }}
-          onFocus={() => setShowDropdown(true)}
-          spellCheck="false"
-          className="search-input"
-        />
-
-        {/* Dropdown */}
-        {showDropdown && (
-          <div className="dropdown-list">
+      {isIOS ? (
+        <div className="card search-container">
+          <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
+          <select
+            value={viewMode === 'exercise' ? selectedExerciseId : selectedDayId}
+            onChange={(e) => {
+              if (viewMode === 'exercise') {
+                handleSelectExercise(e.target.value);
+              } else {
+                handleSelectDay(e.target.value);
+              }
+            }}
+            className="search-input"
+            style={{ backgroundColor: '#1a1a1a', color: '#fff' }}
+          >
+            <option value="">Select {viewMode === 'exercise' ? 'Exercise' : 'Day'}</option>
             {viewMode === 'exercise' ? (
-              filteredExercises.length > 0 ? (
-                filteredExercises.map(ex => (
-                  <div
-                    key={ex.id}
-                    onClick={() => handleSelectExercise(ex.id)}
-                    className={`dropdown-item ${ex.id === selectedExerciseId ? 'selected' : ''}`}
-                  >
-                    {ex.name}
-                  </div>
-                ))
-              ) : (
-                <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>
-                  No exercises found
-                </div>
-              )
+              allExercises.map((ex, idx) => (
+                <option key={`${ex.id}-${idx}`} value={ex.id}>{ex.name}</option>
+              ))
             ) : (
-              filteredDays.length > 0 ? (
-                filteredDays.map(day => (
-                  <div
-                    key={day.id}
-                    onClick={() => handleSelectDay(day.id)}
-                    className={`dropdown-item ${day.id === selectedDayId ? 'selected' : ''}`}
-                  >
-                    {day.name}
-                  </div>
-                ))
-              ) : (
-                <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>
-                  No days found
-                </div>
-              )
+              state.routine.map(day => (
+                <option key={day.id} value={day.id}>{day.name}</option>
+              ))
             )}
-          </div>
-        )}
-      </div>
+          </select>
+        </div>
+      ) : (
+        <div ref={dropdownRef} className="card search-container">
+          <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
+          <input
+            type="text"
+            placeholder={viewMode === 'exercise' ? 'Search exercises...' : 'Search days...'}
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            spellCheck="false"
+            className="search-input"
+          />
+
+          {/* Dropdown */}
+          {showDropdown && (
+            <div className="dropdown-list">
+              {viewMode === 'exercise' ? (
+                filteredExercises.length > 0 ? (
+                  filteredExercises.map(ex => (
+                    <div
+                      key={ex.id}
+                      onClick={() => handleSelectExercise(ex.id)}
+                      className={`dropdown-item ${ex.id === selectedExerciseId ? 'selected' : ''}`}
+                    >
+                      {ex.name}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>
+                    No exercises found
+                  </div>
+                )
+              ) : (
+                filteredDays.length > 0 ? (
+                  filteredDays.map(day => (
+                    <div
+                      key={day.id}
+                      onClick={() => handleSelectDay(day.id)}
+                      className={`dropdown-item ${day.id === selectedDayId ? 'selected' : ''}`}
+                    >
+                      {day.name}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>
+                    No days found
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Chart */}
       <div className="card chart-card">
