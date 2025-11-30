@@ -158,33 +158,6 @@ const Settings: React.FC = () => {
                   borderRadius: '6px',
                   color: '#fff',
                   outline: 'none'
-                }}
-              />
-              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
-                <button
-                  className="btn-primary"
-                  onClick={handleUpdateDisplayName}
-                  style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
-                >
-                  Save
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowEditNameDialog(false);
-                    setNewDisplayName(user?.displayName || '');
-                  }}
-                  style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
-                >
-                  Cancel
-                </button>
-              </div>
-            </>
-          )}
-          
-          {showSuccessMessage && !showEditNameDialog && (
-            <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
-              ✓ Username updated successfully
             </p>
           )}
         </div>
