@@ -154,24 +154,20 @@ const Settings: React.FC = () => {
                 inputMode="text"
                 data-form-type="other"
                 style={{
-                  width: '100%', 
-                  marginBottom: '0.75rem', 
-                  padding: '0.75rem', 
-                  minHeight: '44px', 
-                  boxSizing: 'border-box', 
+                  width: '100%',
+                  marginBottom: '0.75rem',
+                  padding: '0.75rem',
+                  minHeight: '44px',
+                  boxSizing: 'border-box',
                   fontSize: '16px',
-                  background: '#2a2a2a',
-                  border: '1px solid #333',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  outline: 'none'
+                  background: '#2a2a2a'
                 }}
               />
-              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center'}}>
+              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
                 <button
                   className="btn-primary"
                   onClick={handleUpdateDisplayName}
-                  style={{flex: 1, padding: '0.75rem', height: '44px', minWidth: '100px'}}
+                  style={{flex: 1, padding: '0.75rem', height: '44px'}}
                 >
                   Save
                 </button>
@@ -181,7 +177,7 @@ const Settings: React.FC = () => {
                     setShowEditNameDialog(false);
                     setNewDisplayName(user?.displayName || '');
                   }}
-                  style={{flex: 1, padding: '0.75rem', height: '44px', minWidth: '100px'}}
+                  style={{flex: 1, padding: '0.75rem', height: '44px'}}
                 >
                   Cancel
                 </button>

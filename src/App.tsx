@@ -253,17 +253,53 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boo
   return <>{children}</>;
 };
 
+const LoadingScreen: React.FC = () => (
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    background: '#0a0a0a'
+  }}>
+    <img
+      src="/favicon.svg"
+      alt="Prodegi"
+      style={{
+        width: '120px',
+        height: 'auto',
+        marginBottom: '2rem',
+        animation: 'pulse 2s ease-in-out infinite'
+      }}
+    />
+    <div style={{
+      color: '#CC8E51',
+      fontSize: '1.2rem',
+      fontWeight: '500',
+      animation: 'fadeInOut 1.5s ease-in-out infinite'
+    }}>
+      Loading...
+    </div>
+    <style>{`
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+      }
+      @keyframes fadeInOut {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+    `}</style>
+  </div>
+);
+
 const OnboardingRoute: React.FC = () => {
   const { user } = useAuth();
   const { state, isLoaded } = useStore();
   const location = useLocation();
 
   if (!isLoaded) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user) {
@@ -286,11 +322,7 @@ const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
