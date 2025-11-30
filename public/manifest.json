@@ -1,0 +1,17 @@
+{
+  "name": "Prodegi",
+  "short_name": "Prodegi",
+  "description": "Gym Tracker with Progressive Overload",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#CC8E51",
+  "icons": [
+    {
+      "src": "/prodegilogo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
