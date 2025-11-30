@@ -22,7 +22,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: '100vh',
+      minHeight: '100vh',
       background: '#0a0a0a'
     }}>
       {/* Desktop Sidebar - Hidden on mobile */}
@@ -30,7 +30,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         position: 'fixed',
         left: 0,
         top: 0,
-        width: '200px',
+        width: '160px',
         height: '100vh',
         background: '#0a0a0a',
         borderRight: '1px solid #1a1a1a',
@@ -121,97 +121,41 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         flex: 1,
         overflowY: 'auto',
         padding: '2rem 1rem',
-        marginLeft: window.innerWidth <= 768 ? '0' : '200px',
-        marginBottom: window.innerWidth <= 768 ? '80px' : '0'
-      }} id="main-content">
-        {children}
-      </div>
-
-      {/* Footer */}
-      <footer style={{
-        background: '#0a0a0a',
-        borderTop: '1px solid #1a1a1a',
-        padding: '2rem 1rem',
-        marginLeft: '200px',
-        textAlign: 'center',
-        fontSize: '0.85rem',
-        color: '#6a6a6a'
-      }}>
-        <p style={{ margin: '0 0 0.5rem 0' }}>© 2025 Prodegi. All rights reserved.</p>
-        <p style={{ margin: 0 }}>Your personal workout companion.</p>
-      </footer>
-
-      {/* Mobile Bottom Navigation - Shown only on mobile */}
-      <nav style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        marginLeft: window.innerWidth <= 768 ? '0' : '160px',
         display: 'flex',
-        justifyContent: 'space-around',
-        background: '#0a0a0a',
-        borderTop: '1px solid #1a1a1a',
-        padding: '0.5rem 0',
-        zIndex: 100
-      }}>
-        <Link
-          to="/"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.25rem',
-            padding: '0.5rem 1rem',
-            textDecoration: 'none',
-            color: location.pathname === '/' ? '#C8956B' : '#6a6a6a',
-            transition: 'all 0.2s',
-            fontSize: '0.7rem',
-            flex: 1
-          }}
-        >
-          <Dumbbell size={20} />
-          <span>Workout</span>
-        </Link>
-        <Link
-          to="/progress"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.25rem',
-            padding: '0.5rem 1rem',
-            textDecoration: 'none',
-            color: location.pathname === '/progress' ? '#C8956B' : '#6a6a6a',
-            transition: 'all 0.2s',
-            fontSize: '0.7rem',
-            flex: 1
-          }}
-        >
-          <LineChart size={20} />
-          <span>Progress</span>
-        </Link>
-        <Link
-          to="/settings"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.25rem',
-            padding: '0.5rem 1rem',
-            textDecoration: 'none',
-            color: location.pathname === '/settings' ? '#C8956B' : '#6a6a6a',
-            transition: 'all 0.2s',
-            fontSize: '0.7rem',
-            flex: 1
-          }}
-        >
-          <SettingsIcon size={20} />
-          <span>Settings</span>
-        </Link>
-      </nav>
+        flexDirection: 'column'
+      }} id="main-content">
+        <div style={{ flex: 1 }}>
+          {children}
+        </div>
+
+        {/* Footer */}
+        <footer style={{
+          marginTop: 'auto',
+          paddingTop: '1rem',
+          paddingBottom: '0.5rem',
+          borderTop: '1px solid #1a1a1a',
+          fontSize: '0.85rem',
+          color: '#6a6a6a'
+        }}>
+          <p style={{ margin: '0 0 0.5rem 0' }}>
+            © 2025 Prodegi. All rights reserved.
+          </p>
+          <p style={{ margin: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+            <a href="mailto:contact@prodegitracker.com" style={{ color: '#C8956B', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#d4a576'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#C8956B'}>
+              contact@prodegitracker.com
+            </a>
+            <span style={{ color: '#6a6a6a' }}>|</span>
+            <a href="https://www.instagram.com/prodegitracker" target="_blank" rel="noopener noreferrer" style={{ color: '#C8956B', textDecoration: 'none', transition: 'color 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#d4a576'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#C8956B'}>
+              Instagram
+            </a>
+          </p>
+        </footer>
+      </div>
     </div>
   );
 };

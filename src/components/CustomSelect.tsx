@@ -12,6 +12,41 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, s
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Add custom scrollbar styles
+  useEffect(() => {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+      .custom-select-dropdown::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .custom-select-dropdown::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .custom-select-dropdown::-webkit-scrollbar-thumb {
+        background: #333333;
+        border-radius: 3px;
+      }
+
+      .custom-select-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #4a4a4a;
+      }
+
+      .custom-select-dropdown::-webkit-scrollbar-button {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        background: none !important;
+      }
+    `;
+    document.head.appendChild(styleSheet);
+
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
+
   const selectedOption = options.find(opt => opt.id === value);
 
   useEffect(() => {
@@ -74,6 +109,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, s
       {/* Dropdown Menu */}
       {isOpen && (
         <div
+          className="custom-select-dropdown"
           style={{
             position: 'absolute',
             top: 'calc(100% + 0.25rem)',

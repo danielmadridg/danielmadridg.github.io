@@ -349,13 +349,13 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', overflow: 'hidden' }}>
+      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '1.5rem', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
         {hasData ? (
-          <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '300px' : '400px' }}>
+          <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '450px' : '600px', width: '100%' }}>
             <Line options={chartOptions} data={currentData} />
           </div>
         ) : (
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             No data available for this {viewMode === 'exercise' ? 'exercise' : 'day'}.
           </p>
         )}
