@@ -167,7 +167,7 @@ const Settings: React.FC = () => {
                 <button
                   className="btn-primary"
                   onClick={handleUpdateDisplayName}
-                  style={{flex: 1, padding: '0.75rem', height: '44px'}}
+                  style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
                 >
                   Save
                 </button>
@@ -177,7 +177,7 @@ const Settings: React.FC = () => {
                     setShowEditNameDialog(false);
                     setNewDisplayName(user?.displayName || '');
                   }}
-                  style={{flex: 1, padding: '0.75rem', height: '44px'}}
+                  style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
                 >
                   Cancel
                 </button>

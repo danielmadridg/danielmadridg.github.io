@@ -167,7 +167,7 @@ const Onboarding: React.FC = () => {
           <div style={{ marginTop: '1rem' }}>
             {day.exercises.map((ex, exIndex) => (
               <div key={ex.id} style={{ marginBottom: '1rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
-                <div className="flex-row" style={{ marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <input
                     placeholder="Exercise Name"
                     value={ex.name}
@@ -175,7 +175,7 @@ const Onboarding: React.FC = () => {
                     spellCheck="false"
                     style={{ flex: 1 }}
                   />
-                  <button onClick={() => removeExercise(dayIndex, exIndex)} className="btn-danger">
+                  <button onClick={() => removeExercise(dayIndex, exIndex)} className="btn-danger" style={{ height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
                     <Trash2 size={16} />
                   </button>
                 </div>
