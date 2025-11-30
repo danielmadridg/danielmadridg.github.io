@@ -68,23 +68,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           } else {
             console.log('[StoreContext] No Firestore data, checking localStorage');
             // If no data in Firestore, check if we have local data to migrate
-            // Or just start fresh/keep current state
-            // Ideally, if we have local data and just signed up, we might want to upload it.
-            // For now, let's just save the current state to Firestore if it's not empty, 
-            // or if it is empty, just initialize.
-            
-            // If we have data in localStorage that we want to preserve on first login:
             const localData = localStorage.getItem('prodegi_data');
             if (localData) {
                  const parsed = JSON.parse(localData);
                  console.log('[StoreContext] Migrating localStorage to Firestore:', parsed);
-                 // Optional: Merge or just use local data
                  dispatch({ type: 'LOAD_DATA', payload: parsed });
-                 // We will save this to Firestore in the next effect
             }
           }
+          // Only set isLoaded to true if we successfully queried Firestore (found data or confirmed no data)
+          setIsLoaded(true);
         } catch (e) {
           console.error("[StoreContext] Error loading from Firestore:", e);
+          // CRITICAL: Do NOT set isLoaded to true if loading failed.
+          // This prevents the save effect from running and overwriting cloud data with empty local state.
+          alert("Error loading data from cloud. Changes will not be saved to cloud until you refresh.");
         }
       } else {
         // Fallback to localStorage for guest
@@ -97,12 +94,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             console.error("Failed to load local data", e);
           }
         } else {
-            // Reset to initial if no local data and no user
             console.log('[StoreContext] No data found, resetting to initial');
             dispatch({ type: 'CLEAR_DATA' });
         }
+        setIsLoaded(true);
       }
-      setIsLoaded(true);
     };
 
     loadData();
