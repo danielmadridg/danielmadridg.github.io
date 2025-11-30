@@ -351,6 +351,16 @@ const Settings: React.FC = () => {
       <div className="card" style={{marginTop: '2rem'}}>
         <h3 style={{color: '#f44336', marginBottom: '1rem'}}>{t('danger_zone')}</h3>
 
+        {/* Logout Section */}
+        <button
+          className="btn-secondary"
+          onClick={handleLogout}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}
+        >
+          <LogOut style={{verticalAlign: 'middle'}}/>
+          {t('logout')}
+        </button>
+
         {/* Reset Data Section */}
         <button
           className="btn-danger"
@@ -446,16 +456,6 @@ const Settings: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Logout Section */}
-        <button
-          className="btn-danger"
-          onClick={handleLogout}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1rem', backgroundColor: '#ff9800', border: 'none'}}
-        >
-          <LogOut style={{verticalAlign: 'middle', marginRight: '8px'}}/>
-          {t('logout')}
-        </button>
 
         {/* Delete Account Section */}
         <button
