@@ -26,21 +26,24 @@ const Home: React.FC = () => {
     startTime: string;
     exercises: Record<string, { weight: string; reps: string[] }>;
   } | null>(null);
+  const [savedWorkout, setSavedWorkout] = useState<{
+    dayId: string;
+    startTime: string;
+    exercises: Record<string, { weight: string; reps: string[] }>;
+  } | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const navigate = useNavigate();
 
-  // Load active workout from local storage on mount
+  // Load saved workout from local storage on mount (but don't activate it)
   useEffect(() => {
-    const savedWorkout = localStorage.getItem('activeWorkout');
-    if (savedWorkout) {
+    const saved = localStorage.getItem('activeWorkout');
+    if (saved) {
       try {
-        const parsed = JSON.parse(savedWorkout);
+        const parsed = JSON.parse(saved);
         // Validate that the day still exists
         const dayExists = state.routine.some(d => d.id === parsed.dayId);
         if (dayExists) {
-          setActiveWorkout(parsed);
-          setWorkoutActive(true);
-          setSelectedDayId(parsed.dayId);
+          setSavedWorkout(parsed);
         } else {
           localStorage.removeItem('activeWorkout');
         }
@@ -49,14 +52,21 @@ const Home: React.FC = () => {
         localStorage.removeItem('activeWorkout');
       }
     }
-  }, []);
+  }, [state.routine]);
 
   // Save active workout to local storage whenever it changes
   useEffect(() => {
     if (activeWorkout) {
       localStorage.setItem('activeWorkout', JSON.stringify(activeWorkout));
-    } else {
-      localStorage.removeItem('activeWorkout');
+      setSavedWorkout(activeWorkout);
+    } else if (!savedWorkout) {
+      // Only remove if we don't have a saved workout (handled by finish/cancel)
+      // Actually, if activeWorkout becomes null, we might want to keep it in localStorage if it was just closed?
+      // But here activeWorkout becomes null when we finish or cancel.
+      // If we unmount, activeWorkout is lost from state but we want it in localStorage.
+      // This effect runs when activeWorkout changes.
+      // If we finish/cancel, we explicitly remove it.
+      // If we just close the app, this effect doesn't run with null.
     }
   }, [activeWorkout]);
 
@@ -79,6 +89,7 @@ const Home: React.FC = () => {
   const handleCancelWorkout = () => {
     if (confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
       setActiveWorkout(null);
+      setSavedWorkout(null);
       setWorkoutActive(false);
       localStorage.removeItem('activeWorkout');
       navigate('/');
@@ -92,8 +103,24 @@ const Home: React.FC = () => {
     }
   }, [setHandleCancelWorkout]);
 
+  const handleResumeWorkout = () => {
+    if (savedWorkout) {
+      setActiveWorkout(savedWorkout);
+      setWorkoutActive(true);
+      setSelectedDayId(savedWorkout.dayId);
+    }
+  };
+
   const handleStartWorkout = () => {
     if (!selectedDay) return;
+
+    if (savedWorkout) {
+      if (!confirm('You have a workout in progress. Starting a new one will discard it. Continue?')) {
+        return;
+      }
+      localStorage.removeItem('activeWorkout');
+      setSavedWorkout(null);
+    }
 
     const initialExercises: Record<string, { weight: string; reps: string[] }> = {};
 
@@ -161,7 +188,9 @@ const Home: React.FC = () => {
 
     addSession(session);
     setActiveWorkout(null);
+    setSavedWorkout(null);
     setWorkoutActive(false);
+    localStorage.removeItem('activeWorkout');
   };
 
   const handleEditSession = (session: WorkoutSession) => {
@@ -366,6 +395,22 @@ const Home: React.FC = () => {
   return (
     <div>
       <h1>{greeting}</h1>
+
+      {savedWorkout && !activeWorkout && (
+        <div className="card" style={{ marginBottom: '1.5rem', border: '1px solid var(--primary-color)', background: 'rgba(200, 149, 107, 0.1)' }}>
+          <h3 style={{ marginTop: 0, color: 'var(--primary-color)' }}>Workout in Progress</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+            You have an unfinished workout for <strong>{state.routine.find(d => d.id === savedWorkout.dayId)?.name || 'Unknown Day'}</strong>.
+          </p>
+          <button 
+            className="btn-primary" 
+            onClick={handleResumeWorkout}
+            style={{ width: '100%' }}
+          >
+            Resume Workout
+          </button>
+        </div>
+      )}
 
       <div className="card">
         <label style={{fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.75rem'}}>{t('select_routine_day')}</label>

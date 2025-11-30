@@ -7,8 +7,9 @@ import {
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
+import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { auth, googleProvider, functions } from '../config/firebase';
+import { auth, googleProvider, functions, db } from '../config/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { Mail, Lock, Chrome, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -38,6 +39,8 @@ const Login: React.FC = () => {
         if (result) {
           // Successfully signed in via redirect
           console.log('[Login] Redirect result received, user authenticated');
+          // If it's a new user, we might want to ensure they have a user doc, but for Google Sign In we might need a different flow or just let them be without a username for now/auto-generate one.
+          // For now, focusing on Email/Password flow as requested.
         }
       } catch (err: any) {
         console.error('[Login] Redirect result error:', err);
@@ -160,6 +163,13 @@ const Login: React.FC = () => {
     }
   };
 
+  const checkUsernameAvailability = async (usernameToCheck: string) => {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', usernameToCheck));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty;
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -172,6 +182,22 @@ const Login: React.FC = () => {
       }
       if (!username.trim()) {
         setError('Please enter a username');
+        return;
+      }
+      
+      // Check username uniqueness
+      try {
+        setLoading(true);
+        const isAvailable = await checkUsernameAvailability(username.trim());
+        if (!isAvailable) {
+          setError('Username is already taken. Please choose another one.');
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setError('Failed to validate username. Please try again.');
+        setLoading(false);
         return;
       }
     }
@@ -223,9 +249,21 @@ const Login: React.FC = () => {
         // Code verified, proceed with authentication
         if (isSignUp) {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          // Combine name and username or store username separately if possible.
-          // For now, we'll just use Name as Display Name.
-          // Ideally we should store username in Firestore.
+          
+          // Create user document in Firestore
+          try {
+            await setDoc(doc(db, 'users', userCredential.user.uid), {
+              uid: userCredential.user.uid,
+              username: username.trim(),
+              email: email,
+              name: name,
+              createdAt: new Date().toISOString()
+            });
+          } catch (err) {
+            console.error('Error creating user document:', err);
+            // Continue even if firestore fails, auth is successful
+          }
+
           await updateProfile(userCredential.user, {
             displayName: name
           });
