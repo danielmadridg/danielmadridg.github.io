@@ -12,6 +12,15 @@ interface CustomSelectProps {
 const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, style, placeholder = 'Select...' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const checkIOS = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      return /iphone|ipad|ipod/.test(userAgent);
+    };
+    setIsIOS(checkIOS());
+  }, []);
 
   // Add custom scrollbar styles
   useEffect(() => {
@@ -65,6 +74,49 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, s
     onChange(optionId);
     setIsOpen(false);
   };
+
+  if (isIOS) {
+    return (
+      <div style={{ position: 'relative', ...style }}>
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '0.875rem 1rem',
+            fontSize: '1rem',
+            background: 'var(--surface-color)',
+            border: '1px solid #252525',
+            borderRadius: '6px',
+            color: 'var(--text-color)',
+            fontWeight: 500,
+            cursor: 'pointer',
+            appearance: 'none',
+            WebkitAppearance: 'none',
+            fontFamily: 'inherit'
+          }}
+        >
+          <option value="" disabled>{placeholder}</option>
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={20}
+          style={{
+            position: 'absolute',
+            right: '1rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            pointerEvents: 'none',
+            color: 'var(--primary-color)'
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative', ...style }}>
