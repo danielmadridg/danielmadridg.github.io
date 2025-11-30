@@ -6,9 +6,10 @@ interface CustomSelectProps {
   onChange: (value: string) => void;
   options: { id: string; name: string }[];
   style?: React.CSSProperties;
+  placeholder?: string;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, style }) => {
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, style, placeholder = 'Select...' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +96,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, s
           if (!isOpen) e.currentTarget.style.borderColor = '#252525';
         }}
       >
-        <span>{selectedOption?.name || 'Select...'}</span>
+        <span>{selectedOption?.name || placeholder}</span>
         <ChevronDown
           size={20}
           style={{

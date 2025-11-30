@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Line } from 'react-chartjs-2';
 import {
@@ -12,6 +12,8 @@ import {
   Legend,
 } from 'chart.js';
 import { format } from 'date-fns';
+import CustomSelect from '../components/CustomSelect';
+import './Progress.css';
 
 ChartJS.register(
   CategoryScale,
@@ -23,11 +25,19 @@ ChartJS.register(
   Legend
 );
 
-import './Progress.css';
-
 const Progress: React.FC = () => {
   const { state, getExerciseHistory } = useStore();
   const [viewMode, setViewMode] = useState<'exercise' | 'day'>('exercise');
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const checkIOS = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      return /iphone|ipad|ipod/.test(userAgent);
+    };
+    setIsIOS(checkIOS());
+  }, []);
+
   const allExercises = useMemo(() => {
     return state.routine.flatMap(day => day.exercises);
   }, [state.routine]);
@@ -210,33 +220,51 @@ const Progress: React.FC = () => {
       {/* Select Input */}
       <div className="card search-container">
         <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
-        <select
-          value={viewMode === 'exercise' ? selectedExerciseId : selectedDayId}
-          onChange={(e) => {
-            if (viewMode === 'exercise') {
-              handleSelectExercise(e.target.value);
-            } else {
-              handleSelectDay(e.target.value);
+        {isIOS ? (
+          <select
+            value={viewMode === 'exercise' ? selectedExerciseId : selectedDayId}
+            onChange={(e) => {
+              if (viewMode === 'exercise') {
+                handleSelectExercise(e.target.value);
+              } else {
+                handleSelectDay(e.target.value);
+              }
+            }}
+            className="search-input"
+            style={{ backgroundColor: '#1a1a1a', color: '#fff', cursor: 'pointer' }}
+          >
+            <option value="">Select {viewMode === 'exercise' ? 'Exercise' : 'Day'}</option>
+            {viewMode === 'exercise' ? (
+              allExercises
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((ex, idx) => (
+                  <option key={`${ex.id}-${idx}`} value={ex.id}>{ex.name}</option>
+                ))
+            ) : (
+              state.routine
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(day => (
+                  <option key={day.id} value={day.id}>{day.name}</option>
+                ))
+            )}
+          </select>
+        ) : (
+          <CustomSelect
+            value={viewMode === 'exercise' ? selectedExerciseId : selectedDayId}
+            onChange={(value) => {
+              if (viewMode === 'exercise') {
+                handleSelectExercise(value);
+              } else {
+                handleSelectDay(value);
+              }
+            }}
+            options={viewMode === 'exercise' 
+              ? allExercises.sort((a, b) => a.name.localeCompare(b.name))
+              : state.routine.sort((a, b) => a.name.localeCompare(b.name))
             }
-          }}
-          className="search-input"
-          style={{ backgroundColor: '#1a1a1a', color: '#fff', cursor: 'pointer' }}
-        >
-          <option value="">Select {viewMode === 'exercise' ? 'Exercise' : 'Day'}</option>
-          {viewMode === 'exercise' ? (
-            allExercises
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((ex, idx) => (
-                <option key={`${ex.id}-${idx}`} value={ex.id}>{ex.name}</option>
-              ))
-          ) : (
-            state.routine
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(day => (
-                <option key={day.id} value={day.id}>{day.name}</option>
-              ))
-          )}
-        </select>
+            placeholder={`Select ${viewMode === 'exercise' ? 'Exercise' : 'Day'}`}
+          />
+        )}
       </div>
 
       {/* Chart */}
