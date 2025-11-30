@@ -93,8 +93,8 @@ const Login: React.FC = () => {
         justifyContent: 'center',
         padding: '2rem'
       }}>
-        <img src="/prodegilogo.png" alt="Prodegi" style={{
-          maxWidth: '400px',
+        <img src="/favicon.svg" alt="Prodegi" style={{
+          maxWidth: '300px',
           width: '100%',
           height: 'auto'
         }} />
