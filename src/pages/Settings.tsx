@@ -136,6 +136,36 @@ const Settings: React.FC = () => {
                 type="text"
                 value={newDisplayName}
                 onChange={(e) => {
+                  const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
+                  setNewDisplayName(filtered);
+                }}
+                placeholder="Your username"
+                spellCheck={false}
+                autoFocus
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                inputMode="text"
+                style={{
+                  width: '100%', 
+                  marginBottom: '0.75rem', 
+                  padding: '0.75rem', 
+                  minHeight: '44px', 
+                  boxSizing: 'border-box', 
+                  fontSize: '16px',
+                  background: '#2a2a2a',
+                  border: '1px solid #333',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  outline: 'none'
+                }}
+              />
+              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
+                <button
+                  className="btn-primary"
+                  onClick={handleUpdateDisplayName}
+                  style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+                >
                   Save
                 </button>
                 <button
@@ -198,7 +228,7 @@ const Settings: React.FC = () => {
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="Type confirm"
-              spellCheck="false"
+              spellCheck={false}
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
             <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
@@ -246,7 +276,7 @@ const Settings: React.FC = () => {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type confirm"
-              spellCheck="false"
+              spellCheck={false}
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
             <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
