@@ -19,7 +19,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [processingRedirect, setProcessingRedirect] = useState(true);
 
   useEffect(() => {
-    // Handle redirect result
+    let unsubscribe: () => void;
+
+    // Handle redirect result FIRST, then set up auth state listener
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
@@ -30,16 +32,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('[AuthContext] Error handling redirect:', error);
       })
       .finally(() => {
+        console.log('[AuthContext] Redirect processing complete');
         setProcessingRedirect(false);
+        
+        // NOW set up the auth state listener
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          console.log('[AuthContext] Auth state changed:', user?.uid || 'null');
+          setUser(user);
+          setLoading(false);
+        });
       });
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('[AuthContext] Auth state changed:', user?.uid || 'null');
-      setUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const signOut = async () => {
