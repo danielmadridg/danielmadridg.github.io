@@ -80,7 +80,64 @@ const Settings: React.FC = () => {
     }
   };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+
   return (
+    <div>
+      <h1>Settings</h1>
+
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <div style={{marginBottom: '1rem'}}>
+          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Display Name</label>
+          <div style={{
+            display: 'flex', 
+            gap: '0.75rem', 
+            alignItems: 'stretch',
+            flexDirection: isMobile ? 'column' : 'row'
+          }}>
+            <span style={{
+              flex: 1, 
+              padding: '0.75rem', 
+              background: 'var(--surface-color)', 
+              borderRadius: '6px', 
+              minHeight: '44px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              fontSize: '1rem',
+              border: '1px solid #252525'
+            }}>
+              {user?.displayName || 'Not set'}
+            </span>
+            <button
+              className="btn-secondary"
+              onClick={() => setShowEditNameDialog(true)}
+              style={{
+                minHeight: '44px', 
+                padding: '0.75rem 1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                fontSize: '0.95rem',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Edit size={18} />
+              {isMobile && <span>Edit Name</span>}
+            </button>
+          </div>
+          {showSuccessMessage && (
+            <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
+              ✓ Display name updated successfully
+            </p>
+          )}
+        </div>
+
+        {showEditNameDialog && (
+          <div style={{marginTop: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(200, 149, 107, 0.1)', borderRadius: '4px', border: '1px solid var(--primary-color)'}}>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Enter your first name:</label>
+            <input
+              type="text"
               value={newDisplayName}
               onChange={(e) => {
                 const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
@@ -90,7 +147,7 @@ const Settings: React.FC = () => {
               spellCheck="false"
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
-            <div style={{display: 'flex', gap: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row'}}>
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
               <button
                 className="btn-primary"
                 onClick={handleUpdateDisplayName}
@@ -114,12 +171,12 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="card">
-        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minHeight: '44px', width: '100%', padding: '0.75rem', fontSize: window.innerWidth <= 480 ? '0.9rem' : '1rem', flexWrap: 'wrap'}}>
+        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minHeight: '44px', width: '100%', padding: '0.75rem', fontSize: isMobile ? '0.9rem' : '1rem', flexWrap: 'wrap'}}>
           <Edit style={{width: '18px', height: '18px', flexShrink: 0}}/>
           Edit Routine
         </button>
 
-        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: window.innerWidth <= 480 ? '0.9rem' : '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap'}}>
+        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: isMobile ? '0.9rem' : '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap'}}>
           <LogOut style={{width: '18px', height: '18px', flexShrink: 0}}/>
           Logout
         </button>
@@ -139,7 +196,7 @@ const Settings: React.FC = () => {
         </button>
 
         {showResetDialog && (
-          <div style={{marginTop: '0', marginBottom: '1rem', padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+          <div style={{marginTop: '0', marginBottom: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
             <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
               This will permanently delete all your workout data, routine, and history. This action cannot be undone.
             </p>
@@ -154,7 +211,7 @@ const Settings: React.FC = () => {
               spellCheck="false"
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
-            <div style={{display: 'flex', gap: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row'}}>
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
               <button
                 className="btn-danger"
                 onClick={handleResetData}
@@ -187,7 +244,7 @@ const Settings: React.FC = () => {
         </button>
 
         {showDeleteDialog && (
-          <div style={{marginTop: '1rem', padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+          <div style={{marginTop: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
             <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
               This will permanently delete your account and all associated data. This action cannot be undone.
             </p>
@@ -202,7 +259,7 @@ const Settings: React.FC = () => {
               spellCheck="false"
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
-            <div style={{display: 'flex', gap: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row'}}>
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
               <button
                 className="btn-danger"
                 onClick={handleDeleteAccount}
