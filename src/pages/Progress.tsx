@@ -153,12 +153,12 @@ const Progress: React.FC = () => {
         align: 'center' as const,
         labels: {
           color: '#FFF',
-          font: { size: window.innerWidth <= 768 ? 12 : 14, weight: '500' as const },
-          padding: 20,
+          font: { size: window.innerWidth <= 768 ? 14 : 16, weight: '500' as const },
+          padding: 25,
           usePointStyle: true,
           pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8
+          boxWidth: 10,
+          boxHeight: 10
         }
       },
       title: {
@@ -355,9 +355,9 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '1.5rem', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '2rem', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
         {hasData ? (
-          <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '450px' : '600px', width: '100%' }}>
+          <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '500px' : '700px', width: '100%' }}>
             <Line options={chartOptions} data={currentData} />
           </div>
         ) : (
