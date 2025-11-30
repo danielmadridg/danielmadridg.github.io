@@ -6,7 +6,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider } from '../config/firebase';
-import { Mail, Lock, Chrome, User } from 'lucide-react';
+import { Mail, Lock, Chrome, User, Eye, EyeOff } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -15,6 +15,7 @@ const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -266,25 +267,47 @@ const Login: React.FC = () => {
               <Lock size={16} />
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading}
-              minLength={6}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: '#2a2a2a',
-                border: '1px solid #333',
-                borderRadius: '6px',
-                color: '#fff',
-                fontSize: '1rem',
-                outline: 'none'
-              }}
-              placeholder="••••••••"
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={6}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  paddingRight: '2.5rem',
+                  background: '#2a2a2a',
+                  border: '1px solid #333',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontSize: '1rem',
+                  outline: 'none'
+                }}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '0.75rem',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#888',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button
