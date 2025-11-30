@@ -171,7 +171,8 @@ const Login: React.FC = () => {
             fontWeight: '500',
             cursor: loading ? 'not-allowed' : 'pointer',
             opacity: loading ? 0.6 : 1,
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            boxSizing: 'border-box'
           }}
         >
           <Chrome size={20} />
@@ -216,7 +217,8 @@ const Login: React.FC = () => {
                   borderRadius: '6px',
                   color: '#fff',
                   fontSize: '1rem',
-                  outline: 'none'
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
                 placeholder="Your name"
               />
@@ -249,7 +251,8 @@ const Login: React.FC = () => {
                 borderRadius: '6px',
                 color: '#fff',
                 fontSize: '1rem',
-                outline: 'none'
+                outline: 'none',
+                boxSizing: 'border-box'
               }}
               placeholder="your@email.com"
             />
@@ -284,7 +287,8 @@ const Login: React.FC = () => {
                   borderRadius: '6px',
                   color: '#fff',
                   fontSize: '1rem',
-                  outline: 'none'
+                  outline: 'none',
+                  boxSizing: 'border-box'
                 }}
                 placeholder="••••••••"
               />
@@ -324,7 +328,8 @@ const Login: React.FC = () => {
               fontWeight: '600',
               cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.6 : 1,
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              boxSizing: 'border-box'
             }}
           >
             {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
