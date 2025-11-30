@@ -365,7 +365,7 @@ const Settings: React.FC = () => {
         <button
           className="btn-danger"
           onClick={() => setShowClearHistoryDialog(!showClearHistoryDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1.5rem'}}
         >
           <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
           Clear Workout History
@@ -413,7 +413,7 @@ const Settings: React.FC = () => {
         <button
           className="btn-danger"
           onClick={() => setShowResetDialog(!showResetDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1.5rem'}}
         >
           <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
           {t('reset_all_data')}
@@ -461,7 +461,7 @@ const Settings: React.FC = () => {
         <button
           className="btn-danger"
           onClick={() => setShowDeleteDialog(!showDeleteDialog)}
-          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem', marginTop: '1rem'}}
+          style={{width: '100%', padding: '0.75rem', fontSize: '1rem', marginBottom: '1rem'}}
         >
           <Trash2 style={{verticalAlign: 'middle', marginRight: '8px'}}/>
           {t('delete_account')}
