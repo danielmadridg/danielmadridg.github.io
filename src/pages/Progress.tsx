@@ -129,7 +129,7 @@ const Progress: React.FC = () => {
 
   const chartOptions = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: !isMobile,
     interaction: {
       mode: 'index' as const,
       intersect: false,

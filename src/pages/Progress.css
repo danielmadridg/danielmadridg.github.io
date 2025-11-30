@@ -138,7 +138,7 @@
   }
 
   .chart-wrapper {
-    height: calc(100vw - 2rem);
-    max-height: 600px;
+    height: 80vw;
+    min-height: 500px;
   }
 }
