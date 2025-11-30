@@ -29,6 +29,37 @@ const Home: React.FC = () => {
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const navigate = useNavigate();
 
+  // Load active workout from local storage on mount
+  useEffect(() => {
+    const savedWorkout = localStorage.getItem('activeWorkout');
+    if (savedWorkout) {
+      try {
+        const parsed = JSON.parse(savedWorkout);
+        // Validate that the day still exists
+        const dayExists = state.routine.some(d => d.id === parsed.dayId);
+        if (dayExists) {
+          setActiveWorkout(parsed);
+          setWorkoutActive(true);
+          setSelectedDayId(parsed.dayId);
+        } else {
+          localStorage.removeItem('activeWorkout');
+        }
+      } catch (e) {
+        console.error('Failed to parse saved workout', e);
+        localStorage.removeItem('activeWorkout');
+      }
+    }
+  }, []);
+
+  // Save active workout to local storage whenever it changes
+  useEffect(() => {
+    if (activeWorkout) {
+      localStorage.setItem('activeWorkout', JSON.stringify(activeWorkout));
+    } else {
+      localStorage.removeItem('activeWorkout');
+    }
+  }, [activeWorkout]);
+
   // Get the appropriate locale for date-fns
   const getDateLocale = () => {
     switch (language) {
@@ -49,6 +80,7 @@ const Home: React.FC = () => {
     if (confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
       setActiveWorkout(null);
       setWorkoutActive(false);
+      localStorage.removeItem('activeWorkout');
       navigate('/');
     }
   };
@@ -72,11 +104,13 @@ const Home: React.FC = () => {
       };
     });
 
-    setActiveWorkout({
+    const newWorkout = {
       dayId: selectedDayId,
       startTime: new Date().toISOString(),
       exercises: initialExercises
-    });
+    };
+
+    setActiveWorkout(newWorkout);
     setWorkoutActive(true);
   };
 

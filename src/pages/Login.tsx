@@ -22,6 +22,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -96,6 +97,8 @@ const Login: React.FC = () => {
         // Use signInWithRedirect on mobile, signInWithPopup on desktop
         if (isMobileDevice()) {
           await signInWithRedirect(auth, googleProvider);
+          // Return here as the page will redirect
+          return;
         } else {
           await signInWithPopup(auth, googleProvider);
         }
@@ -106,7 +109,9 @@ const Login: React.FC = () => {
         setError(errorMessage);
       }
     } finally {
-      setLoading(false);
+      if (!isMobileDevice()) {
+        setLoading(false);
+      }
     }
   };
 
@@ -165,6 +170,10 @@ const Login: React.FC = () => {
         setError(t('error_weak_password'));
         return;
       }
+      if (!username.trim()) {
+        setError('Please enter a username');
+        return;
+      }
     }
 
     try {
@@ -214,9 +223,14 @@ const Login: React.FC = () => {
         // Code verified, proceed with authentication
         if (isSignUp) {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          // Combine name and username or store username separately if possible.
+          // For now, we'll just use Name as Display Name.
+          // Ideally we should store username in Firestore.
           await updateProfile(userCredential.user, {
             displayName: name
           });
+          
+          alert("We encourage you to take each set as close to failure as possible to ensure accurate progress through progressive overload.");
         } else {
           await signInWithEmailAndPassword(auth, email, password);
         }
@@ -400,39 +414,74 @@ const Login: React.FC = () => {
 
         <form onSubmit={handleEmailAuth}>
           {isSignUp && (
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginBottom: '0.5rem',
-                color: '#ccc',
-                fontSize: '0.9rem'
-              }}>
-                <User size={16} />
-                {t('name')}
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={loading}
-                spellCheck="false"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: '#2a2a2a',
-                  border: '1px solid #333',
-                  borderRadius: '6px',
-                  color: '#fff',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                placeholder={t('your_name')}
-              />
-            </div>
+            <>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem',
+                  color: '#ccc',
+                  fontSize: '0.9rem'
+                }}>
+                  <User size={16} />
+                  {t('name')}
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  disabled={loading}
+                  spellCheck="false"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#2a2a2a',
+                    border: '1px solid #333',
+                    borderRadius: '6px',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder={t('your_name')}
+                />
+              </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem',
+                  color: '#ccc',
+                  fontSize: '0.9rem'
+                }}>
+                  <User size={16} />
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  disabled={loading}
+                  spellCheck="false"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#2a2a2a',
+                    border: '1px solid #333',
+                    borderRadius: '6px',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                  placeholder="Username"
+                />
+              </div>
+            </>
           )}
           <div style={{ marginBottom: '1rem' }}>
             <label style={{

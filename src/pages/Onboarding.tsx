@@ -15,6 +15,7 @@ const Onboarding: React.FC = () => {
   const [step, setStep] = useState<number>(state.routine.length > 0 ? 2 : 1);
   const [routine, setRoutineState] = useState<RoutineDay[]>(state.routine.length > 0 ? state.routine : []);
   const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const [draggedItem, setDraggedItem] = useState<{ dayIndex: number; exIndex: number } | null>(null);
 
   const handleStart = () => {
     if (!daysCount || daysCount < 1) {
@@ -34,9 +35,9 @@ const Onboarding: React.FC = () => {
     const newExercise: ExerciseConfig = {
       id: crypto.randomUUID(),
       name: '',
-      targetReps: 10,
-      sets: 3,
-      increment: 2.5 // Kept for compatibility but not used by new algorithm
+      targetReps: 0, // 0 will be displayed as empty string to show placeholder
+      sets: 0, // 0 will be displayed as empty string to show placeholder
+      increment: 2.5
     };
     const newRoutine = [...routine];
     newRoutine[dayIndex].exercises.push(newExercise);
@@ -53,9 +54,11 @@ const Onboarding: React.FC = () => {
   };
 
   const removeExercise = (dayIndex: number, exIndex: number) => {
-    const newRoutine = [...routine];
-    newRoutine[dayIndex].exercises.splice(exIndex, 1);
-    setRoutineState(newRoutine);
+    if (confirm('Are you sure you want to delete this exercise?')) {
+      const newRoutine = [...routine];
+      newRoutine[dayIndex].exercises.splice(exIndex, 1);
+      setRoutineState(newRoutine);
+    }
   };
 
   const addDay = () => {
@@ -106,6 +109,38 @@ const Onboarding: React.FC = () => {
       // In create mode, go back to step 1
       setStep(1);
     }
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, dayIndex: number, exIndex: number) => {
+    setDraggedItem({ dayIndex, exIndex });
+    e.dataTransfer.effectAllowed = 'move';
+    // Make the drag image transparent or style it if needed
+  };
+
+  const handleDragOver = (e: React.DragEvent, dayIndex: number, exIndex: number) => {
+    e.preventDefault();
+    if (!draggedItem) return;
+    if (draggedItem.dayIndex !== dayIndex) return; // Only allow reordering within the same day
+    if (draggedItem.exIndex === exIndex) return;
+
+    // Perform the swap
+    const newRoutine = [...routine];
+    const dayExercises = [...newRoutine[dayIndex].exercises];
+    const draggedExercise = dayExercises[draggedItem.exIndex];
+    
+    // Remove from old position
+    dayExercises.splice(draggedItem.exIndex, 1);
+    // Insert at new position
+    dayExercises.splice(exIndex, 0, draggedExercise);
+    
+    newRoutine[dayIndex].exercises = dayExercises;
+    setRoutineState(newRoutine);
+    setDraggedItem({ dayIndex, exIndex });
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
   };
 
   if (step === 1) {
@@ -180,8 +215,24 @@ const Onboarding: React.FC = () => {
           </div>
           <div style={{ marginTop: '1rem' }}>
             {day.exercises.map((ex, exIndex) => (
-              <div key={ex.id} style={{ marginBottom: '1rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
+              <div 
+                key={ex.id} 
+                draggable
+                onDragStart={(e) => handleDragStart(e, dayIndex, exIndex)}
+                onDragOver={(e) => handleDragOver(e, dayIndex, exIndex)}
+                onDragEnd={handleDragEnd}
+                style={{ 
+                  marginBottom: '1rem', 
+                  borderBottom: '1px solid #333', 
+                  paddingBottom: '1rem',
+                  opacity: draggedItem?.dayIndex === dayIndex && draggedItem?.exIndex === exIndex ? 0.5 : 1,
+                  cursor: 'grab'
+                }}
+              >
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', cursor: 'grab', paddingRight: '0.5rem', color: '#666' }}>
+                    ⋮⋮
+                  </div>
                   <input
                     placeholder={t('exercise_name')}
                     value={ex.name}
@@ -198,8 +249,9 @@ const Onboarding: React.FC = () => {
                     <label>{t('sets')}</label>
                     <input
                       type="number"
-                      value={ex.sets}
-                      onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', Number(e.target.value))}
+                      value={ex.sets === 0 ? '' : ex.sets}
+                      placeholder="3"
+                      onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', e.target.value === '' ? 0 : Number(e.target.value))}
                       style={{ width: '100%', boxSizing: 'border-box' }}
                     />
                   </div>
@@ -207,8 +259,9 @@ const Onboarding: React.FC = () => {
                     <label>{t('target_reps')}</label>
                     <input
                       type="number"
-                      value={ex.targetReps}
-                      onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', Number(e.target.value))}
+                      value={ex.targetReps === 0 ? '' : ex.targetReps}
+                      placeholder="10"
+                      onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', e.target.value === '' ? 0 : Number(e.target.value))}
                       style={{ width: '100%', boxSizing: 'border-box' }}
                     />
                   </div>
