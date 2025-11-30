@@ -166,9 +166,7 @@ const Progress: React.FC = () => {
         display: true,
         position: 'left' as const,
         title: {
-          display: true,
-          text: viewMode === 'exercise' ? 'Weight (kg)' : 'Total Volume (kg × reps)',
-          color: '#D4AF37'
+          display: false
         },
         ticks: { color: '#B3B3B3' },
         grid: { color: '#333' }
@@ -178,9 +176,7 @@ const Progress: React.FC = () => {
         display: true,
         position: 'right' as const,
         title: {
-          display: true,
-          text: viewMode === 'exercise' ? 'Volume (kg × reps)' : 'Average Weight (kg)',
-          color: '#03DAC6'
+          display: false
         },
         ticks: { color: '#B3B3B3' },
         grid: {
