@@ -55,7 +55,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const loadData = async () => {
       console.log('[StoreContext] Loading data, user:', user?.uid);
       setIsLoaded(false);
-      
+
       if (user) {
         // Try to load from Firestore
         try {
@@ -80,24 +80,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setIsLoaded(true);
         } catch (e) {
           console.error("[StoreContext] Error loading from Firestore:", e);
-          // CRITICAL: Do NOT set isLoaded to true if loading failed.
-          // This prevents the save effect from running and overwriting cloud data with empty local state.
-          alert("Error loading data from cloud. Changes will not be saved to cloud until you refresh.");
+          // Fallback to localStorage if Firestore fails
+          const localData = localStorage.getItem('prodegi_data');
+          if (localData) {
+            try {
+              const parsed = JSON.parse(localData);
+              console.log('[StoreContext] Firestore failed, loaded from localStorage fallback:', parsed);
+              dispatch({ type: 'LOAD_DATA', payload: parsed });
+              setIsLoaded(true);
+            } catch (parseErr) {
+              console.error("Failed to parse local data:", parseErr);
+              dispatch({ type: 'CLEAR_DATA' });
+              setIsLoaded(true);
+            }
+          } else {
+            console.log('[StoreContext] Firestore failed and no localStorage data, resetting to initial');
+            dispatch({ type: 'CLEAR_DATA' });
+            setIsLoaded(true);
+          }
         }
       } else {
-        // Fallback to localStorage for guest
-        const stored = localStorage.getItem('prodegi_data');
-        if (stored) {
-          try {
-            dispatch({ type: 'LOAD_DATA', payload: JSON.parse(stored) });
-            console.log('[StoreContext] Loaded from localStorage (guest)');
-          } catch (e) {
-            console.error("Failed to load local data", e);
-          }
-        } else {
-            console.log('[StoreContext] No data found, resetting to initial');
-            dispatch({ type: 'CLEAR_DATA' });
-        }
+        // User logged out - keep local state from before logout, don't clear it
+        // Just mark as loaded without changing state
+        console.log('[StoreContext] User logged out, keeping local state');
         setIsLoaded(true);
       }
     };
@@ -108,6 +113,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Save data whenever state changes
   useEffect(() => {
     if (!isLoaded) return;
+
+    // Don't save empty state (when clearing data on logout)
+    if (state.routine.length === 0 && state.history.length === 0) {
+      console.log('[StoreContext] Not saving empty state (logout in progress)');
+      return;
+    }
 
     const saveData = async () => {
       // Always save to localStorage as backup/cache
