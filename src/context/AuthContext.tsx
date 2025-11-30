@@ -48,10 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleUpdateProfile = async (updates: { displayName?: string; photoURL?: string }) => {
     try {
-      if (!user) throw new Error('No user logged in');
-      await updateProfile(user, updates);
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('No user logged in');
+      await updateProfile(currentUser, updates);
       // Refresh user state to reflect changes
-      setUser({ ...user, ...updates } as User);
+      setUser({ ...currentUser, ...updates } as User);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
