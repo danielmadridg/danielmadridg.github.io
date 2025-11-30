@@ -16,6 +16,25 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+
+  const validatePassword = (pwd: string): string[] => {
+    const errors: string[] = [];
+    if (!/[A-Z]/.test(pwd)) errors.push('Debe contener al menos una letra mayúscula');
+    if (!/[a-z]/.test(pwd)) errors.push('Debe contener al menos una letra minúscula');
+    if (!/[0-9]/.test(pwd)) errors.push('Debe contener al menos un número');
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push('Debe contener al menos un carácter especial');
+    if (pwd.length < 8) errors.push('Debe tener al menos 8 caracteres');
+    return errors;
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    if (isSignUp) {
+      setPasswordErrors(validatePassword(newPassword));
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -44,7 +63,7 @@ const Login: React.FC = () => {
       case 'auth/email-already-in-use':
         return 'Ya existe una cuenta con este correo electrónico.';
       case 'auth/weak-password':
-        return 'La contraseña debe tener al menos 6 caracteres.';
+        return 'La contraseña no cumple con los requisitos de seguridad.';
       case 'auth/invalid-email':
         return 'El correo electrónico no es válido.';
       case 'auth/network-request-failed':
@@ -58,6 +77,17 @@ const Login: React.FC = () => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password on signup
+    if (isSignUp) {
+      const errors = validatePassword(password);
+      if (errors.length > 0) {
+        setPasswordErrors(errors);
+        setError('La contraseña no cumple con los requisitos de seguridad.');
+        return;
+      }
+    }
+
     try {
       setError(null);
       setLoading(true);
@@ -274,16 +304,16 @@ const Login: React.FC = () => {
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
                 disabled={loading}
-                minLength={6}
+                minLength={8}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   paddingRight: '2.5rem',
                   background: '#2a2a2a',
-                  border: '1px solid #333',
+                  border: `1px solid ${isSignUp && passwordErrors.length > 0 && password.length > 0 ? '#f44336' : '#333'}`,
                   borderRadius: '6px',
                   color: '#fff',
                   fontSize: '1rem',
@@ -312,6 +342,19 @@ const Login: React.FC = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {isSignUp && password.length > 0 && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                {passwordErrors.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#f44336' }}>
+                    {passwordErrors.map((err, idx) => (
+                      <li key={idx}>{err}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p style={{ margin: 0, color: '#4CAF50' }}>✓ La contraseña cumple con todos los requisitos</p>
+                )}
+              </div>
+            )}
           </div>
 
           <button
