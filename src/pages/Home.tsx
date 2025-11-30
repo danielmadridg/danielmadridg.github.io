@@ -11,7 +11,7 @@ import './Home.css';
 const Home: React.FC = () => {
   const { state, addSession, getExerciseHistory } = useStore();
   const { user } = useAuth();
-  const [selectedDayId, setSelectedDayId] = useState<string>(state.routine[0]?.id || '');
+  const [selectedDayId, setSelectedDayId] = useState<string>('');
   const [activeWorkout, setActiveWorkout] = useState<{
     dayId: string;
     startTime: string;
@@ -230,30 +230,33 @@ const Home: React.FC = () => {
     <div>
       <h1>{greeting}</h1>
 
-      {selectedDay && (
-          <div className="card">
-              <label style={{fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.75rem'}}>Select Routine Day</label>
-              <CustomSelect
-                  value={selectedDayId}
-                  onChange={setSelectedDayId}
-                  options={state.routine}
-                  style={{ marginBottom: '1rem' }}
-              />
+      <div className="card">
+        <label style={{fontSize: '0.9rem', fontWeight: '500', marginBottom: '0.75rem'}}>Select Routine Day</label>
+        <CustomSelect
+          value={selectedDayId}
+          onChange={setSelectedDayId}
+          options={state.routine}
+          placeholder="Select Day"
+          style={{ marginBottom: '1rem' }}
+        />
 
-              <h3>{selectedDay.name} Preview</h3>
-              <ul style={{paddingLeft: '1.2rem', color: 'var(--text-secondary)'}}>
-                  {selectedDay.exercises.map(ex => (
-                      <li key={ex.id} style={{marginBottom: '0.5rem'}}>
-                          {ex.name} - {ex.sets} x {ex.targetReps}
-                      </li>
-                  ))}
-              </ul>
-              <button className="btn-primary" onClick={handleStartWorkout}>
-                  <Dumbbell style={{verticalAlign: 'middle', marginRight: '8px'}}/>
-                  Start Workout
-              </button>
-          </div>
-      )}
+        {selectedDay && (
+          <>
+            <h3>{selectedDay.name} Preview</h3>
+            <ul style={{paddingLeft: '1.2rem', color: 'var(--text-secondary)'}}>
+              {selectedDay.exercises.map(ex => (
+                <li key={ex.id} style={{marginBottom: '0.5rem'}}>
+                  {ex.name} - {ex.sets} x {ex.targetReps}
+                </li>
+              ))}
+            </ul>
+            <button className="btn-primary" onClick={handleStartWorkout}>
+              <Dumbbell style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+              Start Workout
+            </button>
+          </>
+        )}
+      </div>
       
       <div style={{marginTop: '2rem', marginBottom: '1rem'}}>
           <h3 style={{marginBottom: '1rem'}}>Recent Activity</h3>
