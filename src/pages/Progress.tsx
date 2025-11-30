@@ -138,6 +138,7 @@ const Progress: React.FC = () => {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: true,
     interaction: {
       mode: 'index' as const,
       intersect: false,
@@ -145,14 +146,18 @@ const Progress: React.FC = () => {
     plugins: {
       legend: {
         position: 'top' as const,
-        labels: { color: '#FFF' }
+        labels: {
+          color: '#FFF',
+          font: { size: window.innerWidth <= 768 ? 12 : 14 }
+        }
       },
       title: {
         display: true,
         text: viewMode === 'exercise'
           ? `${selectedExercise?.name || 'Exercise'} Progress`
           : `${selectedDay?.name || 'Day'} Progress`,
-        color: '#FFF'
+        color: '#FFF',
+        font: { size: window.innerWidth <= 768 ? 14 : 16 }
       },
     },
     scales: {
@@ -205,16 +210,20 @@ const Progress: React.FC = () => {
           }}
           style={{
             flex: 1,
-            minWidth: '120px',
-            padding: '0.75rem',
+            minWidth: '100px',
+            padding: window.innerWidth <= 480 ? '0.6rem 0.5rem' : '0.75rem',
             background: viewMode === 'exercise' ? 'var(--primary-color)' : 'var(--surface-color)',
             color: viewMode === 'exercise' ? '#000' : 'var(--text-secondary)',
             border: viewMode === 'exercise' ? 'none' : '1px solid #333',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+            fontSize: window.innerWidth <= 480 ? '0.75rem' : 'clamp(0.85rem, 2vw, 1rem)',
             fontWeight: viewMode === 'exercise' ? 'bold' : 'normal',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            minHeight: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
           By Exercise
@@ -226,16 +235,20 @@ const Progress: React.FC = () => {
           }}
           style={{
             flex: 1,
-            minWidth: '120px',
-            padding: '0.75rem',
+            minWidth: '100px',
+            padding: window.innerWidth <= 480 ? '0.6rem 0.5rem' : '0.75rem',
             background: viewMode === 'day' ? 'var(--primary-color)' : 'var(--surface-color)',
             color: viewMode === 'day' ? '#000' : 'var(--text-secondary)',
             border: viewMode === 'day' ? 'none' : '1px solid #333',
             borderRadius: '4px',
             cursor: 'pointer',
-            fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+            fontSize: window.innerWidth <= 480 ? '0.75rem' : 'clamp(0.85rem, 2vw, 1rem)',
             fontWeight: viewMode === 'day' ? 'bold' : 'normal',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            minHeight: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
           By Day
@@ -243,7 +256,7 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Search/Select Input */}
-      <div className="card" style={{ position: 'relative' }}>
+      <div className="card" style={{ position: 'relative', zIndex: 10 }}>
         <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
         <input
           type="text"
@@ -254,7 +267,8 @@ const Progress: React.FC = () => {
             setShowDropdown(true);
           }}
           onFocus={() => setShowDropdown(true)}
-          style={{ width: '100%', padding: '0.8rem', fontSize: '1rem' }}
+          spellCheck="false"
+          style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', minHeight: '44px', boxSizing: 'border-box' }}
         />
 
         {/* Dropdown */}
@@ -268,9 +282,10 @@ const Progress: React.FC = () => {
             border: '1px solid #333',
             borderRadius: '4px',
             marginTop: '0.25rem',
-            maxHeight: '200px',
+            maxHeight: window.innerWidth <= 480 ? '150px' : '200px',
             overflowY: 'auto',
-            zIndex: 1000
+            zIndex: 1001,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
           }}>
             {viewMode === 'exercise' ? (
               filteredExercises.length > 0 ? (
@@ -279,11 +294,15 @@ const Progress: React.FC = () => {
                     key={ex.id}
                     onClick={() => handleSelectExercise(ex.id)}
                     style={{
-                      padding: '0.75rem',
+                      padding: window.innerWidth <= 480 ? '0.65rem' : '0.75rem',
                       cursor: 'pointer',
                       background: ex.id === selectedExerciseId ? '#333' : 'transparent',
                       color: '#fff',
-                      borderBottom: '1px solid #333'
+                      borderBottom: '1px solid #333',
+                      minHeight: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: window.innerWidth <= 480 ? '0.85rem' : '1rem'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#333'}
                     onMouseLeave={(e) => e.currentTarget.style.background = ex.id === selectedExerciseId ? '#333' : 'transparent'}
@@ -303,11 +322,15 @@ const Progress: React.FC = () => {
                     key={day.id}
                     onClick={() => handleSelectDay(day.id)}
                     style={{
-                      padding: '0.75rem',
+                      padding: window.innerWidth <= 480 ? '0.65rem' : '0.75rem',
                       cursor: 'pointer',
                       background: day.id === selectedDayId ? '#333' : 'transparent',
                       color: '#fff',
-                      borderBottom: '1px solid #333'
+                      borderBottom: '1px solid #333',
+                      minHeight: '44px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: window.innerWidth <= 480 ? '0.85rem' : '1rem'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.background = '#333'}
                     onMouseLeave={(e) => e.currentTarget.style.background = day.id === selectedDayId ? '#333' : 'transparent'}
@@ -326,11 +349,13 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="card">
+      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', overflow: 'hidden' }}>
         {hasData ? (
-          <Line options={chartOptions} data={currentData} />
+          <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '300px' : '400px' }}>
+            <Line options={chartOptions} data={currentData} />
+          </div>
         ) : (
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             No data available for this {viewMode === 'exercise' ? 'exercise' : 'day'}.
           </p>
         )}

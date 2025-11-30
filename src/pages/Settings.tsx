@@ -6,10 +6,12 @@ import { LogOut, Edit, Trash2 } from 'lucide-react';
 
 const Settings: React.FC = () => {
   const { clearData } = useStore();
-  const { signOut, deleteAccount } = useAuth();
+  const { signOut, deleteAccount, user, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditNameDialog, setShowEditNameDialog] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState(user?.displayName || '');
   const [confirmText, setConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
@@ -49,18 +51,83 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleUpdateDisplayName = async () => {
+    if (newDisplayName.trim() === '') {
+      alert('Please enter a name.');
+      return;
+    }
+    try {
+      await updateProfile({ displayName: newDisplayName.trim() });
+      setShowEditNameDialog(false);
+      alert('Display name updated successfully.');
+    } catch (error) {
+      alert('Failed to update display name.');
+    }
+  };
+
   return (
     <div>
       <h1>Settings</h1>
 
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <div style={{marginBottom: '1rem'}}>
+          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Display Name</label>
+          <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+            <span style={{flex: 1, padding: '0.75rem', background: 'var(--surface-color)', borderRadius: '6px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>
+              {user?.displayName || 'Not set'}
+            </span>
+            <button
+              className="btn-secondary"
+              onClick={() => setShowEditNameDialog(true)}
+              style={{minHeight: '44px', padding: '0.75rem 1rem', flexShrink: 0}}
+            >
+              <Edit size={18} />
+            </button>
+          </div>
+        </div>
+
+        {showEditNameDialog && (
+          <div style={{marginTop: '1rem', padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', background: 'rgba(200, 149, 107, 0.1)', borderRadius: '4px', border: '1px solid var(--primary-color)'}}>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Enter your first name:</label>
+            <input
+              type="text"
+              value={newDisplayName}
+              onChange={(e) => setNewDisplayName(e.target.value)}
+              placeholder="Your first name"
+              spellCheck="false"
+              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
+            />
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row'}}>
+              <button
+                className="btn-primary"
+                onClick={handleUpdateDisplayName}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+              >
+                Save
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setShowEditNameDialog(false);
+                  setNewDisplayName(user?.displayName || '');
+                }}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="card">
-        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
-          <Edit style={{width: '18px', height: '18px'}}/>
+        <button className="btn-primary" onClick={handleEditRoutine} style={{marginBottom: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', minHeight: '44px', width: '100%', padding: '0.75rem', fontSize: window.innerWidth <= 480 ? '0.9rem' : '1rem', flexWrap: 'wrap'}}>
+          <Edit style={{width: '18px', height: '18px', flexShrink: 0}}/>
           Edit Routine
         </button>
 
-        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', padding: '0.75rem', fontSize: '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}>
-          <LogOut style={{width: '18px', height: '18px'}}/>
+        <button className="btn-primary" onClick={handleLogout} style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: window.innerWidth <= 480 ? '0.9rem' : '1rem', backgroundColor: 'var(--surface-color)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap'}}>
+          <LogOut style={{width: '18px', height: '18px', flexShrink: 0}}/>
           Logout
         </button>
       </div>
@@ -79,11 +146,11 @@ const Settings: React.FC = () => {
         </button>
 
         {showResetDialog && (
-          <div style={{marginTop: '0', marginBottom: '1rem', padding: '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
-            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem'}}>
+          <div style={{marginTop: '0', marginBottom: '1rem', padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
               This will permanently delete all your workout data, routine, and history. This action cannot be undone.
             </p>
-            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>
               Type "confirm" to reset your data:
             </label>
             <input
@@ -91,13 +158,14 @@ const Settings: React.FC = () => {
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
               placeholder="Type confirm"
-              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem'}}
+              spellCheck="false"
+              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
-            <div style={{display: 'flex', gap: '0.5rem'}}>
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row'}}>
               <button
                 className="btn-danger"
                 onClick={handleResetData}
-                style={{flex: 1, padding: '0.75rem'}}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
               >
                 Confirm Reset
               </button>
@@ -107,7 +175,7 @@ const Settings: React.FC = () => {
                   setShowResetDialog(false);
                   setConfirmText('');
                 }}
-                style={{flex: 1, padding: '0.75rem'}}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
               >
                 Cancel
               </button>
@@ -126,11 +194,11 @@ const Settings: React.FC = () => {
         </button>
 
         {showDeleteDialog && (
-          <div style={{marginTop: '1rem', padding: '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
-            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem'}}>
+          <div style={{marginTop: '1rem', padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', background: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px', border: '1px solid #f44336'}}>
+            <p style={{color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.85rem', lineHeight: '1.4'}}>
               This will permanently delete your account and all associated data. This action cannot be undone.
             </p>
-            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>
               Type "confirm" to delete your account:
             </label>
             <input
@@ -138,13 +206,14 @@ const Settings: React.FC = () => {
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="Type confirm"
-              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem'}}
+              spellCheck="false"
+              style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
-            <div style={{display: 'flex', gap: '0.5rem'}}>
+            <div style={{display: 'flex', gap: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row'}}>
               <button
                 className="btn-danger"
                 onClick={handleDeleteAccount}
-                style={{flex: 1, padding: '0.75rem'}}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
               >
                 Delete Account
               </button>
@@ -154,7 +223,7 @@ const Settings: React.FC = () => {
                   setShowDeleteDialog(false);
                   setDeleteConfirmText('');
                 }}
-                style={{flex: 1, padding: '0.75rem'}}
+                style={{flex: 1, padding: '0.75rem', minHeight: '44px'}}
               >
                 Cancel
               </button>

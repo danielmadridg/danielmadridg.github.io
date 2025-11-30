@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
-import { Check, ArrowLeft, Play } from 'lucide-react';
+import { Check, ArrowLeft, Dumbbell } from 'lucide-react';
 import { format } from 'date-fns';
 import CustomSelect from '../components/CustomSelect';
 
@@ -97,6 +97,42 @@ const Home: React.FC = () => {
     setActiveWorkout(null);
   };
 
+  const getUserName = () => {
+    if (user?.displayName) {
+      return user.displayName.split(' ')[0]; // Get first name
+    }
+    return 'there';
+  };
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    const name = getUserName();
+
+    // Time-based greetings
+    let timeGreetings: string[] = [];
+    if (hour >= 5 && hour < 12) {
+      timeGreetings = [`Good morning, ${name}`, `Morning, ${name}`];
+    } else if (hour >= 12 && hour < 18) {
+      timeGreetings = [`Good afternoon, ${name}`, `Afternoon, ${name}`];
+    } else {
+      timeGreetings = [`Good evening, ${name}`, `Evening, ${name}`];
+    }
+
+    // General greetings
+    const generalGreetings = [
+      `Hi, ${name}`,
+      `Hello, ${name}`,
+      `Hey, ${name}`,
+      `Welcome back, ${name}`,
+    ];
+
+    // Combine all greetings
+    const allGreetings = [...timeGreetings, ...generalGreetings];
+
+    // Return random greeting
+    return allGreetings[Math.floor(Math.random() * allGreetings.length)];
+  }, [user?.displayName]);
+
   if (activeWorkout && selectedDay) {
     return (
         <div>
@@ -158,10 +194,11 @@ const Home: React.FC = () => {
                                     newExState[ex.id].weight = e.target.value;
                                     setActiveWorkout({...activeWorkout, exercises: newExState});
                                 }}
+                                spellCheck="false"
                                 style={{width: '100px'}}
                             />
                         </div>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))', gap: '0.5rem'}}>
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem'}}>
                             {exState.reps.map((rep, i) => {
                                 const lastReps = lastSession?.sets[i];
                                 return (
@@ -181,7 +218,8 @@ const Home: React.FC = () => {
                                                 newExState[ex.id].reps = newReps;
                                                 setActiveWorkout({...activeWorkout, exercises: newExState});
                                             }}
-                                            style={{width: '100%'}}
+                                            spellCheck="false"
+                                            style={{width: '100%', boxSizing: 'border-box'}}
                                         />
                                     </div>
                                 );
@@ -198,45 +236,9 @@ const Home: React.FC = () => {
     );
   }
 
-  const getUserName = () => {
-    if (user?.displayName) {
-      return user.displayName.split(' ')[0]; // Get first name
-    }
-    return 'there';
-  };
-
-  const getRandomGreeting = () => {
-    const hour = new Date().getHours();
-    const name = getUserName();
-
-    // Time-based greetings
-    let timeGreetings: string[] = [];
-    if (hour >= 5 && hour < 12) {
-      timeGreetings = [`Good morning, ${name}`, `Morning, ${name}`];
-    } else if (hour >= 12 && hour < 18) {
-      timeGreetings = [`Good afternoon, ${name}`, `Afternoon, ${name}`];
-    } else {
-      timeGreetings = [`Good evening, ${name}`, `Evening, ${name}`];
-    }
-
-    // General greetings
-    const generalGreetings = [
-      `Hi, ${name}`,
-      `Hello, ${name}`,
-      `Hey, ${name}`,
-      `Welcome back, ${name}`,
-    ];
-
-    // Combine all greetings
-    const allGreetings = [...timeGreetings, ...generalGreetings];
-
-    // Return random greeting
-    return allGreetings[Math.floor(Math.random() * allGreetings.length)];
-  };
-
   return (
     <div>
-      <h1>{getRandomGreeting()}</h1>
+      <h1>{greeting}</h1>
 
       {selectedDay && (
           <div className="card">
@@ -257,14 +259,14 @@ const Home: React.FC = () => {
                   ))}
               </ul>
               <button className="btn-primary" onClick={handleStartWorkout}>
-                  <Play style={{verticalAlign: 'middle', marginRight: '8px'}}/>
+                  <Dumbbell style={{verticalAlign: 'middle', marginRight: '8px'}}/>
                   Start Workout
               </button>
           </div>
       )}
       
-      <div style={{marginTop: '2rem'}}>
-          <h3>Recent Activity</h3>
+      <div style={{marginTop: '2rem', marginBottom: '1rem'}}>
+          <h3 style={{marginBottom: '1rem'}}>Recent Activity</h3>
           {state.history.slice().reverse().slice(0, 5).map((session, idx, arr) => {
               const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
 
@@ -274,7 +276,7 @@ const Home: React.FC = () => {
 
               return (
                   <div key={session.id} className="card" style={{padding: '1rem'}}>
-                      <div className="flex-row" style={{marginBottom: '0.5rem'}}>
+                      <div className="flex-row" style={{marginBottom: '0.5rem', flexDirection: window.innerWidth <= 480 ? 'column' : 'row', alignItems: window.innerWidth <= 480 ? 'flex-start' : 'center', gap: window.innerWidth <= 480 ? '0.25rem' : '1rem'}}>
                           <span style={{fontWeight: 'bold', color: 'var(--primary-color)'}}>{dayName}</span>
                           <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
                               {format(new Date(session.date), 'MMM d, yyyy HH:mm')}
@@ -302,16 +304,18 @@ const Home: React.FC = () => {
 
                               return (
                                   <div key={ex.exerciseId} style={{
-                                      fontSize: '0.85rem',
+                                      fontSize: window.innerWidth <= 480 ? '0.8rem' : '0.85rem',
                                       color: 'var(--text-secondary)',
                                       marginBottom: '0.25rem',
                                       display: 'flex',
+                                      flexDirection: window.innerWidth <= 480 && prevEx ? 'column' : 'row',
                                       justifyContent: 'space-between',
-                                      alignItems: 'center'
+                                      alignItems: window.innerWidth <= 480 && prevEx ? 'flex-start' : 'center',
+                                      gap: window.innerWidth <= 480 ? '0.25rem' : '0.5rem'
                                   }}>
                                       <span>{exerciseName}: {ex.weight} kg × {ex.sets.join(', ')}</span>
                                       {prevEx && (
-                                          <div style={{display: 'flex', gap: '0.5rem', fontSize: '0.75rem'}}>
+                                          <div style={{display: 'flex', gap: '0.5rem', fontSize: '0.7rem', flexWrap: 'wrap'}}>
                                               <span style={{color: weightChange > 0 ? '#4CAF50' : weightChange < 0 ? '#f44336' : '#888'}}>
                                                   W: {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)}%
                                               </span>

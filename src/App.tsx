@@ -51,8 +51,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          <img src="/prodegilogo.png" alt="Prodegi" style={{
-            width: '140px',
+          <img src="/favicon.svg" alt="Prodegi" style={{
+            width: '3rem',
             height: 'auto'
           }} />
         </Link>

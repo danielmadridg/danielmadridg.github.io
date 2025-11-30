@@ -82,7 +82,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, s
             background: '#0a0a0a',
             border: '1px solid #252525',
             borderRadius: '6px',
-            maxHeight: '200px',
+            maxHeight: typeof window !== 'undefined' && window.innerWidth <= 480 ? '150px' : '200px',
             overflowY: 'auto',
             zIndex: 1000,
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
@@ -93,12 +93,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, s
               key={option.id}
               onClick={() => handleSelect(option.id)}
               style={{
-                padding: '0.875rem 1rem',
+                padding: typeof window !== 'undefined' && window.innerWidth <= 480 ? '0.65rem 1rem' : '0.875rem 1rem',
                 cursor: 'pointer',
                 background: option.id === value ? 'rgba(200, 149, 107, 0.15)' : 'transparent',
                 color: option.id === value ? 'var(--primary-color)' : 'var(--text-color)',
                 transition: 'all 0.15s',
-                fontWeight: option.id === value ? 500 : 400
+                fontWeight: option.id === value ? 500 : 400,
+                minHeight: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: typeof window !== 'undefined' && window.innerWidth <= 480 ? '0.9rem' : '1rem'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(200, 149, 107, 0.15)';

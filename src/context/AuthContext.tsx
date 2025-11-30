@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut as firebaseSignOut, deleteUser } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut, deleteUser, updateProfile } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  updateProfile: (updates: { displayName?: string; photoURL?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,8 +46,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const handleUpdateProfile = async (updates: { displayName?: string; photoURL?: string }) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+      await updateProfile(user, updates);
+      // Refresh user state to reflect changes
+      setUser({ ...user, ...updates } as User);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signOut, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, signOut, deleteAccount, updateProfile: handleUpdateProfile }}>
       {children}
     </AuthContext.Provider>
   );

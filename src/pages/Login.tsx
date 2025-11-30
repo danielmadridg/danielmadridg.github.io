@@ -83,24 +83,24 @@ const Login: React.FC = () => {
       display: 'flex',
       minHeight: '100vh',
       background: '#000',
-      flexDirection: 'column'
+      flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
     }}>
-      {/* Top side - Logo (shown on mobile, left on desktop) */}
+      {/* Left side - Logo (hidden on mobile, shown on desktop) */}
       <div style={{
         flex: window.innerWidth <= 768 ? 0 : 1,
-        display: 'flex',
+        display: window.innerWidth <= 768 ? 'none' : 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: window.innerWidth <= 768 ? '1.5rem 1rem' : '2rem'
+        padding: '2rem'
       }}>
         <img src="/prodegilogo.png" alt="Prodegi" style={{
-          maxWidth: window.innerWidth <= 768 ? '200px' : '400px',
+          maxWidth: '400px',
           width: '100%',
           height: 'auto'
         }} />
       </div>
 
-      {/* Bottom side - Login form */}
+      {/* Right side - Login form (full width on mobile) */}
       <div style={{
         flex: 1,
         display: 'flex',
@@ -206,6 +206,7 @@ const Login: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={loading}
+                spellCheck="false"
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -238,6 +239,7 @@ const Login: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              spellCheck="false"
               style={{
                 width: '100%',
                 padding: '0.75rem',
