@@ -8,8 +8,11 @@ import {
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { auth, googleProvider, functions } from '../config/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { Mail, Lock, Chrome, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Chrome, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import VerificationCodeInput from '../components/VerificationCodeInput';
+
+type LoginStep = 'credentials' | 'verification';
 
 const Login: React.FC = () => {
   const { t } = useLanguage();
@@ -22,13 +25,14 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
 
   const validatePassword = (pwd: string): string[] => {
     const errors: string[] = [];
     if (!/[A-Z]/.test(pwd)) errors.push(t('password_uppercase'));
     if (!/[a-z]/.test(pwd)) errors.push(t('password_lowercase'));
     if (!/[0-9]/.test(pwd)) errors.push(t('password_number'));
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push(t('password_special'));
+    if (!/[!@#$%^&*(),.?\":{}|<>]/.test(pwd)) errors.push(t('password_special'));
     if (pwd.length < 8) errors.push(t('password_length'));
     return errors;
   };
@@ -46,7 +50,6 @@ const Login: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      // Execute reCAPTCHA
       if (!executeRecaptcha) {
         setError(t('error_captcha_failed'));
         return;
@@ -54,9 +57,7 @@ const Login: React.FC = () => {
 
       const token = await executeRecaptcha('google_signin');
 
-      // Store token for backend validation (can be sent to backend if needed)
       if (token) {
-        // Verify token with backend
         const verifyRecaptchaFn = httpsCallable(functions, 'verifyRecaptcha');
         const result = await verifyRecaptchaFn({ token });
         const data = result.data as { success: boolean; score?: number };
@@ -69,7 +70,6 @@ const Login: React.FC = () => {
         await signInWithPopup(auth, googleProvider);
       }
     } catch (err: any) {
-      // Ignore if user just closed the popup
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
         const errorMessage = getErrorMessage(err.code, false);
         setError(errorMessage);
@@ -102,10 +102,31 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleSendVerificationCode = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      const sendCodeFn = httpsCallable(functions, 'sendVerificationCode');
+      const result = await sendCodeFn({ email, name: name || email.split('@')[0] });
+      const data = result.data as { success: boolean; error?: string };
+
+      if (data.success) {
+        setCurrentStep('verification');
+      } else {
+        setError(data.error || 'Failed to send verification code');
+      }
+    } catch (err: any) {
+      console.error('Error sending code:', err);
+      setError('Failed to send verification code. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate password on signup
     if (isSignUp) {
       const errors = validatePassword(password);
       if (errors.length > 0) {
@@ -119,7 +140,6 @@ const Login: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      // Execute reCAPTCHA
       if (!executeRecaptcha) {
         setError(t('error_captcha_failed'));
         return;
@@ -127,13 +147,11 @@ const Login: React.FC = () => {
 
       const token = await executeRecaptcha(isSignUp ? 'signup' : 'signin');
 
-      // Only proceed if token is received
       if (!token) {
         setError(t('error_captcha_failed'));
         return;
       }
 
-      // Verify token with backend
       const verifyRecaptchaFn = httpsCallable(functions, 'verifyRecaptcha');
       const result = await verifyRecaptchaFn({ token });
       const data = result.data as { success: boolean; score?: number };
@@ -143,14 +161,36 @@ const Login: React.FC = () => {
         return;
       }
 
-      if (isSignUp) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Update the user's display name
-        await updateProfile(userCredential.user, {
-          displayName: name
-        });
+      // Send verification code
+      await handleSendVerificationCode();
+    } catch (err: any) {
+      const errorMessage = getErrorMessage(err.code, isSignUp);
+      setError(errorMessage);
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (code: string) => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      const verifyCodeFn = httpsCallable(functions, 'verifyCode');
+      const result = await verifyCodeFn({ email, code });
+      const data = result.data as { success: boolean; error?: string };
+
+      if (data.success) {
+        // Code verified, proceed with authentication
+        if (isSignUp) {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(userCredential.user, {
+            displayName: name
+          });
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        setError(data.error || 'Invalid verification code');
       }
     } catch (err: any) {
       const errorMessage = getErrorMessage(err.code, isSignUp);
@@ -160,6 +200,65 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleResendCode = async () => {
+    await handleSendVerificationCode();
+  };
+
+  const handleBackToCredentials = () => {
+    setCurrentStep('credentials');
+    setError(null);
+  };
+
+  if (currentStep === 'verification') {
+    return (
+      <div style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: '#000',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '450px',
+          padding: '2.5rem 2rem',
+          borderRadius: '0',
+          border: '1px solid #333',
+          background: '#000'
+        }}>
+          <button
+            onClick={handleBackToCredentials}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#C8956B',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginBottom: '1.5rem',
+              padding: '0.5rem 0',
+              fontSize: '0.9rem'
+            }}
+          >
+            <ArrowLeft size={18} />
+            Back
+          </button>
+
+          <VerificationCodeInput
+            email={email}
+            onComplete={handleVerifyCode}
+            onResend={handleResendCode}
+            loading={loading}
+            error={error}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       display: 'flex',
@@ -167,7 +266,7 @@ const Login: React.FC = () => {
       background: '#000',
       flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
     }}>
-      {/* Left side - Logo (hidden on mobile, shown on desktop) */}
+      {/* Left side - Logo */}
       <div style={{
         flex: window.innerWidth <= 768 ? 0 : 1,
         display: window.innerWidth <= 768 ? 'none' : 'flex',
@@ -182,7 +281,7 @@ const Login: React.FC = () => {
         }} />
       </div>
 
-      {/* Right side - Login form (full width on mobile) */}
+      {/* Right side - Login form */}
       <div style={{
         flex: 1,
         display: 'flex',
@@ -191,7 +290,6 @@ const Login: React.FC = () => {
         justifyContent: 'center',
         padding: window.innerWidth <= 768 ? '1rem' : '2rem'
       }}>
-        {/* App name at top */}
         <h1 style={{
           fontSize: window.innerWidth <= 768 ? '2rem' : '3rem',
           marginBottom: window.innerWidth <= 768 ? '1.5rem' : '3rem',

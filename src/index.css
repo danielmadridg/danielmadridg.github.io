@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap");
 
 :root {
   --bg-color: #0a0a0a;
   --surface-color: #141414;
-  --primary-color: #C8956B;
+  --primary-color: #c8956b;
   --text-color: #ffffff;
   --text-secondary: #8a8a8a;
   --danger-color: #cf6679;
@@ -21,7 +21,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #C8956B 0%, #a67c52 100%);
+  background: linear-gradient(180deg, #c8956b 0%, #a67c52 100%);
   border-radius: 10px;
   border: 2px solid #0a0a0a;
 }
@@ -261,7 +261,7 @@ footer p {
 /* Responsive Design */
 @media (max-width: 768px) {
   :root {
-    --primary-color: #C8956B;
+    --primary-color: #c8956b;
   }
 
   body {
@@ -416,4 +416,11 @@ footer p {
     padding: 1rem !important;
     font-size: 0.7rem !important;
   }
+}
+
+/* Hide reCAPTCHA v3 badge */
+.grecaptcha-badge {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }

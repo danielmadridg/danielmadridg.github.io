@@ -15,7 +15,7 @@ import clsx from 'clsx';
 import './App.css';
 
 // reCAPTCHA site key (configure in environment variables)
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeI5BwsAAAAAGMtS2CM8KyfybN32SPX__eiHR0T';
 
 // Context for tracking workout state
 interface WorkoutContextType {
@@ -175,6 +175,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               onMouseLeave={(e) => e.currentTarget.style.color = '#C8956B'}>
               Instagram
             </a>
+          </p>
+          <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.75rem', color: '#555', lineHeight: '1.4' }}>
+            This site is protected by reCAPTCHA and the Google{' '}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'underline' }}>
+              Privacy Policy
+            </a>{' '}and{' '}
+            <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'underline' }}>
+              Terms of Service
+            </a>{' '}apply.
           </p>
         </footer>
       </div>
