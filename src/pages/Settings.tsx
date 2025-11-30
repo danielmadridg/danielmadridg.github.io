@@ -88,7 +88,7 @@ const Settings: React.FC = () => {
 
       <div className="card" style={{marginBottom: '1rem'}}>
         <div style={{marginBottom: '1rem'}}>
-          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Display Name</label>
+          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Username</label>
           <div style={{
             display: 'flex', 
             gap: '0.75rem', 
@@ -123,7 +123,7 @@ const Settings: React.FC = () => {
               }}
             >
               <Edit size={18} />
-              {isMobile && <span>Edit Name</span>}
+              {isMobile && <span>Edit Username</span>}
             </button>
           </div>
           {showSuccessMessage && (
@@ -135,7 +135,7 @@ const Settings: React.FC = () => {
 
         {showEditNameDialog && (
           <div style={{marginTop: '1rem', padding: isMobile ? '0.75rem' : '1rem', background: 'rgba(200, 149, 107, 0.1)', borderRadius: '4px', border: '1px solid var(--primary-color)'}}>
-            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Enter your first name:</label>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Enter your new username:</label>
             <input
               type="text"
               value={newDisplayName}
@@ -143,7 +143,7 @@ const Settings: React.FC = () => {
                 const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
                 setNewDisplayName(filtered);
               }}
-              placeholder="Your first name"
+              placeholder="Your username"
               spellCheck="false"
               style={{width: '100%', marginBottom: '1rem', padding: '0.75rem', minHeight: '44px', boxSizing: 'border-box', fontSize: '16px'}}
             />
