@@ -52,7 +52,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           alignItems: 'center'
         }}>
           <img src="/favicon.svg" alt="Prodegi" style={{
-            width: '3rem',
+            width: '3.5rem',
             height: 'auto'
           }} />
         </Link>
@@ -121,11 +121,25 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         flex: 1,
         overflowY: 'auto',
         padding: '2rem 1rem',
-        marginLeft: '200px',
-        marginBottom: '80px'
+        marginLeft: window.innerWidth <= 768 ? '0' : '200px',
+        marginBottom: window.innerWidth <= 768 ? '80px' : '0'
       }} id="main-content">
         {children}
       </div>
+
+      {/* Footer */}
+      <footer style={{
+        background: '#0a0a0a',
+        borderTop: '1px solid #1a1a1a',
+        padding: '2rem 1rem',
+        marginLeft: '200px',
+        textAlign: 'center',
+        fontSize: '0.85rem',
+        color: '#6a6a6a'
+      }}>
+        <p style={{ margin: '0 0 0.5rem 0' }}>© 2025 Prodegi. All rights reserved.</p>
+        <p style={{ margin: 0 }}>Your personal workout companion.</p>
+      </footer>
 
       {/* Mobile Bottom Navigation - Shown only on mobile */}
       <nav style={{

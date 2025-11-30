@@ -405,4 +405,9 @@ label {
   label {
     font-size: 0.85rem;
   }
+
+  /* Hide footer on mobile */
+  footer {
+    display: none !important;
+  }
 }
