@@ -23,6 +23,8 @@ ChartJS.register(
   Legend
 );
 
+import './Progress.css';
+
 const Progress: React.FC = () => {
   const { state, getExerciseHistory } = useStore();
   const [viewMode, setViewMode] = useState<'exercise' | 'day'>('exercise');
@@ -167,7 +169,7 @@ const Progress: React.FC = () => {
         align: 'center' as const,
         labels: {
           color: '#FFF',
-          font: { size: window.innerWidth <= 768 ? 14 : 16, weight: 500 as const },
+          font: { size: 14, weight: 500 as const },
           padding: 25,
           usePointStyle: true,
           pointStyle: 'circle',
@@ -181,7 +183,7 @@ const Progress: React.FC = () => {
           ? `${selectedExercise?.name || 'Exercise'} Progress`
           : `${selectedDay?.name || 'Day'} Progress`,
         color: '#FFF',
-        font: { size: window.innerWidth <= 768 ? 14 : 16 }
+        font: { size: 16 }
       },
     },
     scales: {
@@ -219,33 +221,17 @@ const Progress: React.FC = () => {
   const hasData = viewMode === 'exercise' ? exerciseHistory.length > 0 : dayHistory.length > 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+    <div className="progress-container">
       <h1>Progress</h1>
 
       {/* View Mode Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', width: '100%' }}>
+      <div className="view-mode-tabs">
         <button
           onClick={() => {
             setViewMode('exercise');
             setSearchQuery(selectedExercise?.name || '');
           }}
-          style={{
-            flex: 1,
-            minWidth: '100px',
-            padding: window.innerWidth <= 480 ? '0.6rem 0.5rem' : '0.75rem',
-            background: viewMode === 'exercise' ? 'var(--primary-color)' : 'var(--surface-color)',
-            color: viewMode === 'exercise' ? '#000' : 'var(--text-secondary)',
-            border: viewMode === 'exercise' ? 'none' : '1px solid #333',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: window.innerWidth <= 480 ? '0.75rem' : 'clamp(0.85rem, 2vw, 1rem)',
-            fontWeight: viewMode === 'exercise' ? 'bold' : 'normal',
-            transition: 'all 0.2s',
-            minHeight: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
+          className={`view-mode-btn ${viewMode === 'exercise' ? 'active' : 'inactive'}`}
         >
           By Exercise
         </button>
@@ -254,30 +240,14 @@ const Progress: React.FC = () => {
             setViewMode('day');
             setSearchQuery(selectedDay?.name || '');
           }}
-          style={{
-            flex: 1,
-            minWidth: '100px',
-            padding: window.innerWidth <= 480 ? '0.6rem 0.5rem' : '0.75rem',
-            background: viewMode === 'day' ? 'var(--primary-color)' : 'var(--surface-color)',
-            color: viewMode === 'day' ? '#000' : 'var(--text-secondary)',
-            border: viewMode === 'day' ? 'none' : '1px solid #333',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: window.innerWidth <= 480 ? '0.75rem' : 'clamp(0.85rem, 2vw, 1rem)',
-            fontWeight: viewMode === 'day' ? 'bold' : 'normal',
-            transition: 'all 0.2s',
-            minHeight: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
+          className={`view-mode-btn ${viewMode === 'day' ? 'active' : 'inactive'}`}
         >
           By Day
         </button>
       </div>
 
       {/* Search/Select Input */}
-      <div ref={dropdownRef} className="card" style={{ position: 'relative', zIndex: 10, width: '100%', padding: window.innerWidth <= 480 ? '0.5rem 0.75rem 1rem 0.75rem' : '0.75rem 2rem 1.25rem 2rem', boxSizing: 'border-box' }}>
+      <div ref={dropdownRef} className="card search-container">
         <label>{viewMode === 'exercise' ? 'Select Exercise' : 'Select Day'}</label>
         <input
           type="text"
@@ -289,44 +259,19 @@ const Progress: React.FC = () => {
           }}
           onFocus={() => setShowDropdown(true)}
           spellCheck="false"
-          style={{ width: '100%', padding: '0.8rem', fontSize: '1rem', minHeight: '44px', boxSizing: 'border-box' }}
+          className="search-input"
         />
 
         {/* Dropdown */}
         {showDropdown && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '4px',
-            marginTop: '0.25rem',
-            maxHeight: window.innerWidth <= 480 ? '150px' : '200px',
-            overflowY: 'auto',
-            zIndex: 1001,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
-          }}>
+          <div className="dropdown-list">
             {viewMode === 'exercise' ? (
               filteredExercises.length > 0 ? (
                 filteredExercises.map(ex => (
                   <div
                     key={ex.id}
                     onClick={() => handleSelectExercise(ex.id)}
-                    style={{
-                      padding: window.innerWidth <= 480 ? '0.65rem' : '0.75rem',
-                      cursor: 'pointer',
-                      background: ex.id === selectedExerciseId ? '#333' : 'transparent',
-                      color: '#fff',
-                      borderBottom: '1px solid #333',
-                      minHeight: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontSize: window.innerWidth <= 480 ? '0.85rem' : '1rem'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#333'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = ex.id === selectedExerciseId ? '#333' : 'transparent'}
+                    className={`dropdown-item ${ex.id === selectedExerciseId ? 'selected' : ''}`}
                   >
                     {ex.name}
                   </div>
@@ -342,19 +287,7 @@ const Progress: React.FC = () => {
                   <div
                     key={day.id}
                     onClick={() => handleSelectDay(day.id)}
-                    style={{
-                      padding: window.innerWidth <= 480 ? '0.65rem' : '0.75rem',
-                      cursor: 'pointer',
-                      background: day.id === selectedDayId ? '#333' : 'transparent',
-                      color: '#fff',
-                      borderBottom: '1px solid #333',
-                      minHeight: '44px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontSize: window.innerWidth <= 480 ? '0.85rem' : '1rem'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#333'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = day.id === selectedDayId ? '#333' : 'transparent'}
+                    className={`dropdown-item ${day.id === selectedDayId ? 'selected' : ''}`}
                   >
                     {day.name}
                   </div>
@@ -370,19 +303,19 @@ const Progress: React.FC = () => {
       </div>
 
       {/* Chart */}
-      <div className="card" style={{ padding: window.innerWidth <= 480 ? '0.75rem' : '2rem', overflow: 'hidden', width: '100%', boxSizing: 'border-box' }}>
+      <div className="card chart-card">
         {hasSelection ? (
           hasData ? (
-            <div style={{ position: 'relative', height: window.innerWidth <= 480 ? '500px' : '700px', width: '100%' }}>
+            <div className="chart-wrapper">
               <Line options={chartOptions} data={currentData} />
             </div>
           ) : (
-            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p className="no-data-message">
               No data available for this {viewMode === 'exercise' ? 'exercise' : 'day'}.
             </p>
           )
         ) : (
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p className="no-data-message">
             Please select {viewMode === 'exercise' ? 'an exercise' : 'a day'} to view progress.
           </p>
         )}
