@@ -81,36 +81,6 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1>Settings</h1>
-
-      <div className="card" style={{marginBottom: '1rem'}}>
-        <div style={{marginBottom: '1rem'}}>
-          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Display Name</label>
-          <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
-            <span style={{flex: 1, padding: '0.5rem 0.75rem', background: 'var(--surface-color)', borderRadius: '6px', minHeight: '36px', display: 'flex', alignItems: 'center', fontSize: '0.95rem'}}>
-              {user?.displayName || 'Not set'}
-            </span>
-            <button
-              className="btn-secondary"
-              onClick={() => setShowEditNameDialog(true)}
-              style={{minHeight: '44px', padding: '0.75rem 1rem', flexShrink: 0}}
-            >
-              <Edit size={18} />
-            </button>
-          </div>
-          {showSuccessMessage && (
-            <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
-              ✓ Display name updated successfully
-            </p>
-          )}
-        </div>
-
-        {showEditNameDialog && (
-          <div style={{marginTop: '1rem', padding: window.innerWidth <= 480 ? '0.75rem' : '1rem', background: 'rgba(200, 149, 107, 0.1)', borderRadius: '4px', border: '1px solid var(--primary-color)'}}>
-            <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Enter your first name:</label>
-            <input
-              type="text"
               value={newDisplayName}
               onChange={(e) => {
                 const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
