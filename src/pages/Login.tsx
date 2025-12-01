@@ -38,7 +38,6 @@ const Login: React.FC = () => {
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
   const [accessKey, setAccessKey] = useState('');
-  const [showPWALogin, setShowPWALogin] = useState(false);
   const inPWA = isPWA();
 
   // Redirect if user is already logged in
@@ -491,7 +490,7 @@ const Login: React.FC = () => {
           color: '#888',
           fontSize: '0.9rem'
         }}>
-          {inPWA && showPWALogin ? 'Enter your access key' : (isSignUp ? t('create_account') : t('sign_in_continue'))}
+          {inPWA ? 'Enter your access key to sign in' : (isSignUp ? t('create_account') : t('sign_in_continue'))}
         </p>
 
         {error && (
@@ -508,8 +507,8 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        {/* PWA Access Key Login */}
-        {inPWA && showPWALogin ? (
+        {/* PWA Access Key Login - ONLY option in PWA */}
+        {inPWA ? (
           <form onSubmit={handleAccessKeyLogin}>
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{
@@ -553,7 +552,7 @@ const Login: React.FC = () => {
                 color: '#666',
                 lineHeight: '1.4'
               }}>
-                Find your access key in Settings when logged in on the web
+                Find your access key in Settings when logged in on the web browser
               </p>
             </div>
 
@@ -572,64 +571,14 @@ const Login: React.FC = () => {
                 cursor: loading ? 'not-allowed' : 'pointer',
                 opacity: loading ? 0.6 : 1,
                 transition: 'all 0.2s',
-                boxSizing: 'border-box',
-                marginBottom: '1rem'
+                boxSizing: 'border-box'
               }}
             >
-              {loading ? 'Signing in...' : 'Sign In with Key'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowPWALogin(false)}
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'none',
-                color: 'var(--primary-color)',
-                border: '1px solid var(--primary-color)',
-                borderRadius: '6px',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              Use Email/Google Instead
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         ) : (
           <>
-            {/* Show PWA login option if in PWA */}
-            {inPWA && (
-              <button
-                onClick={() => setShowPWALogin(true)}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  marginBottom: '1.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  background: 'var(--primary-color)',
-                  color: '#000',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.6 : 1,
-                  transition: 'all 0.2s',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <Key size={20} />
-                Sign In with Access Key
-              </button>
-            )}
-
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
