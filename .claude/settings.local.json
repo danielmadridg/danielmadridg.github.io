@@ -13,7 +13,10 @@
       "Bash(firebase functions:config:set:*)",
       "Bash(firebase deploy:*)",
       "Bash(firebase functions:log:*)",
-      "Bash(firebase functions:config:get:*)"
+      "Bash(firebase functions:config:get:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

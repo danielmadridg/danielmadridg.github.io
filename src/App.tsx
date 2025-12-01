@@ -15,7 +15,9 @@ import clsx from 'clsx';
 import './App.css';
 
 // reCAPTCHA site key (configure in environment variables)
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LesKB0sAAAAAJLdCi4ZO6CcBg9rzPxccGD9zu0M';
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string;
+console.log('[App] Raw env value:', import.meta.env.VITE_RECAPTCHA_SITE_KEY);
+console.log('[App] RECAPTCHA_SITE_KEY:', RECAPTCHA_SITE_KEY);
 
 // Context for tracking workout state
 interface WorkoutContextType {
