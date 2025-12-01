@@ -112,7 +112,7 @@ const Login: React.FC = () => {
         return;
       }
 
-      // Use signInWithPopup for all devices
+      // Use signInWithPopup for all devices first
       try {
         await signInWithPopup(auth, googleProvider);
       } catch (popupErr: any) {
@@ -125,14 +125,13 @@ const Login: React.FC = () => {
         throw popupErr;
       }
     } catch (err: any) {
+      console.error('[Login] Google Sign-In Error:', err);
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
         const errorMessage = getErrorMessage(err.code, false);
         setError(errorMessage);
       }
-    } finally {
-      if (!isMobileDevice()) {
-        setLoading(false);
-      }
+      // Ensure loading stops on error or cancellation
+      setLoading(false);
     }
   };
 
