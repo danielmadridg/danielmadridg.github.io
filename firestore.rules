@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow anyone to read the users collection to search by accessKey
+    // This is needed for access key login functionality
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Verification codes - only server can write, only accessible via cloud functions
+    match /verificationCodes/{email} {
+      allow read, write: if false; // All access through Cloud Functions only
+    }
+  }
+}
