@@ -8,7 +8,7 @@ import {
   updateProfile,
   signInWithCustomToken
 } from 'firebase/auth';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { useNavigate } from 'react-router-dom';
 import { auth, googleProvider, functions, db } from '../config/firebase';
@@ -285,7 +285,7 @@ const Login: React.FC = () => {
         // Code verified, proceed with authentication
         if (isSignUp) {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          
+
           // Create user document in Firestore
           try {
             await setDoc(doc(db, 'users', userCredential.user.uid), {
@@ -298,6 +298,17 @@ const Login: React.FC = () => {
           } catch (err) {
             console.error('Error creating user document:', err);
             // Continue even if firestore fails, auth is successful
+          }
+
+          // Ensure email is saved even if there's an issue with initial doc creation
+          try {
+            const userDocRef = doc(db, 'users', userCredential.user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (!userDoc.data()?.email) {
+              await setDoc(userDocRef, { email: email }, { merge: true });
+            }
+          } catch (err) {
+            console.error('Error ensuring email is saved:', err);
           }
 
           await updateProfile(userCredential.user, {
@@ -342,9 +353,10 @@ const Login: React.FC = () => {
       setLoading(true);
       console.log('[AccessKey] Starting login with key:', accessKey.trim());
 
-      // Search for user with this access key
+      // Search for user with this access key (remove dashes for comparison)
+      const cleanAccessKey = accessKey.trim().replace(/-/g, '');
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('accessKey', '==', accessKey.trim()));
+      const q = query(usersRef, where('accessKey', '==', cleanAccessKey));
       const querySnapshot = await getDocs(q);
 
       console.log('[AccessKey] Query result - Found users:', querySnapshot.size);
@@ -549,7 +561,18 @@ const Login: React.FC = () => {
               <input
                 type="text"
                 value={accessKey}
-                onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                  // Add dashes every 4 characters
+                  if (value.length > 0) {
+                    const parts = [];
+                    for (let i = 0; i < value.length; i += 4) {
+                      parts.push(value.substring(i, i + 4));
+                    }
+                    value = parts.join('-');
+                  }
+                  setAccessKey(value);
+                }}
                 required
                 disabled={loading}
                 spellCheck="false"
