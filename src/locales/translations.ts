@@ -117,6 +117,9 @@ export const translations: Record<Language, Translations> = {
     error_signup_generic: 'Error creating account. Please try again.',
     error_signin_generic: 'Error signing in. Please try again.',
     error_captcha_failed: 'reCAPTCHA verification failed. Please try again.',
+    error_enter_username: 'Please enter a username',
+    error_username_taken: 'Username is already taken. Please choose another one.',
+    error_delete_account: 'Error deleting account. Please try logging out and logging back in to delete your account.',
 
     // Progress Page
     progress: 'Progress',
@@ -251,6 +254,9 @@ export const translations: Record<Language, Translations> = {
     error_signup_generic: 'Error al crear la cuenta. Intenta de nuevo.',
     error_signin_generic: 'Error al iniciar sesión. Intenta de nuevo.',
     error_captcha_failed: 'Falló la verificación de reCAPTCHA. Intenta de nuevo.',
+    error_enter_username: 'Por favor, ingresa un nombre de usuario',
+    error_username_taken: 'El nombre de usuario ya está en uso. Elige otro.',
+    error_delete_account: 'Error al eliminar la cuenta. Por favor, intenta cerrar sesión y volver a iniciar para borrar tu cuenta.',
 
     // Progress Page
     progress: 'Progreso',
@@ -385,6 +391,9 @@ export const translations: Record<Language, Translations> = {
     error_signup_generic: 'Erreur lors de la création du compte. Veuillez réessayer.',
     error_signin_generic: 'Erreur lors de la connexion. Veuillez réessayer.',
     error_captcha_failed: 'Échec de la vérification reCAPTCHA. Veuillez réessayer.',
+    error_enter_username: 'Veuillez entrer un nom d\'utilisateur',
+    error_username_taken: 'Ce nom d\'utilisateur est déjà utilisé. Veuillez en choisir un autre.',
+    error_delete_account: 'Erreur lors de la suppression du compte. Veuillez vous déconnecter et vous reconnecter pour supprimer votre compte.',
 
     // Progress Page
     progress: 'Progrès',
@@ -519,6 +528,9 @@ export const translations: Record<Language, Translations> = {
     error_signup_generic: 'Errore durante la creazione dell\'account. Per favore riprova.',
     error_signin_generic: 'Errore durante l\'accesso. Per favore riprova.',
     error_captcha_failed: 'Verifica reCAPTCHA non riuscita. Per favore riprova.',
+    error_enter_username: 'Per favore, inserisci un nome utente',
+    error_username_taken: 'Questo nome utente è già in uso. Per favore, scegline un altro.',
+    error_delete_account: 'Errore durante l\'eliminazione dell\'account. Per favore, esci e accedi di nuovo per eliminare il tuo account.',
 
     // Progress Page
     progress: 'Progresso',

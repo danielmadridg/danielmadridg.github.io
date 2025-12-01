@@ -216,7 +216,7 @@ const Login: React.FC = () => {
         return;
       }
       if (!username.trim()) {
-        setError('Please enter a username');
+        setError(t('error_enter_username'));
         return;
       }
       
@@ -225,7 +225,7 @@ const Login: React.FC = () => {
         setLoading(true);
         const isAvailable = await checkUsernameAvailability(username.trim());
         if (!isAvailable) {
-          setError('Username is already taken. Please choose another one.');
+          setError(t('error_username_taken'));
           setLoading(false);
           return;
         }

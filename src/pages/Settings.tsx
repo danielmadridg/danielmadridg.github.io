@@ -136,7 +136,7 @@ const Settings: React.FC = () => {
         await deleteAccount(); // Then delete the Firebase account
         navigate('/login');
       } catch (error) {
-        alert('Error al borrar la cuenta. Por favor, intenta cerrar sesión y volver a iniciar para borrar tu cuenta.');
+        alert(t('error_delete_account'));
       }
     } else {
       alert('Please type "confirm" to delete your account.');
