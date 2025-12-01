@@ -8,7 +8,7 @@ import { getFunctions } from "firebase/functions";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyAHLLbo6zbVryKiCH96r84dGX8cOXfzTHE",
-  authDomain: "prodegitracker.com",
+  authDomain: "progredi-1.firebaseapp.com",
   projectId: "progredi-1",
   storageBucket: "progredi-1.firebasestorage.app",
   messagingSenderId: "603628930060",
