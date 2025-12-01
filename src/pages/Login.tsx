@@ -46,6 +46,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
+        setLoading(true);
         console.log('[Login] Checking for redirect result...');
         const result = await getRedirectResult(auth);
         if (result) {
@@ -57,14 +58,18 @@ const Login: React.FC = () => {
           if (auth.currentUser) {
             console.log('[Login] Current user confirmed:', auth.currentUser.uid);
           }
+        } else if (auth.currentUser) {
+           console.log('[Login] User already signed in:', auth.currentUser.uid);
         } else {
           console.log('[Login] No redirect result found');
+          setLoading(false);
         }
       } catch (err: any) {
         console.error('[Login] Redirect result error:', err.code, err.message);
         if (err.code && err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
           setError(err.message || 'An error occurred during sign-in');
         }
+        setLoading(false);
       }
     };
 
@@ -103,12 +108,14 @@ const Login: React.FC = () => {
       setLoading(true);
 
       const standalone = isStandalone();
-      console.log('[Login] Environment:', { isMobile: isMobileDevice(), isStandalone: standalone });
+      const isMobile = isMobileDevice();
+      console.log('[Login] Environment:', { isMobile, isStandalone: standalone });
 
       // If in standalone mode (PWA), use redirect to avoid popup issues and ensure state preservation
       if (standalone) {
         console.log('[Login] Standalone mode detected, using signInWithRedirect');
         await signInWithRedirect(auth, googleProvider);
+        // Do NOT set loading to false here, as the page will redirect
         return;
       }
 
@@ -293,12 +300,8 @@ const Login: React.FC = () => {
             displayName: name
           });
 
-          // Show different alert based on device
-          if (isMobileDevice()) {
-            alert("We encourage you to take each set as close to failure as possible to ensure accurate progress through progressive overload.");
-          } else {
-            setError("We encourage you to take each set as close to failure as possible to ensure accurate progress through progressive overload.");
-          }
+          // Removed alert to prevent PWA black screen/crash issues.
+          // The progressive overload message can be shown in the onboarding flow instead.
         } else {
           await signInWithEmailAndPassword(auth, email, password);
         }
