@@ -1,4 +1,5 @@
 "use strict";
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkUsernameAvailability = exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
 const functions = require("firebase-functions");
@@ -8,21 +9,21 @@ const nodemailer = require("nodemailer");
 // Initialize Firebase Admin
 admin.initializeApp();
 // Access the secret key from environment variables
-const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY || '6LesKB0sAAAAACxKFPKmX8So69EbFLyl5Zvp8L4o';
-// Configure email transporter using Firebase's SMTP
+const RECAPTCHA_SECRET_KEY = ((_a = functions.config().recaptcha) === null || _a === void 0 ? void 0 : _a.secret_key) || process.env.RECAPTCHA_SECRET_KEY || '';
+// Configure email transporter using SendGrid SMTP
 function getEmailTransporter() {
     var _a;
-    const emailPassword = ((_a = functions.config().email) === null || _a === void 0 ? void 0 : _a.password) || process.env.EMAIL_PASSWORD || '';
-    if (!emailPassword) {
-        console.error('EMAIL_PASSWORD not found in config or environment variables');
+    const sendgridApiKey = ((_a = functions.config().email) === null || _a === void 0 ? void 0 : _a.sendgrid_key) || process.env.SENDGRID_API_KEY || '';
+    if (!sendgridApiKey) {
+        console.error('SENDGRID_API_KEY not found in config or environment variables');
     }
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
+        host: 'smtp.sendgrid.net',
         port: 587,
         secure: false,
         auth: {
-            user: 'progredicontact@gmail.com', // Your actual Gmail account
-            pass: emailPassword,
+            user: 'apikey',
+            pass: sendgridApiKey,
         },
     });
 }
@@ -37,6 +38,7 @@ exports.verifyRecaptcha = functions.https.onCall(async (data, context) => {
         return { success: false, error: 'Token is missing' };
     }
     try {
+        console.log('reCAPTCHA Secret Key present:', !!RECAPTCHA_SECRET_KEY, 'Length:', RECAPTCHA_SECRET_KEY.length);
         const response = await axios_1.default.post(`https://www.google.com/recaptcha/api/siteverify`, null, {
             params: {
                 secret: RECAPTCHA_SECRET_KEY,
@@ -94,7 +96,7 @@ exports.sendVerificationCode = functions.https.onCall(async (data, context) => {
             .container { max-width: 600px; margin: 40px auto; background-color: #141414; border-radius: 16px; padding: 40px; border: 1px solid #1a1a1a; }
             .logo { text-align: center; font-size: 32px; font-weight: 700; color: #C8956B; margin-bottom: 30px; letter-spacing: 1px; }
             .code-box { background-color: #1a1a1a; border: 2px solid #C8956B; border-radius: 12px; padding: 30px; text-align: center; margin: 30px 0; }
-            .code { font-size: 48px; font-weight: 700; color: #C8956B; letter-spacing: 8px; font-family: 'Courier New', monospace; }
+            .code { font-size: 56px; font-weight: 900; color: #C8956B; letter-spacing: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; }
             .message { font-size: 16px; line-height: 1.6; color: #e0e0e0; margin: 20px 0; }
             .footer { text-align: center; font-size: 14px; color: #999999; margin-top: 40px; padding-top: 20px; border-top: 1px solid #1a1a1a; }
             .warning { background-color: rgba(207, 102, 121, 0.1); border-left: 4px solid #cf6679; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #e0e0e0; }
