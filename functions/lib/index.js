@@ -247,7 +247,8 @@ exports.generateCustomToken = functions.https.onCall(async (data, context) => {
     }
     catch (error) {
         console.error('Error generating custom token:', error);
-        return { error: 'Failed to generate authentication token' };
+        // Return specific error message for debugging
+        return { error: `Failed to generate token: ${error.message || 'Unknown error'}` };
     }
 });
 //# sourceMappingURL=index.js.map

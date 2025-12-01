@@ -298,8 +298,9 @@ export const generateCustomToken = functions.https.onCall(async (data, context):
 
     console.log(`Custom token generated for user: ${uid}`);
     return { token: customToken };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating custom token:', error);
-    return { error: 'Failed to generate authentication token' };
+    // Return specific error message for debugging
+    return { error: `Failed to generate token: ${error.message || 'Unknown error'}` };
   }
 });
