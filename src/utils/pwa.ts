@@ -1,8 +1,13 @@
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 export const isPWA = (): boolean => {
   if (typeof window === 'undefined') return false;
-  
+
+  const navigator = window.navigator as NavigatorWithStandalone;
   return (
-    (window.navigator as any).standalone || 
+    navigator.standalone === true ||
     window.matchMedia('(display-mode: standalone)').matches
   );
 };

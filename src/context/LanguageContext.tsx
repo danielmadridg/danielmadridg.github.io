@@ -27,26 +27,26 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = translations[language];
+    let value: Record<string, any> | string | undefined = translations[language];
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+        value = (value as Record<string, any>)[k];
       } else {
         // Fallback to English if translation key not found
         value = translations.en;
         for (const fallbackKey of keys) {
           if (value && typeof value === 'object' && fallbackKey in value) {
-            value = value[fallbackKey];
+            value = (value as Record<string, any>)[fallbackKey];
           } else {
             return key; // Return the key itself if translation not found
           }
         }
-        return value as string;
+        return typeof value === 'string' ? value : key;
       }
     }
 
-    return value as string;
+    return typeof value === 'string' ? value : key;
   };
 
   return (

@@ -44,7 +44,7 @@ const Onboarding: React.FC = () => {
     setRoutineState(newRoutine);
   };
 
-  const updateExercise = (dayIndex: number, exIndex: number, field: keyof ExerciseConfig, value: any) => {
+  const updateExercise = (dayIndex: number, exIndex: number, field: keyof ExerciseConfig, value: string | number) => {
     const newRoutine = [...routine];
     newRoutine[dayIndex].exercises[exIndex] = {
       ...newRoutine[dayIndex].exercises[exIndex],
