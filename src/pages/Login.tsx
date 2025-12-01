@@ -340,13 +340,17 @@ const Login: React.FC = () => {
     try {
       setError(null);
       setLoading(true);
+      console.log('[AccessKey] Starting login with key:', accessKey.trim());
 
       // Search for user with this access key
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('accessKey', '==', accessKey.trim()));
       const querySnapshot = await getDocs(q);
 
+      console.log('[AccessKey] Query result - Found users:', querySnapshot.size);
+
       if (querySnapshot.empty) {
+        console.log('[AccessKey] No user found with this key');
         setError('Invalid access key. Please check and try again.');
         setLoading(false);
         return;
@@ -357,30 +361,41 @@ const Login: React.FC = () => {
       const userData = userDoc.data();
       const userEmail = userData.email;
 
+      console.log('[AccessKey] User found:', { uid: userDoc.id, email: userEmail });
+
       if (!userEmail) {
+        console.log('[AccessKey] User has no email');
         setError('Account error. Please contact support.');
         setLoading(false);
         return;
       }
 
       // Call Firebase Function to generate custom token
+      console.log('[AccessKey] Calling generateCustomToken function...');
       const generateTokenFn = httpsCallable(functions, 'generateCustomToken');
       const result = await generateTokenFn({ uid: userDoc.id });
       const data = result.data as { token?: string; error?: string };
 
+      console.log('[AccessKey] Function response:', { hasToken: !!data.token, error: data.error });
+
       if (data.error || !data.token) {
+        console.log('[AccessKey] Token generation failed:', data.error);
         setError(data.error || 'Failed to authenticate. Please try again.');
         setLoading(false);
         return;
       }
 
       // Sign in with custom token
+      console.log('[AccessKey] Signing in with custom token...');
       await signInWithCustomToken(auth, data.token);
+      console.log('[AccessKey] Sign in successful!');
       
       // Navigation will happen automatically via useEffect
     } catch (err: any) {
-      console.error('[Login] Access key error:', err);
-      setError('Failed to sign in. Please try again.');
+      console.error('[AccessKey] Error:', err);
+      console.error('[AccessKey] Error code:', err.code);
+      console.error('[AccessKey] Error message:', err.message);
+      setError(`Failed to sign in: ${err.message || 'Please try again.'}`);
       setLoading(false);
     }
   };
