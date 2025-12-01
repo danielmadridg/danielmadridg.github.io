@@ -9,10 +9,12 @@ import {
 } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { useNavigate } from 'react-router-dom';
 import { auth, googleProvider, functions, db } from '../config/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { Mail, Lock, Chrome, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import VerificationCodeInput from '../components/VerificationCodeInput';
 
 type LoginStep = 'credentials' | 'verification';
@@ -20,6 +22,8 @@ type LoginStep = 'credentials' | 'verification';
 const Login: React.FC = () => {
   const { t } = useLanguage();
   const { executeRecaptcha } = useGoogleReCaptcha();
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -31,6 +35,13 @@ const Login: React.FC = () => {
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
 
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/');
+    }
+  }, [user, authLoading, navigate]);
+
   // Handle redirect result from Google Sign-In on mobile
   useEffect(() => {
     const handleRedirectResult = async () => {
@@ -39,8 +50,7 @@ const Login: React.FC = () => {
         if (result) {
           // Successfully signed in via redirect
           console.log('[Login] Redirect result received, user authenticated');
-          // If it's a new user, we might want to ensure they have a user doc, but for Google Sign In we might need a different flow or just let them be without a username for now/auto-generate one.
-          // For now, focusing on Email/Password flow as requested.
+          // User will be redirected by the above useEffect when auth state updates
         }
       } catch (err: any) {
         console.error('[Login] Redirect result error:', err);
