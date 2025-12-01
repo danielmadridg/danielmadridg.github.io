@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { StoreProvider, useStore } from './context/StoreContext';
@@ -390,6 +390,23 @@ const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
   );
 };
 
+const NavigationHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  const { isWorkoutActive, setWorkoutActive } = useWorkout();
+  const previousPathRef = useRef(location.pathname);
+
+  useEffect(() => {
+    // If workout is active and we're trying to navigate away from home
+    if (isWorkoutActive && location.pathname !== '/' && location.pathname !== previousPathRef.current) {
+      // Reset workout state so we can navigate
+      setWorkoutActive(false);
+    }
+    previousPathRef.current = location.pathname;
+  }, [location.pathname, isWorkoutActive, setWorkoutActive]);
+
+  return <>{children}</>;
+};
+
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
 
@@ -400,31 +417,33 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <WorkoutProvider>
-        <Layout>
-          <Routes>
-          <Route path="/login" element={
-            user ? <Navigate to="/" replace /> : <Login />
-          } />
-          <Route path="/onboarding" element={
-            <OnboardingRoute />
-          } />
-          <Route path="/" element={
-            <ProtectedRoute requireRoutine={true}>
-              <Home />
-            </ProtectedRoute>
-          } />
-          <Route path="/progress" element={
-            <ProtectedRoute>
-              <Progress />
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          } />
-        </Routes>
-        </Layout>
+        <NavigationHandler>
+          <Layout>
+            <Routes>
+            <Route path="/login" element={
+              user ? <Navigate to="/" replace /> : <Login />
+            } />
+            <Route path="/onboarding" element={
+              <OnboardingRoute />
+            } />
+            <Route path="/" element={
+              <ProtectedRoute requireRoutine={true}>
+                <Home />
+              </ProtectedRoute>
+            } />
+            <Route path="/progress" element={
+              <ProtectedRoute>
+                <Progress />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            } />
+          </Routes>
+          </Layout>
+        </NavigationHandler>
       </WorkoutProvider>
     </Router>
   );

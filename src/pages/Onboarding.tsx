@@ -3,7 +3,112 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useLanguage } from '../context/LanguageContext';
 import type { RoutineDay, ExerciseConfig } from '../types';
-import { Plus, Trash2, Edit, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Edit, ArrowLeft, GripVertical } from 'lucide-react';
+import {
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import {CSS} from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
+
+interface SortableExerciseItemProps {
+  id: string;
+  exercise: ExerciseConfig;
+  dayIndex: number;
+  exIndex: number;
+  updateExercise: (dayIndex: number, exIndex: number, field: keyof ExerciseConfig, value: string | number) => void;
+  removeExercise: (dayIndex: number, exIndex: number) => void;
+  t: (key: string) => string;
+}
+
+const SortableExerciseItem = ({ id, exercise, dayIndex, exIndex, updateExercise, removeExercise, t }: SortableExerciseItemProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    marginBottom: '1rem',
+    borderBottom: '1px solid #333',
+    paddingBottom: '1rem',
+    touchAction: 'none', // Important for touch devices to prevent scrolling while dragging
+    position: 'relative' as const,
+    zIndex: isDragging ? 999 : 'auto',
+    background: isDragging ? '#1a1a1a' : 'transparent',
+    borderRadius: isDragging ? '8px' : '0',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', cursor: 'grab', paddingRight: '0.5rem', color: '#666' }}>
+          <GripVertical size={20} />
+        </div>
+        <input
+          placeholder={t('exercise_name')}
+          value={exercise.name}
+          onChange={(e) => updateExercise(dayIndex, exIndex, 'name', e.target.value)}
+          spellCheck="false"
+          // Stop propagation to prevent drag start when typing immediately
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box' }}
+        />
+        <button 
+          onClick={() => removeExercise(dayIndex, exIndex)} 
+          className="btn-danger" 
+          style={{ height: '44px', width: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}
+          onPointerDown={(e) => e.stopPropagation()} // Prevent drag when clicking delete
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', boxSizing: 'border-box'}}>
+        <div style={{ boxSizing: 'border-box' }}>
+          <label>{t('sets')}</label>
+          <input
+            type="number"
+            value={exercise.sets === 0 ? '' : exercise.sets}
+            placeholder="3"
+            onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', e.target.value === '' ? 0 : Number(e.target.value))}
+            style={{ width: '100%', boxSizing: 'border-box' }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+        </div>
+        <div style={{ boxSizing: 'border-box' }}>
+          <label>{t('target_reps')}</label>
+          <input
+            type="number"
+            value={exercise.targetReps === 0 ? '' : exercise.targetReps}
+            placeholder="10"
+            onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', e.target.value === '' ? 0 : Number(e.target.value))}
+            style={{ width: '100%', boxSizing: 'border-box' }}
+            onPointerDown={(e) => e.stopPropagation()}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Onboarding: React.FC = () => {
   const { state, setRoutine } = useStore();
@@ -15,7 +120,6 @@ const Onboarding: React.FC = () => {
   const [step, setStep] = useState<number>(state.routine.length > 0 ? 2 : 1);
   const [routine, setRoutineState] = useState<RoutineDay[]>(state.routine.length > 0 ? state.routine : []);
   const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  const [draggedItem, setDraggedItem] = useState<{ dayIndex: number; exIndex: number } | null>(null);
 
   const handleStart = () => {
     if (!daysCount || daysCount < 1) {
@@ -111,36 +215,34 @@ const Onboarding: React.FC = () => {
     }
   };
 
-  // Drag and Drop Handlers
-  const handleDragStart = (e: React.DragEvent, dayIndex: number, exIndex: number) => {
-    setDraggedItem({ dayIndex, exIndex });
-    e.dataTransfer.effectAllowed = 'move';
-    // Make the drag image transparent or style it if needed
-  };
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-  const handleDragOver = (e: React.DragEvent, dayIndex: number, exIndex: number) => {
-    e.preventDefault();
-    if (!draggedItem) return;
-    if (draggedItem.dayIndex !== dayIndex) return; // Only allow reordering within the same day
-    if (draggedItem.exIndex === exIndex) return;
-
-    // Perform the swap
-    const newRoutine = [...routine];
-    const dayExercises = [...newRoutine[dayIndex].exercises];
-    const draggedExercise = dayExercises[draggedItem.exIndex];
+  const handleDragEnd = (event: DragEndEvent, dayIndex: number) => {
+    const {active, over} = event;
     
-    // Remove from old position
-    dayExercises.splice(draggedItem.exIndex, 1);
-    // Insert at new position
-    dayExercises.splice(exIndex, 0, draggedExercise);
-    
-    newRoutine[dayIndex].exercises = dayExercises;
-    setRoutineState(newRoutine);
-    setDraggedItem({ dayIndex, exIndex });
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
+    if (over && active.id !== over.id) {
+      const oldIndex = routine[dayIndex].exercises.findIndex(e => e.id === active.id);
+      const newIndex = routine[dayIndex].exercises.findIndex(e => e.id === over.id);
+      
+      const newRoutine = [...routine];
+      newRoutine[dayIndex].exercises = arrayMove(newRoutine[dayIndex].exercises, oldIndex, newIndex);
+      setRoutineState(newRoutine);
+    }
   };
 
   if (step === 1) {
@@ -214,60 +316,30 @@ const Onboarding: React.FC = () => {
             </button>
           </div>
           <div style={{ marginTop: '1rem' }}>
-            {day.exercises.map((ex, exIndex) => (
-              <div 
-                key={ex.id} 
-                draggable
-                onDragStart={(e) => handleDragStart(e, dayIndex, exIndex)}
-                onDragOver={(e) => handleDragOver(e, dayIndex, exIndex)}
-                onDragEnd={handleDragEnd}
-                style={{ 
-                  marginBottom: '1rem', 
-                  borderBottom: '1px solid #333', 
-                  paddingBottom: '1rem',
-                  opacity: draggedItem?.dayIndex === dayIndex && draggedItem?.exIndex === exIndex ? 0.5 : 1,
-                  cursor: 'grab'
-                }}
+            <DndContext 
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(e) => handleDragEnd(e, dayIndex)}
+              modifiers={[restrictToVerticalAxis, restrictToWindowEdges]}
+            >
+              <SortableContext 
+                items={day.exercises.map(e => e.id)}
+                strategy={verticalListSortingStrategy}
               >
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', cursor: 'grab', paddingRight: '0.5rem', color: '#666' }}>
-                    ⋮⋮
-                  </div>
-                  <input
-                    placeholder={t('exercise_name')}
-                    value={ex.name}
-                    onChange={(e) => updateExercise(dayIndex, exIndex, 'name', e.target.value)}
-                    spellCheck="false"
-                    style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box' }}
+                {day.exercises.map((ex, exIndex) => (
+                  <SortableExerciseItem
+                    key={ex.id}
+                    id={ex.id}
+                    exercise={ex}
+                    dayIndex={dayIndex}
+                    exIndex={exIndex}
+                    updateExercise={updateExercise}
+                    removeExercise={removeExercise}
+                    t={t}
                   />
-                  <button onClick={() => removeExercise(dayIndex, exIndex)} className="btn-danger" style={{ height: '44px', width: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0 }}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', boxSizing: 'border-box'}}>
-                  <div style={{ boxSizing: 'border-box' }}>
-                    <label>{t('sets')}</label>
-                    <input
-                      type="number"
-                      value={ex.sets === 0 ? '' : ex.sets}
-                      placeholder="3"
-                      onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', e.target.value === '' ? 0 : Number(e.target.value))}
-                      style={{ width: '100%', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                  <div style={{ boxSizing: 'border-box' }}>
-                    <label>{t('target_reps')}</label>
-                    <input
-                      type="number"
-                      value={ex.targetReps === 0 ? '' : ex.targetReps}
-                      placeholder="10"
-                      onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', e.target.value === '' ? 0 : Number(e.target.value))}
-                      style={{ width: '100%', boxSizing: 'border-box' }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+                ))}
+              </SortableContext>
+            </DndContext>
             <button className="btn-secondary" onClick={() => addExercise(dayIndex)} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
               <Plus size={16} /> {t('add_exercise')}
             </button>
