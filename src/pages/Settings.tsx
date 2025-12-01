@@ -7,6 +7,7 @@ import { LogOut, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import ProfilePictureEditor from '../components/ProfilePictureEditor';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ACCESS_KEY_LENGTH, ACCESS_KEY_SEGMENT_LENGTH } from '../utils/constants';
 
 const Settings: React.FC = () => {
   const { clearData, clearHistory, state, setUnitPreference } = useStore();
@@ -65,12 +66,12 @@ const Settings: React.FC = () => {
   }, [user]);
 
   const generateAccessKey = (): string => {
-    // Generate a 12-character alphanumeric key
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous characters
+    // Generate access key with format: XXXX-XXXX-XXXX
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous characters (I, O, 0)
     let key = '';
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < ACCESS_KEY_LENGTH; i++) {
       key += chars.charAt(Math.floor(Math.random() * chars.length));
-      if ((i + 1) % 4 === 0 && i < 11) key += '-'; // Add dashes every 4 characters
+      if ((i + 1) % ACCESS_KEY_SEGMENT_LENGTH === 0 && i < ACCESS_KEY_LENGTH - 1) key += '-';
     }
     return key;
   };

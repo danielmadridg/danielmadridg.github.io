@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { VERIFICATION_CODE_TIMEOUT, VERIFICATION_CODE_WARNING_TIME } from '../utils/constants';
 
 interface VerificationCodeInputProps {
   onComplete: (code: string) => void;
@@ -16,7 +17,7 @@ const VerificationCodeInput: React.FC<VerificationCodeInputProps> = ({
   error = null,
 }) => {
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(VERIFICATION_CODE_TIMEOUT);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -182,17 +183,17 @@ const VerificationCodeInput: React.FC<VerificationCodeInputProps> = ({
         <button
           onClick={() => {
             setCode(['', '', '', '', '', '']);
-            setTimeLeft(600);
+            setTimeLeft(VERIFICATION_CODE_TIMEOUT);
             onResend();
             inputRefs.current[0]?.focus();
           }}
-          disabled={loading || timeLeft > 540} // Can resend after 1 minute
+          disabled={loading || timeLeft > VERIFICATION_CODE_WARNING_TIME}
           style={{
             background: 'none',
             border: 'none',
-            color: loading || timeLeft > 540 ? '#555' : '#C8956B',
+            color: loading || timeLeft > VERIFICATION_CODE_WARNING_TIME ? '#555' : '#C8956B',
             fontSize: '0.9rem',
-            cursor: loading || timeLeft > 540 ? 'not-allowed' : 'pointer',
+            cursor: loading || timeLeft > VERIFICATION_CODE_WARNING_TIME ? 'not-allowed' : 'pointer',
             textDecoration: 'underline',
             padding: '0.5rem',
           }}
