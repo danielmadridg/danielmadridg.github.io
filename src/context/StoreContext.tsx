@@ -102,17 +102,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               const parsed = JSON.parse(localData);
               console.log('[StoreContext] Firestore failed, loaded from localStorage fallback:', parsed);
               dispatch({ type: 'LOAD_DATA', payload: parsed });
-              setIsLoaded(true);
             } catch (parseErr) {
               console.error("Failed to parse local data:", parseErr);
               dispatch({ type: 'CLEAR_DATA' });
-              setIsLoaded(true);
             }
           } else {
             console.log('[StoreContext] Firestore failed and no localStorage data, resetting to initial');
             dispatch({ type: 'CLEAR_DATA' });
-            setIsLoaded(true);
           }
+          // Always set loaded to true so we don't get stuck on black screen
+          setIsLoaded(true);
         }
       } else {
         // User logged out - keep local state from before logout, don't clear it
