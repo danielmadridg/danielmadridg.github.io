@@ -93,13 +93,26 @@ const Login: React.FC = () => {
     return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   };
 
+  const isStandalone = () => {
+    return (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       setError(null);
       setLoading(true);
 
-      // Use signInWithPopup for all devices (works better on iOS than signInWithRedirect)
-      // We removed reCAPTCHA here to ensure the popup is triggered immediately within the user gesture
+      const standalone = isStandalone();
+      console.log('[Login] Environment:', { isMobile: isMobileDevice(), isStandalone: standalone });
+
+      // If in standalone mode (PWA), use redirect to avoid popup issues and ensure state preservation
+      if (standalone) {
+        console.log('[Login] Standalone mode detected, using signInWithRedirect');
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+
+      // Use signInWithPopup for all other devices (works better on iOS browser than signInWithRedirect)
       try {
         await signInWithPopup(auth, googleProvider);
       } catch (popupErr: any) {
