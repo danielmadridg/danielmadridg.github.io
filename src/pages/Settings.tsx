@@ -47,12 +47,30 @@ const Settings: React.FC = () => {
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
         
-        if (userDoc.exists() && userDoc.data().accessKey) {
-          setAccessKey(userDoc.data().accessKey);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          
+          // Ensure email is saved in the document (fixes "User account is incomplete" error)
+          if (!data.email && user.email) {
+            await setDoc(userDocRef, { email: user.email }, { merge: true });
+          }
+
+          if (data.accessKey) {
+            setAccessKey(data.accessKey);
+          } else {
+            // Generate new access key
+            const newKey = generateAccessKey();
+            await setDoc(userDocRef, { accessKey: newKey, email: user.email }, { merge: true });
+            setAccessKey(newKey);
+          }
         } else {
-          // Generate new access key
+          // Create document if it doesn't exist
           const newKey = generateAccessKey();
-          await setDoc(userDocRef, { accessKey: newKey }, { merge: true });
+          await setDoc(userDocRef, { 
+            accessKey: newKey,
+            email: user.email,
+            createdAt: new Date().toISOString()
+          });
           setAccessKey(newKey);
         }
       } catch (error) {
