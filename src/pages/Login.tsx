@@ -98,35 +98,18 @@ const Login: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      if (!executeRecaptcha) {
-        setError(t('error_captcha_failed'));
-        return;
-      }
-
-      const token = await executeRecaptcha('google_signin');
-
-      if (token) {
-        const verifyRecaptchaFn = httpsCallable(functions, 'verifyRecaptcha');
-        const result = await verifyRecaptchaFn({ token });
-        const data = result.data as { success: boolean; score?: number };
-
-        if (!data.success) {
-          setError(t('error_captcha_failed'));
+      // Use signInWithPopup for all devices (works better on iOS than signInWithRedirect)
+      // We removed reCAPTCHA here to ensure the popup is triggered immediately within the user gesture
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (popupErr: any) {
+        // If popup fails on mobile (some browsers don't allow popups), fall back to redirect
+        if (isMobileDevice() && popupErr.code === 'auth/popup-blocked') {
+          console.log('[Login] Popup blocked on mobile, using redirect instead');
+          await signInWithRedirect(auth, googleProvider);
           return;
         }
-
-        // Use signInWithPopup for all devices (works better on iOS than signInWithRedirect)
-        try {
-          await signInWithPopup(auth, googleProvider);
-        } catch (popupErr: any) {
-          // If popup fails on mobile (some browsers don't allow popups), fall back to redirect
-          if (isMobileDevice() && popupErr.code === 'auth/popup-blocked') {
-            console.log('[Login] Popup blocked on mobile, using redirect instead');
-            await signInWithRedirect(auth, googleProvider);
-            return;
-          }
-          throw popupErr;
-        }
+        throw popupErr;
       }
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
