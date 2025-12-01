@@ -16,6 +16,7 @@ import { Mail, Lock, Chrome, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VerificationCodeInput from '../components/VerificationCodeInput';
+import { isPWA } from '../utils/pwa';
 
 type LoginStep = 'credentials' | 'verification';
 
@@ -98,17 +99,13 @@ const Login: React.FC = () => {
     return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   };
 
-  const isStandalone = () => {
-    return (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
-  };
-
   const handleGoogleSignIn = async () => {
     try {
       setError(null);
       setLoading(true);
       console.log('[Login] Starting Google Sign-In (v2025-12-01-fix)');
 
-      const standalone = isStandalone();
+      const standalone = isPWA();
       const isMobile = isMobileDevice();
       console.log('[Login] Environment:', { isMobile, isStandalone: standalone });
 
