@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -33,15 +33,47 @@ export const useWorkout = () => {
   return context;
 };
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const hideNav = location.pathname === '/onboarding' || location.pathname === '/login';
   const { isWorkoutActive, handleCancelWorkout } = useWorkout();
   const { t } = useLanguage();
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const navigate = useNavigate();
 
+  // Handle back button - intercept page unload
   useEffect(() => {
-    console.log('[Layout] Rendered with path:', location.pathname, 'isWorkoutActive:', isWorkoutActive);
-  }, [location.pathname, isWorkoutActive]);
+    if (!isWorkoutActive) return;
+
+    console.log('[Back Button] Setting up beforeunload handler');
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log('[Back Button] beforeunload triggered!');
+      e.preventDefault();
+      e.returnValue = '';
+      setShowBackConfirm(true);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      console.log('[Back Button] Removing beforeunload handler');
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isWorkoutActive]);
+
+  const handleBackClick = () => {
+    if (isWorkoutActive) {
+      setShowBackConfirm(true);
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handlePauseWorkout = () => {
+    setShowBackConfirm(false);
+    navigate('/');
+  };
 
   if (hideNav) {
     return <>{children}</>;
@@ -54,7 +86,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {/* Logo */}
         {isWorkoutActive ? (
           <button
-            onClick={handleCancelWorkout}
+            onClick={handleBackClick}
             style={{
               padding: '1rem 1rem',
               marginBottom: '2rem',
@@ -67,7 +99,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               cursor: 'pointer',
               color: 'inherit'
             }}
-            title="Exit workout"
+            title="Back"
           >
             <img src="/favicon.svg" alt="Prodegi" style={{
               width: '3.5rem',
@@ -252,9 +284,124 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <span>{t('settings')}</span>
         </Link>
       </nav>
+
+      {/* Back Confirmation Modal */}
+      {showBackConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--surface-color)',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '400px',
+            textAlign: 'center',
+            border: '1px solid var(--primary-color)',
+            position: 'relative'
+          }}>
+            {/* Close button (X) */}
+            <button
+              onClick={() => setShowBackConfirm(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: '0.25rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+              title="Close"
+            >
+              ✕
+            </button>
+
+            <h2 style={{
+              color: 'var(--text-primary)',
+              marginTop: 0,
+              marginBottom: '1.5rem',
+              fontSize: '1.2rem',
+              paddingRight: '2rem'
+            }}>
+              {t('back_during_workout')}
+            </h2>
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              flexDirection: 'column'
+            }}>
+              <button
+                onClick={handlePauseWorkout}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  minHeight: '44px',
+                  background: 'var(--primary-color)',
+                  color: '#0a0a0a',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                {t('pause_workout')}
+              </button>
+              <button
+                onClick={() => {
+                  setShowBackConfirm(false);
+                  handleCancelWorkout?.();
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  minHeight: '44px',
+                  background: 'transparent',
+                  color: '#f44336',
+                  border: '1px solid #f44336',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(244, 67, 54, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {t('cancel_workout')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// Memoize Layout to prevent unnecessary re-renders of navigation
+const Layout = React.memo(LayoutContent);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boolean }> = ({ children, requireRoutine = false }) => {
   const { user, loading } = useAuth();
@@ -394,30 +541,55 @@ const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
   );
 };
 
-const NavigationHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const InnerContent: React.FC = () => {
   const location = useLocation();
+  const { user, loading } = useAuth();
   const { isWorkoutActive, setWorkoutActive } = useWorkout();
   const previousPathRef = useRef(location.pathname);
 
+  // Reset workout when navigating away from home
   useEffect(() => {
-    console.log('[NavigationHandler] Current path:', location.pathname);
-    console.log('[NavigationHandler] isWorkoutActive:', isWorkoutActive);
-    console.log('[NavigationHandler] Previous path:', previousPathRef.current);
-
-    // If workout is active and we're trying to navigate away from home
     if (isWorkoutActive && location.pathname !== '/' && location.pathname !== previousPathRef.current) {
-      console.log('[NavigationHandler] Resetting workout state because navigating away from home');
-      // Reset workout state so we can navigate
       setWorkoutActive(false);
     }
     previousPathRef.current = location.pathname;
   }, [location.pathname, isWorkoutActive, setWorkoutActive]);
 
-  return <>{children}</>;
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Layout>
+      <Routes>
+      <Route path="/login" element={
+        user ? <Navigate to="/" replace /> : <Login />
+      } />
+      <Route path="/onboarding" element={
+        <OnboardingRoute />
+      } />
+      <Route path="/" element={
+        <ProtectedRoute requireRoutine={true}>
+          <Home />
+        </ProtectedRoute>
+      } />
+      <Route path="/progress" element={
+        <ProtectedRoute>
+          <Progress />
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      } />
+    </Routes>
+    </Layout>
+  );
 };
 
 const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return <LoadingScreen />;
@@ -426,33 +598,7 @@ const AppContent: React.FC = () => {
   return (
     <Router>
       <WorkoutProvider>
-        <NavigationHandler>
-          <Layout>
-            <Routes>
-            <Route path="/login" element={
-              user ? <Navigate to="/" replace /> : <Login />
-            } />
-            <Route path="/onboarding" element={
-              <OnboardingRoute />
-            } />
-            <Route path="/" element={
-              <ProtectedRoute requireRoutine={true}>
-                <Home />
-              </ProtectedRoute>
-            } />
-            <Route path="/progress" element={
-              <ProtectedRoute>
-                <Progress />
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-          </Routes>
-          </Layout>
-        </NavigationHandler>
+        <InnerContent />
       </WorkoutProvider>
     </Router>
   );

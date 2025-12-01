@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Trash2 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ProfilePictureEditorProps {
   currentPhotoURL?: string;
@@ -14,6 +15,7 @@ const ProfilePictureEditor: React.FC<ProfilePictureEditorProps> = ({
   loading = false,
   compact = false
 }) => {
+  const { t } = useLanguage();
   const [previewURL, setPreviewURL] = useState<string | undefined>(currentPhotoURL);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,7 +157,7 @@ const ProfilePictureEditor: React.FC<ProfilePictureEditorProps> = ({
             }}
           >
             <Upload size={16} />
-            {isSaving ? 'Saving...' : 'Upload'}
+            {isSaving ? t('saving') : t('upload_photo')}
           </button>
 
           {previewURL && (
@@ -179,7 +181,7 @@ const ProfilePictureEditor: React.FC<ProfilePictureEditorProps> = ({
               }}
             >
               <Trash2 size={16} />
-              Remove
+              {t('remove_photo')}
             </button>
           )}
         </div>

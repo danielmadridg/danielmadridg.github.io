@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
@@ -33,6 +33,7 @@ const Home: React.FC = () => {
     exercises: Record<string, { weight: string; reps: string[] }>;
   } | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const navigate = useNavigate();
 
   // Load saved workout from local storage on mount (but don't activate it)
@@ -87,22 +88,44 @@ const Home: React.FC = () => {
 
   const selectedDay = state.routine.find(d => d.id === selectedDayId);
 
-  const handleCancelWorkout = () => {
-    if (confirm('Are you sure you want to cancel this workout? All progress will be lost.')) {
-      setActiveWorkout(null);
-      setSavedWorkout(null);
-      setWorkoutActive(false);
-      localStorage.removeItem('activeWorkout');
-      navigate('/');
-    }
-  };
+  // Memoize exercise lookup map to avoid O(n²) in history rendering
+  const exerciseMap = useMemo(() => {
+    const map = new Map();
+    state.routine.forEach(day => {
+      day.exercises.forEach(ex => {
+        map.set(ex.id, ex.name);
+      });
+    });
+    return map;
+  }, [state.routine]);
+
+  // Memoize filtered history to avoid recalculating in each render
+  const filteredAndDisplayedHistory = useMemo(() => {
+    const fullHistory = state.history.slice().reverse();
+    const filtered = filterByDayId ? fullHistory.filter(s => s.dayId === filterByDayId) : fullHistory;
+    const displayed = showAllHistory ? filtered : filtered.slice(0, 5);
+    return { fullHistory, filtered, displayed };
+  }, [state.history, filterByDayId, showAllHistory]);
+
+  const handleCancelWorkout = useCallback(() => {
+    setShowCancelConfirm(true);
+  }, []);
+
+  const confirmCancelWorkout = useCallback(() => {
+    setShowCancelConfirm(false);
+    setActiveWorkout(null);
+    setSavedWorkout(null);
+    setWorkoutActive(false);
+    localStorage.removeItem('activeWorkout');
+    navigate('/');
+  }, [setActiveWorkout, setSavedWorkout, setWorkoutActive, navigate]);
 
   // Update the context with the handleCancelWorkout function
   useEffect(() => {
     if (setHandleCancelWorkout) {
       setHandleCancelWorkout(() => handleCancelWorkout);
     }
-  }, [setHandleCancelWorkout, handleCancelWorkout]);
+  }, [handleCancelWorkout, setHandleCancelWorkout]);
 
   const handleResumeWorkout = () => {
     if (savedWorkout) {
@@ -292,13 +315,7 @@ const Home: React.FC = () => {
     return timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
   }, [user?.displayName, t]);
 
-  useEffect(() => {
-    console.log('[Home] activeWorkout state:', activeWorkout);
-    console.log('[Home] isWorkoutActive state:', );
-  }, [activeWorkout]);
-
   if (activeWorkout && selectedDay) {
-    console.log('[Home] Rendering workout view because activeWorkout is set');
     return (
         <div>
             <div className="workout-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
@@ -470,17 +487,12 @@ const Home: React.FC = () => {
                   ))}
               </select>
           </div>
-          {(() => {
-              const fullHistory = state.history.slice().reverse();
-              const filteredHistory = filterByDayId ? fullHistory.filter(s => s.dayId === filterByDayId) : fullHistory;
-              const displayedHistory = showAllHistory ? filteredHistory : filteredHistory.slice(0, 5);
+          {filteredAndDisplayedHistory.displayed.map((session, idx) => {
+              const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
 
-              return displayedHistory.map((session, idx) => {
-                  const dayName = state.routine.find(d => d.id === session.dayId)?.name || 'Unknown Day';
-
-                  // Find previous session for the same day in FULL history, not just displayed
-                  const previousSessionIndex = fullHistory.findIndex((s, i) => i > idx && s.dayId === session.dayId);
-                  const previousSession = previousSessionIndex !== -1 ? fullHistory[previousSessionIndex] : null;
+              // Find previous session for the same day in FULL history, not just displayed
+              const previousSessionIndex = filteredAndDisplayedHistory.fullHistory.findIndex((s, i) => i > idx && s.dayId === session.dayId);
+              const previousSession = previousSessionIndex !== -1 ? filteredAndDisplayedHistory.fullHistory[previousSessionIndex] : null;
 
               return (
                   <div key={session.id} className="card history-card">
@@ -512,9 +524,7 @@ const Home: React.FC = () => {
                       {/* Show exercise changes */}
                       <div style={{marginTop: '0.5rem'}}>
                           {session.exercises.map(ex => {
-                              const exerciseName = state.routine
-                                  .flatMap(d => d.exercises)
-                                  .find(e => e.id === ex.exerciseId)?.name || 'Unknown';
+                              const exerciseName = exerciseMap.get(ex.exerciseId) || 'Unknown';
 
                               const prevEx = previousSession?.exercises.find(e => e.exerciseId === ex.exerciseId);
 
@@ -547,40 +557,146 @@ const Home: React.FC = () => {
                       </div>
                   </div>
               );
-              });
-          })()}
-          {(() => {
-              const fullHistory = state.history.slice().reverse();
-              const filteredHistory = filterByDayId ? fullHistory.filter(s => s.dayId === filterByDayId) : fullHistory;
-
-              return (
-                  <>
-                      {!showAllHistory && filteredHistory.length > 5 && (
-                          <button
-                              onClick={() => setShowAllHistory(true)}
-                              style={{
-                                  width: '100%',
-                                  padding: '0.75rem 1rem',
-                                  marginTop: '1rem',
-                                  background: 'none',
-                                  border: '1px solid var(--primary-color)',
-                                  color: 'var(--primary-color)',
-                                  cursor: 'pointer',
-                                  borderRadius: '8px',
-                                  fontWeight: '500',
-                                  transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 149, 107, 0.1)'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                          >
-                              {t('see_more')}
-                          </button>
-                      )}
-                      {filteredHistory.length === 0 && <p style={{color: 'var(--text-secondary)'}}>{t('no_workouts')}</p>}
-                  </>
-              );
-          })()}
+          })}
+          {!showAllHistory && filteredAndDisplayedHistory.filtered.length > 5 && (
+              <button
+                  onClick={() => setShowAllHistory(true)}
+                  style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      marginTop: '1rem',
+                      background: 'none',
+                      border: '1px solid var(--primary-color)',
+                      color: 'var(--primary-color)',
+                      cursor: 'pointer',
+                      borderRadius: '8px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200, 149, 107, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+              >
+                  {t('see_more')}
+              </button>
+          )}
+          {filteredAndDisplayedHistory.filtered.length === 0 && <p style={{color: 'var(--text-secondary)'}}>{t('no_workouts')}</p>}
       </div>
+
+      {/* Cancel Workout Confirmation Modal */}
+      {showCancelConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--surface-color)',
+            borderRadius: '12px',
+            padding: '2rem',
+            maxWidth: '400px',
+            textAlign: 'center',
+            border: '1px solid var(--primary-color)',
+            position: 'relative'
+          }}>
+            {/* Close button (X) */}
+            <button
+              onClick={() => setShowCancelConfirm(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                padding: '0.25rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+              title="Close"
+            >
+              ✕
+            </button>
+
+            <h2 style={{
+              color: 'var(--text-primary)',
+              marginTop: 0,
+              marginBottom: '1.5rem',
+              fontSize: '1.2rem',
+              paddingRight: '2rem'
+            }}>
+              {t('cancel_workout')}?
+            </h2>
+            <p style={{
+              color: 'var(--text-secondary)',
+              marginBottom: '1.5rem',
+              lineHeight: '1.5'
+            }}>
+              {t('back_during_workout')}
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              flexDirection: 'column'
+            }}>
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  minHeight: '44px',
+                  background: 'var(--primary-color)',
+                  color: '#0a0a0a',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+              >
+                {t('pause_workout')}
+              </button>
+              <button
+                onClick={confirmCancelWorkout}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  minHeight: '44px',
+                  background: 'transparent',
+                  color: '#f44336',
+                  border: '1px solid #f44336',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(244, 67, 54, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                {t('cancel_workout')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

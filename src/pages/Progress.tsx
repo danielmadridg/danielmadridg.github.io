@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { Line } from 'react-chartjs-2';
 import {
@@ -30,12 +30,24 @@ const Progress: React.FC = () => {
   const { t } = useLanguage();
   const { state, getExerciseHistory } = useStore();
   const [viewMode, setViewMode] = useState<'exercise' | 'day'>('exercise');
+  const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth <= 768);
+
   const allExercises = useMemo(() => {
     return state.routine.flatMap(day => day.exercises);
   }, [state.routine]);
 
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+
+  // Detect window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const selectedExercise = allExercises.find(ex => ex.id === selectedExerciseId);
   const selectedDay = state.routine.find(day => day.id === selectedDayId);
@@ -125,7 +137,6 @@ const Progress: React.FC = () => {
   const hasSelection = viewMode === 'exercise' ? !!selectedExerciseId : !!selectedDayId;
   const hasData = viewMode === 'exercise' ? exerciseHistory.length > 0 : dayHistory.length > 0;
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const legendPosition = isMobile ? 'bottom' : 'right';
   const legendPadding = isMobile ? 15 : 25;
 

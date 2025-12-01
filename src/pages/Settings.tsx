@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
+import { LogOut, Edit, Trash2 } from 'lucide-react';
 import ProfilePictureEditor from '../components/ProfilePictureEditor';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -26,6 +26,7 @@ const Settings: React.FC = () => {
   const [accessKey, setAccessKey] = useState<string | null>(null);
   const [loadingKey, setLoadingKey] = useState(true);
   const [keyCopied, setKeyCopied] = useState(false);
+  const [showAccessKeyWarning, setShowAccessKeyWarning] = useState(false);
   const currentUnit = state.unitPreference || 'kg';
 
   useEffect(() => {
@@ -294,7 +295,7 @@ const Settings: React.FC = () => {
         </div>
 
         <div>
-          <label style={{display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem'}}>Profile Picture</label>
+          <label style={{display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem'}}>{t('profile_picture')}</label>
           <ProfilePictureEditor
             currentPhotoURL={user?.photoURL || undefined}
             onSave={(photoURL) => updateProfile({ photoURL })}
@@ -303,79 +304,6 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
-      {/* Access Key Section */}
-      <div className="card" style={{marginBottom: '1rem'}}>
-        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-          <Key size={20} />
-          PWA Access Key
-        </h2>
-        
-        <p style={{color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem', lineHeight: '1.5'}}>
-          Use this key to log in when using the app as a PWA (added to home screen). Copy this key before installing the app.
-        </p>
-        
-        {loadingKey ? (
-          <div style={{
-            padding: '1rem',
-            background: 'var(--surface-color)',
-            borderRadius: '6px',
-            textAlign: 'center',
-            color: 'var(--text-secondary)'
-          }}>
-            Loading key...
-          </div>
-        ) : (
-          <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
-            <div style={{
-              flex: 1,
-              padding: '1rem',
-              background: 'var(--surface-color)',
-              borderRadius: '6px',
-              border: '2px solid var(--primary-color)',
-              fontFamily: 'monospace',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              letterSpacing: '0.05em',
-              color: 'var(--primary-color)',
-              textAlign: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: '44px'
-            }}>
-              {accessKey || 'Error loading key'}
-            </div>
-            <button
-              onClick={copyAccessKey}
-              className="btn-secondary"
-              style={{
-                minHeight: '44px',
-                padding: '0.75rem 1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                fontSize: '0.95rem',
-                whiteSpace: 'nowrap',
-                background: keyCopied ? '#4CAF50' : undefined,
-                borderColor: keyCopied ? '#4CAF50' : undefined
-              }}
-            >
-              {keyCopied ? (
-                <>
-                  <Check size={18} />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy size={18} />
-                  Copy
-                </>
-              )}
-            </button>
-          </div>
-        )}
-      </div>
 
       <div className="card" style={{marginBottom: '1rem'}}>
         <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>Preferences</h2>
@@ -422,79 +350,91 @@ const Settings: React.FC = () => {
 
         <div style={{marginBottom: '1.5rem'}}>
           <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>{t('language')}</label>
-          <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
-            <button
-              onClick={() => setLanguage('en')}
-              style={{
+          <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+            {/* Slider container */}
+            <div style={{display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative'}}>
+              <button
+                onClick={() => {
+                  const currentIndex = ['en', 'es', 'fr', 'it'].indexOf(language);
+                  const nextIndex = currentIndex === 0 ? 3 : currentIndex - 1;
+                  setLanguage(['en', 'es', 'fr', 'it'][nextIndex] as any);
+                }}
+                style={{
+                  padding: '0.5rem',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary-color)',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ‹
+              </button>
+
+              {/* Slide content */}
+              <div style={{
                 flex: 1,
-                padding: '0.75rem',
-                minHeight: '44px',
-                border: language === 'en' ? '2px solid var(--primary-color)' : '1px solid #252525',
-                background: language === 'en' ? 'rgba(200, 149, 107, 0.1)' : 'var(--surface-color)',
-                color: language === 'en' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: language === 'en' ? '600' : '500',
-                transition: 'all 0.2s',
-                fontSize: '0.9rem'
-              }}
-            >
-              {t('english')}
-            </button>
-            <button
-              onClick={() => setLanguage('es')}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                minHeight: '44px',
-                border: language === 'es' ? '2px solid var(--primary-color)' : '1px solid #252525',
-                background: language === 'es' ? 'rgba(200, 149, 107, 0.1)' : 'var(--surface-color)',
-                color: language === 'es' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: language === 'es' ? '600' : '500',
-                transition: 'all 0.2s',
-                fontSize: '0.9rem'
-              }}
-            >
-              {t('spanish')}
-            </button>
-            <button
-              onClick={() => setLanguage('fr')}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                minHeight: '44px',
-                border: language === 'fr' ? '2px solid var(--primary-color)' : '1px solid #252525',
-                background: language === 'fr' ? 'rgba(200, 149, 107, 0.1)' : 'var(--surface-color)',
-                color: language === 'fr' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: language === 'fr' ? '600' : '500',
-                transition: 'all 0.2s',
-                fontSize: '0.9rem'
-              }}
-            >
-              {t('french')}
-            </button>
-            <button
-              onClick={() => setLanguage('it')}
-              style={{
-                flex: 1,
-                padding: '0.75rem',
-                minHeight: '44px',
-                border: language === 'it' ? '2px solid var(--primary-color)' : '1px solid #252525',
-                background: language === 'it' ? 'rgba(200, 149, 107, 0.1)' : 'var(--surface-color)',
-                color: language === 'it' ? 'var(--primary-color)' : 'var(--text-secondary)',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: language === 'it' ? '600' : '500',
-                transition: 'all 0.2s',
-                fontSize: '0.9rem'
-              }}
-            >
-              {t('italian')}
-            </button>
+                padding: '1.5rem',
+                background: 'var(--surface-color)',
+                borderRadius: '8px',
+                border: '1px solid var(--primary-color)',
+                textAlign: 'center',
+                minHeight: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <span style={{fontSize: '1.1rem', fontWeight: '600', color: 'var(--primary-color)'}}>
+                  {language === 'en' && t('english')}
+                  {language === 'es' && t('spanish')}
+                  {language === 'fr' && t('french')}
+                  {language === 'it' && t('italian')}
+                </span>
+              </div>
+
+              <button
+                onClick={() => {
+                  const currentIndex = ['en', 'es', 'fr', 'it'].indexOf(language);
+                  const nextIndex = currentIndex === 3 ? 0 : currentIndex + 1;
+                  setLanguage(['en', 'es', 'fr', 'it'][nextIndex] as any);
+                }}
+                style={{
+                  padding: '0.5rem',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary-color)',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ›
+              </button>
+            </div>
+
+            {/* Indicator dots */}
+            <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'center'}}>
+              {['en', 'es', 'fr', 'it'].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang as any)}
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    background: language === lang ? 'var(--primary-color)' : '#555',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -502,6 +442,101 @@ const Settings: React.FC = () => {
           <Edit style={{width: '18px', height: '18px', flexShrink: 0}}/>
           {t('edit_routine')}
         </button>
+      </div>
+
+      {/* PWA Access Key Section */}
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>{t('pwa_access_key')}</h2>
+
+        <p style={{color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem', lineHeight: '1.5'}}>
+          {t('pwa_access_key_description')}
+        </p>
+
+        {!showAccessKeyWarning ? (
+          <button
+            onClick={() => setShowAccessKeyWarning(true)}
+            className="btn-secondary"
+            style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}
+          >
+            {t('show_access_key')}
+          </button>
+        ) : (
+          <>
+            {/* Security Warning */}
+            <div style={{marginBottom: '1rem', padding: '1rem', background: 'rgba(255, 152, 0, 0.1)', borderRadius: '6px', border: '1px solid #FF9800'}}>
+              <p style={{color: '#FF9800', fontSize: '0.9rem', fontWeight: '600', marginTop: 0, marginBottom: '0.5rem'}}>
+                {t('security_warning')}
+              </p>
+              <p style={{color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0, lineHeight: '1.5'}}>
+                {t('security_warning_message')}
+              </p>
+            </div>
+
+            {/* Access Key Display */}
+            {loadingKey ? (
+              <div style={{
+                padding: '1rem',
+                background: 'var(--surface-color)',
+                borderRadius: '6px',
+                textAlign: 'center',
+                color: 'var(--text-secondary)',
+                marginBottom: '1rem'
+              }}>
+                Loading key...
+              </div>
+            ) : (
+              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row', marginBottom: '1rem'}}>
+                <div style={{
+                  flex: 1,
+                  padding: '1rem',
+                  background: 'var(--surface-color)',
+                  borderRadius: '6px',
+                  border: '2px solid var(--primary-color)',
+                  fontFamily: 'monospace',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  letterSpacing: '0.05em',
+                  color: 'var(--primary-color)',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '44px',
+                  wordBreak: 'break-all'
+                }}>
+                  {accessKey || 'Error loading key'}
+                </div>
+                <button
+                  onClick={copyAccessKey}
+                  className="btn-secondary"
+                  style={{
+                    minHeight: '44px',
+                    padding: '0.75rem 1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.95rem',
+                    whiteSpace: 'nowrap',
+                    background: keyCopied ? '#4CAF50' : undefined,
+                    borderColor: keyCopied ? '#4CAF50' : undefined
+                  }}
+                >
+                  {keyCopied ? t('copied_button') : t('copy_button')}
+                </button>
+              </div>
+            )}
+
+            {/* Hide Button */}
+            <button
+              onClick={() => setShowAccessKeyWarning(false)}
+              className="btn-secondary"
+              style={{width: '100%', minHeight: '44px', padding: '0.75rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'}}
+            >
+              {t('hide_access_key')}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="card" style={{marginTop: '2rem'}}>
