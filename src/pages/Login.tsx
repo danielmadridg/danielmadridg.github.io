@@ -351,12 +351,12 @@ const Login: React.FC = () => {
       setError(null);
       setLoading(true);
 
-      // Remove dashes from access key for lookup
-      const cleanAccessKey = accessKey.trim().replace(/-/g, '');
+      // Keep dashes in access key for lookup as they are stored in Firestore
+      const keyToVerify = accessKey.trim();
 
       // Call Firebase Function to find user by access key
       const findUserFn = httpsCallable(functions, 'findUserByAccessKey');
-      const findResult = await findUserFn({ accessKey: cleanAccessKey });
+      const findResult = await findUserFn({ accessKey: keyToVerify });
       const findData = findResult.data as { uid?: string; email?: string; error?: string };
 
       if (findData.error || !findData.uid) {

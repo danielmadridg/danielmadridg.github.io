@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateCustomToken = exports.checkUsernameAvailability = exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
+exports.generateCustomToken = exports.findUserByAccessKey = exports.checkUsernameAvailability = exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const axios_1 = require("axios");
@@ -201,11 +201,43 @@ exports.checkUsernameAvailability = functions.https.onCall(async (data, context)
         return { available: false, error: 'Failed to check username availability' };
     }
 });
+// Find user by access key (server-side for security)
+exports.findUserByAccessKey = functions.https.onCall(async (data, context) => {
+    const { accessKey } = data;
+    if (!accessKey) {
+        return { error: 'Access key is required' };
+    }
+    if (typeof accessKey !== 'string' || accessKey.length === 0) {
+        return { error: 'Invalid access key format' };
+    }
+    try {
+        const db = admin.firestore();
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('accessKey', '==', accessKey).get();
+        if (snapshot.empty) {
+            return { error: 'Invalid access key' };
+        }
+        const userDoc = snapshot.docs[0];
+        const userData = userDoc.data();
+        if (!userData.email) {
+            return { error: 'User account is incomplete' };
+        }
+        console.log(`User found by access key: ${userDoc.id}`);
+        return { uid: userDoc.id, email: userData.email };
+    }
+    catch (error) {
+        console.error('Error finding user by access key:', error);
+        return { error: 'Failed to authenticate with access key' };
+    }
+});
 // Generate custom token for access key login
 exports.generateCustomToken = functions.https.onCall(async (data, context) => {
     const { uid } = data;
     if (!uid) {
         return { error: 'User ID is required' };
+    }
+    if (typeof uid !== 'string' || uid.length === 0) {
+        return { error: 'Invalid user ID format' };
     }
     try {
         // Generate a custom token for the user
