@@ -115,13 +115,17 @@ const Login: React.FC = () => {
           return;
         }
 
-        // Use signInWithRedirect on mobile, signInWithPopup on desktop
-        if (isMobileDevice()) {
-          await signInWithRedirect(auth, googleProvider);
-          // Return here as the page will redirect
-          return;
-        } else {
+        // Use signInWithPopup for all devices (works better on iOS than signInWithRedirect)
+        try {
           await signInWithPopup(auth, googleProvider);
+        } catch (popupErr: any) {
+          // If popup fails on mobile (some browsers don't allow popups), fall back to redirect
+          if (isMobileDevice() && popupErr.code === 'auth/popup-blocked') {
+            console.log('[Login] Popup blocked on mobile, using redirect instead');
+            await signInWithRedirect(auth, googleProvider);
+            return;
+          }
+          throw popupErr;
         }
       }
     } catch (err: any) {
