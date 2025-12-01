@@ -223,6 +223,7 @@ export const verifyCode = functions.https.onCall(async (data, context): Promise<
     return { success: false, error: 'Verification failed' };
   }
 });
+
 // Check username availability
 export const checkUsernameAvailability = functions.https.onCall(async (data, context): Promise<{ available: boolean; error?: string }> => {
   const { username } = data;
@@ -240,5 +241,25 @@ export const checkUsernameAvailability = functions.https.onCall(async (data, con
   } catch (error) {
     console.error('Error checking username:', error);
     return { available: false, error: 'Failed to check username availability' };
+  }
+});
+
+// Generate custom token for access key login
+export const generateCustomToken = functions.https.onCall(async (data, context): Promise<{ token?: string; error?: string }> => {
+  const { uid } = data;
+
+  if (!uid) {
+    return { error: 'User ID is required' };
+  }
+
+  try {
+    // Generate a custom token for the user
+    const customToken = await admin.auth().createCustomToken(uid);
+    
+    console.log(`Custom token generated for user: ${uid}`);
+    return { token: customToken };
+  } catch (error) {
+    console.error('Error generating custom token:', error);
+    return { error: 'Failed to generate authentication token' };
   }
 });

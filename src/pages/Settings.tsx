@@ -3,8 +3,10 @@ import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Edit, Trash2 } from 'lucide-react';
+import { LogOut, Edit, Trash2, Key, Copy, Check } from 'lucide-react';
 import ProfilePictureEditor from '../components/ProfilePictureEditor';
+import { db } from '../config/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const Settings: React.FC = () => {
   const { clearData, clearHistory, state, setUnitPreference } = useStore();
@@ -20,6 +22,9 @@ const Settings: React.FC = () => {
   const [clearHistoryConfirmText, setClearHistoryConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [accessKey, setAccessKey] = useState<string | null>(null);
+  const [loadingKey, setLoadingKey] = useState(true);
+  const [keyCopied, setKeyCopied] = useState(false);
   const currentUnit = state.unitPreference || 'kg';
 
   useEffect(() => {
@@ -31,6 +36,64 @@ const Settings: React.FC = () => {
       setShowSuccessMessage(false);
     };
   }, []);
+
+  // Load or generate access key
+  useEffect(() => {
+    const loadAccessKey = async () => {
+      if (!user) return;
+      
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists() && userDoc.data().accessKey) {
+          setAccessKey(userDoc.data().accessKey);
+        } else {
+          // Generate new access key
+          const newKey = generateAccessKey();
+          await setDoc(userDocRef, { accessKey: newKey }, { merge: true });
+          setAccessKey(newKey);
+        }
+      } catch (error) {
+        console.error('Error loading access key:', error);
+      } finally {
+        setLoadingKey(false);
+      }
+    };
+    
+    loadAccessKey();
+  }, [user]);
+
+  const generateAccessKey = (): string => {
+    // Generate a 12-character alphanumeric key
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removed ambiguous characters
+    let key = '';
+    for (let i = 0; i < 12; i++) {
+      key += chars.charAt(Math.floor(Math.random() * chars.length));
+      if ((i + 1) % 4 === 0 && i < 11) key += '-'; // Add dashes every 4 characters
+    }
+    return key;
+  };
+
+  const copyAccessKey = async () => {
+    if (!accessKey) return;
+    
+    try {
+      await navigator.clipboard.writeText(accessKey);
+      setKeyCopied(true);
+      setTimeout(() => setKeyCopied(false), 2000);
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = accessKey;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setKeyCopied(true);
+      setTimeout(() => setKeyCopied(false), 2000);
+    }
+  };
 
   const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
@@ -219,6 +282,80 @@ const Settings: React.FC = () => {
             compact={true}
           />
         </div>
+      </div>
+
+      {/* Access Key Section */}
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+          <Key size={20} />
+          PWA Access Key
+        </h2>
+        
+        <p style={{color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem', lineHeight: '1.5'}}>
+          Use this key to log in when using the app as a PWA (added to home screen). Copy this key before installing the app.
+        </p>
+        
+        {loadingKey ? (
+          <div style={{
+            padding: '1rem',
+            background: 'var(--surface-color)',
+            borderRadius: '6px',
+            textAlign: 'center',
+            color: 'var(--text-secondary)'
+          }}>
+            Loading key...
+          </div>
+        ) : (
+          <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
+            <div style={{
+              flex: 1,
+              padding: '1rem',
+              background: 'var(--surface-color)',
+              borderRadius: '6px',
+              border: '2px solid var(--primary-color)',
+              fontFamily: 'monospace',
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              letterSpacing: '0.05em',
+              color: 'var(--primary-color)',
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '44px'
+            }}>
+              {accessKey || 'Error loading key'}
+            </div>
+            <button
+              onClick={copyAccessKey}
+              className="btn-secondary"
+              style={{
+                minHeight: '44px',
+                padding: '0.75rem 1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                fontSize: '0.95rem',
+                whiteSpace: 'nowrap',
+                background: keyCopied ? '#4CAF50' : undefined,
+                borderColor: keyCopied ? '#4CAF50' : undefined
+              }}
+            >
+              {keyCopied ? (
+                <>
+                  <Check size={18} />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy size={18} />
+                  Copy
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="card" style={{marginBottom: '1rem'}}>

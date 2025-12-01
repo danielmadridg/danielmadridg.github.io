@@ -5,18 +5,20 @@ import {
   getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  signInWithCustomToken
 } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { useNavigate } from 'react-router-dom';
 import { auth, googleProvider, functions, db } from '../config/firebase';
 import { httpsCallable } from 'firebase/functions';
-import { Mail, Lock, Chrome, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Chrome, User, Eye, EyeOff, ArrowLeft, Key } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VerificationCodeInput from '../components/VerificationCodeInput';
 import { isPWA } from '../utils/pwa';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 type LoginStep = 'credentials' | 'verification';
 
@@ -35,6 +37,9 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
+  const [accessKey, setAccessKey] = useState('');
+  const [showPWALogin, setShowPWALogin] = useState(false);
+  const inPWA = isPWA();
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -325,6 +330,62 @@ const Login: React.FC = () => {
     setError(null);
   };
 
+  const handleAccessKeyLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!accessKey.trim()) {
+      setError('Please enter your access key');
+      return;
+    }
+
+    try {
+      setError(null);
+      setLoading(true);
+
+      // Search for user with this access key
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('accessKey', '==', accessKey.trim()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setError('Invalid access key. Please check and try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Get the user's UID and email
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const userEmail = userData.email;
+
+      if (!userEmail) {
+        setError('Account error. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      // Call Firebase Function to generate custom token
+      const generateTokenFn = httpsCallable(functions, 'generateCustomToken');
+      const result = await generateTokenFn({ uid: userDoc.id });
+      const data = result.data as { token?: string; error?: string };
+
+      if (data.error || !data.token) {
+        setError(data.error || 'Failed to authenticate. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Sign in with custom token
+      await signInWithCustomToken(auth, data.token);
+      
+      // Navigation will happen automatically via useEffect
+    } catch (err: any) {
+      console.error('[Login] Access key error:', err);
+      setError('Failed to sign in. Please try again.');
+      setLoading(false);
+    }
+  };
+
   if (currentStep === 'verification') {
     return (
       <div style={{
@@ -430,7 +491,7 @@ const Login: React.FC = () => {
           color: '#888',
           fontSize: '0.9rem'
         }}>
-          {isSignUp ? t('create_account') : t('sign_in_continue')}
+          {inPWA && showPWALogin ? 'Enter your access key' : (isSignUp ? t('create_account') : t('sign_in_continue'))}
         </p>
 
         {error && (
@@ -446,6 +507,128 @@ const Login: React.FC = () => {
             {error}
           </div>
         )}
+
+        {/* PWA Access Key Login */}
+        {inPWA && showPWALogin ? (
+          <form onSubmit={handleAccessKeyLogin}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '0.5rem',
+                color: '#ccc',
+                fontSize: '0.9rem'
+              }}>
+                <Key size={16} />
+                Access Key
+              </label>
+              <input
+                type="text"
+                value={accessKey}
+                onChange={(e) => setAccessKey(e.target.value.toUpperCase())}
+                required
+                disabled={loading}
+                spellCheck="false"
+                placeholder="XXXX-XXXX-XXXX"
+                maxLength={14}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: '#2a2a2a',
+                  border: '1px solid #333',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.1em',
+                  textAlign: 'center'
+                }}
+              />
+              <p style={{
+                marginTop: '0.5rem',
+                fontSize: '0.75rem',
+                color: '#666',
+                lineHeight: '1.4'
+              }}>
+                Find your access key in Settings when logged in on the web
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'var(--primary-color)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.2s',
+                boxSizing: 'border-box',
+                marginBottom: '1rem'
+              }}
+            >
+              {loading ? 'Signing in...' : 'Sign In with Key'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPWALogin(false)}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'none',
+                color: 'var(--primary-color)',
+                border: '1px solid var(--primary-color)',
+                borderRadius: '6px',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              Use Email/Google Instead
+            </button>
+          </form>
+        ) : (
+          <>
+            {/* Show PWA login option if in PWA */}
+            {inPWA && (
+              <button
+                onClick={() => setShowPWALogin(true)}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  marginBottom: '1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  background: 'var(--primary-color)',
+                  color: '#000',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1,
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <Key size={20} />
+                Sign In with Access Key
+              </button>
+            )}
 
         <button
           onClick={handleGoogleSignIn}
@@ -678,6 +861,8 @@ const Login: React.FC = () => {
             {loading ? t('please_wait') : (isSignUp ? t('sign_up') : t('sign_in'))}
           </button>
         </form>
+        </>
+        )}
 
         <div style={{
           textAlign: 'center',

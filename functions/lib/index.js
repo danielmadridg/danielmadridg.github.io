@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkUsernameAvailability = exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
+exports.generateCustomToken = exports.checkUsernameAvailability = exports.verifyCode = exports.sendVerificationCode = exports.verifyRecaptcha = void 0;
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const axios_1 = require("axios");
@@ -199,6 +199,23 @@ exports.checkUsernameAvailability = functions.https.onCall(async (data, context)
     catch (error) {
         console.error('Error checking username:', error);
         return { available: false, error: 'Failed to check username availability' };
+    }
+});
+// Generate custom token for access key login
+exports.generateCustomToken = functions.https.onCall(async (data, context) => {
+    const { uid } = data;
+    if (!uid) {
+        return { error: 'User ID is required' };
+    }
+    try {
+        // Generate a custom token for the user
+        const customToken = await admin.auth().createCustomToken(uid);
+        console.log(`Custom token generated for user: ${uid}`);
+        return { token: customToken };
+    }
+    catch (error) {
+        console.error('Error generating custom token:', error);
+        return { error: 'Failed to generate authentication token' };
     }
 });
 //# sourceMappingURL=index.js.map
