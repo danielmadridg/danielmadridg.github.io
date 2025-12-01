@@ -39,6 +39,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isWorkoutActive, handleCancelWorkout } = useWorkout();
   const { t } = useLanguage();
 
+  useEffect(() => {
+    console.log('[Layout] Rendered with path:', location.pathname, 'isWorkoutActive:', isWorkoutActive);
+  }, [location.pathname, isWorkoutActive]);
+
   if (hideNav) {
     return <>{children}</>;
   }
@@ -396,8 +400,13 @@ const NavigationHandler: React.FC<{ children: React.ReactNode }> = ({ children }
   const previousPathRef = useRef(location.pathname);
 
   useEffect(() => {
+    console.log('[NavigationHandler] Current path:', location.pathname);
+    console.log('[NavigationHandler] isWorkoutActive:', isWorkoutActive);
+    console.log('[NavigationHandler] Previous path:', previousPathRef.current);
+
     // If workout is active and we're trying to navigate away from home
     if (isWorkoutActive && location.pathname !== '/' && location.pathname !== previousPathRef.current) {
+      console.log('[NavigationHandler] Resetting workout state because navigating away from home');
       // Reset workout state so we can navigate
       setWorkoutActive(false);
     }

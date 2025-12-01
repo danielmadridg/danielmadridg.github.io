@@ -292,7 +292,13 @@ const Home: React.FC = () => {
     return timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
   }, [user?.displayName, t]);
 
+  useEffect(() => {
+    console.log('[Home] activeWorkout state:', activeWorkout);
+    console.log('[Home] isWorkoutActive state:', );
+  }, [activeWorkout]);
+
   if (activeWorkout && selectedDay) {
+    console.log('[Home] Rendering workout view because activeWorkout is set');
     return (
         <div>
             <div className="workout-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
