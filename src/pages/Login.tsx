@@ -106,28 +106,29 @@ const Login: React.FC = () => {
     try {
       setError(null);
       setLoading(true);
+      console.log('[Login] Starting Google Sign-In (v2025-12-01-fix)');
 
       const standalone = isStandalone();
       const isMobile = isMobileDevice();
       console.log('[Login] Environment:', { isMobile, isStandalone: standalone });
 
-      // If in standalone mode (PWA), use redirect to avoid popup issues and ensure state preservation
-      if (standalone) {
-        console.log('[Login] Standalone mode detected, using signInWithRedirect');
-        await signInWithRedirect(auth, googleProvider);
-        // Do NOT set loading to false here, as the page will redirect
-        return;
-      }
-
-      // Use signInWithPopup for all devices first
+      // Use signInWithPopup for ALL devices
+      // We reverted from signInWithRedirect because it was causing issues in PWA mode
+      // (returning to login screen without user)
       try {
         await signInWithPopup(auth, googleProvider);
       } catch (popupErr: any) {
-        // If popup fails on mobile (some browsers don't allow popups), fall back to redirect
-        if (isMobileDevice() && (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/cancelled-popup-request')) {
-          console.log('[Login] Popup blocked or cancelled on mobile, using redirect instead');
-          await signInWithRedirect(auth, googleProvider);
-          return;
+        console.error('[Login] Popup error:', popupErr);
+        // If popup fails, we could try redirect, but let's be careful about loops.
+        // For now, let's just throw it so the user sees the error.
+        // If it's a popup blocked error, we can suggest the user to allow popups.
+        if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/cancelled-popup-request') {
+             // Optional: You could enable redirect here as a last resort, 
+             // but if redirect is broken in PWA, it's better to fail and let user know.
+             // Let's try redirect ONLY if it's explicitly blocked, but log it clearly.
+             console.log('[Login] Popup blocked, attempting redirect fallback...');
+             await signInWithRedirect(auth, googleProvider);
+             return;
         }
         throw popupErr;
       }
@@ -137,7 +138,9 @@ const Login: React.FC = () => {
         const errorMessage = getErrorMessage(err.code, false);
         setError(errorMessage);
       }
-      // Ensure loading stops on error or cancellation
+    } finally {
+      // Always stop loading if we finished (success or error)
+      // Unless we triggered a redirect (which returns early above)
       setLoading(false);
     }
   };
