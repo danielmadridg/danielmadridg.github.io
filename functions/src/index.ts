@@ -244,6 +244,42 @@ export const checkUsernameAvailability = functions.https.onCall(async (data, con
   }
 });
 
+// Find user by access key (server-side for security)
+export const findUserByAccessKey = functions.https.onCall(async (data, context): Promise<{ uid?: string; email?: string; error?: string }> => {
+  const { accessKey } = data;
+
+  if (!accessKey) {
+    return { error: 'Access key is required' };
+  }
+
+  if (typeof accessKey !== 'string' || accessKey.length === 0) {
+    return { error: 'Invalid access key format' };
+  }
+
+  try {
+    const db = admin.firestore();
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('accessKey', '==', accessKey).get();
+
+    if (snapshot.empty) {
+      return { error: 'Invalid access key' };
+    }
+
+    const userDoc = snapshot.docs[0];
+    const userData = userDoc.data();
+
+    if (!userData.email) {
+      return { error: 'User account is incomplete' };
+    }
+
+    console.log(`User found by access key: ${userDoc.id}`);
+    return { uid: userDoc.id, email: userData.email };
+  } catch (error) {
+    console.error('Error finding user by access key:', error);
+    return { error: 'Failed to authenticate with access key' };
+  }
+});
+
 // Generate custom token for access key login
 export const generateCustomToken = functions.https.onCall(async (data, context): Promise<{ token?: string; error?: string }> => {
   const { uid } = data;
@@ -252,10 +288,14 @@ export const generateCustomToken = functions.https.onCall(async (data, context):
     return { error: 'User ID is required' };
   }
 
+  if (typeof uid !== 'string' || uid.length === 0) {
+    return { error: 'Invalid user ID format' };
+  }
+
   try {
     // Generate a custom token for the user
     const customToken = await admin.auth().createCustomToken(uid);
-    
+
     console.log(`Custom token generated for user: ${uid}`);
     return { token: customToken };
   } catch (error) {

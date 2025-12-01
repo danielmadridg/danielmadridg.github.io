@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, deleteUser, updateProfile } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import logger from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('[AuthContext] Auth state changed:', user?.uid || 'null');
+      logger.log('[AuthContext] Auth state changed:', user?.uid || 'null');
       setUser(user);
       setLoading(false);
     });
@@ -31,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await firebaseSignOut(auth);
     } catch (error) {
-      console.error('Error signing out:', error);
+      logger.error('Error signing out:', error);
       throw error;
     }
   };
@@ -41,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!user) throw new Error('No user logged in');
       await deleteUser(user);
     } catch (error) {
-      console.error('Error deleting account:', error);
+      logger.error('Error deleting account:', error);
       throw error;
     }
   };
@@ -57,10 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
 
       await updateProfile(currentUser, cleanedUpdates);
-      // Refresh user state to reflect changes
-      setUser({ ...currentUser, ...cleanedUpdates } as User);
+      // Refresh user state by getting the updated auth.currentUser
+      // This ensures we have the latest data from Firebase
+      const refreshedUser = auth.currentUser;
+      if (refreshedUser) {
+        setUser(refreshedUser);
+      }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      logger.error('Error updating profile:', error);
       throw error;
     }
   };

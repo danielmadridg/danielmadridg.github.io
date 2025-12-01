@@ -7,6 +7,7 @@ import { useLanguage } from '../context/LanguageContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
 import { calculateProgressiveOverload } from '../utils/algorithm';
 import { convertWeight } from '../utils/unitConversion';
+import logger from '../utils/logger';
 import { Check, Dumbbell, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, fr, it } from 'date-fns/locale';
@@ -48,7 +49,7 @@ const Home: React.FC = () => {
           localStorage.removeItem('activeWorkout');
         }
       } catch (e) {
-        console.error('Failed to parse saved workout', e);
+        logger.error('Failed to parse saved workout', e);
         localStorage.removeItem('activeWorkout');
       }
     }
@@ -101,7 +102,7 @@ const Home: React.FC = () => {
     if (setHandleCancelWorkout) {
       setHandleCancelWorkout(() => handleCancelWorkout);
     }
-  }, [setHandleCancelWorkout]);
+  }, [setHandleCancelWorkout, handleCancelWorkout]);
 
   const handleResumeWorkout = () => {
     if (savedWorkout) {
@@ -148,7 +149,7 @@ const Home: React.FC = () => {
     const hasEmptyData = selectedDay.exercises.some(ex => {
       const input = activeWorkout.exercises[ex.id];
       const weight = parseFloat(input.weight) || 0;
-      const reps = input.reps.map(r => parseInt(r) || 0);
+      const reps = input.reps.map(r => parseInt(r, 10) || 0);
       return weight === 0 || reps.every(r => r === 0);
     });
 
@@ -162,7 +163,7 @@ const Home: React.FC = () => {
     selectedDay.exercises.forEach(ex => {
       const input = activeWorkout.exercises[ex.id];
       const weight = parseFloat(input.weight) || 0;
-      const reps = input.reps.map(r => parseInt(r) || 0);
+      const reps = input.reps.map(r => parseInt(r, 10) || 0);
 
       const algoResult = calculateProgressiveOverload({
         currentWeight: weight,
@@ -222,7 +223,7 @@ const Home: React.FC = () => {
     const hasEmptyData = selectedDay.exercises.some(ex => {
       const input = activeWorkout.exercises[ex.id];
       const weight = parseFloat(input.weight) || 0;
-      const reps = input.reps.map(r => parseInt(r) || 0);
+      const reps = input.reps.map(r => parseInt(r, 10) || 0);
       return weight === 0 || reps.every(r => r === 0);
     });
 
@@ -236,7 +237,7 @@ const Home: React.FC = () => {
     selectedDay.exercises.forEach(ex => {
       const input = activeWorkout.exercises[ex.id];
       const weight = parseFloat(input.weight) || 0;
-      const reps = input.reps.map(r => parseInt(r) || 0);
+      const reps = input.reps.map(r => parseInt(r, 10) || 0);
 
       const algoResult = calculateProgressiveOverload({
         currentWeight: weight,
