@@ -466,6 +466,15 @@ const Login: React.FC = () => {
         justifyContent: 'center',
         padding: window.innerWidth <= 768 ? '1rem' : '2rem'
       }}>
+        {/* Show logo in PWA mode */}
+        {inPWA && (
+          <img src="/favicon.svg" alt="Prodegi" style={{
+            width: '120px',
+            height: 'auto',
+            marginBottom: '2rem'
+          }} />
+        )}
+
         <h1 style={{
           fontSize: window.innerWidth <= 768 ? '2rem' : '3rem',
           marginBottom: window.innerWidth <= 768 ? '1.5rem' : '3rem',
@@ -813,33 +822,36 @@ const Login: React.FC = () => {
         </>
         )}
 
-        <div style={{
-          textAlign: 'center',
-          marginTop: '1.5rem',
-          fontSize: '0.9rem'
-        }}>
-          <span style={{ color: '#888' }}>
-            {isSignUp ? t('already_have_account') : t('dont_have_account')}
-          </span>
-          {' '}
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-            }}
-            disabled={loading}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--primary-color)',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              fontSize: '0.9rem'
-            }}
-          >
-            {isSignUp ? t('sign_in') : t('sign_up')}
-          </button>
-        </div>
+        {/* Hide Sign Up toggle in PWA mode */}
+        {!inPWA && (
+          <div style={{
+            textAlign: 'center',
+            marginTop: '1.5rem',
+            fontSize: '0.9rem'
+          }}>
+            <span style={{ color: '#888' }}>
+              {isSignUp ? t('already_have_account') : t('dont_have_account')}
+            </span>
+            {' '}
+            <button
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+              }}
+              disabled={loading}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--primary-color)',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '0.9rem'
+              }}
+            >
+              {isSignUp ? t('sign_in') : t('sign_up')}
+            </button>
+          </div>
+        )}
       </div>
       </div>
     </div>
