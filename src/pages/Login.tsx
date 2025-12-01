@@ -46,14 +46,22 @@ const Login: React.FC = () => {
   useEffect(() => {
     const handleRedirectResult = async () => {
       try {
+        console.log('[Login] Checking for redirect result...');
         const result = await getRedirectResult(auth);
         if (result) {
           // Successfully signed in via redirect
-          console.log('[Login] Redirect result received, user authenticated');
-          // User will be redirected by the above useEffect when auth state updates
+          console.log('[Login] Redirect result received, user authenticated:', result.user.uid);
+          // Small delay to ensure auth state updates propagate
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Check if currentUser is set
+          if (auth.currentUser) {
+            console.log('[Login] Current user confirmed:', auth.currentUser.uid);
+          }
+        } else {
+          console.log('[Login] No redirect result found');
         }
       } catch (err: any) {
-        console.error('[Login] Redirect result error:', err);
+        console.error('[Login] Redirect result error:', err.code, err.message);
         if (err.code && err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
           setError(err.message || 'An error occurred during sign-in');
         }
