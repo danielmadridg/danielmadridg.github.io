@@ -222,6 +222,9 @@ export const translations: Record<Language, Translations> = {
     share_personal_records: 'Share my personal records',
     share_personal_info: 'Share my personal information (age, gender, weight)',
     privacy_description: 'Control what information other users can see when they view your profile',
+    no_routine_shared: 'No routine shared yet.',
+    no_workouts_yet: 'No workouts recorded yet.',
+    no_data_for_chart: 'No data available for chart.',
   },
   es: {
     // Common
@@ -440,6 +443,9 @@ export const translations: Record<Language, Translations> = {
     share_personal_records: 'Compartir mis récords personales',
     share_personal_info: 'Compartir mi información personal (edad, género, peso)',
     privacy_description: 'Controla qué información pueden ver otros usuarios cuando visitan tu perfil',
+    no_routine_shared: 'Aún no se ha compartido rutina.',
+    no_workouts_yet: 'Aún no hay entrenamientos registrados.',
+    no_data_for_chart: 'No hay datos disponibles para el gráfico.',
   },
   fr: {
     // Common
@@ -658,6 +664,9 @@ export const translations: Record<Language, Translations> = {
     share_personal_records: 'Partager mes records personnels',
     share_personal_info: 'Partager mes informations personnelles (âge, genre, poids)',
     privacy_description: 'Contrôlez les informations que les autres utilisateurs peuvent voir lorsqu\'ils consultent votre profil',
+    no_routine_shared: 'Aucune routine partagée pour le moment.',
+    no_workouts_yet: 'Aucun entraînement enregistré pour le moment.',
+    no_data_for_chart: 'Aucune donnée disponible pour le graphique.',
   },
   it: {
     // Common
@@ -876,5 +885,8 @@ export const translations: Record<Language, Translations> = {
     share_personal_records: 'Condividi i miei record personali',
     share_personal_info: 'Condividi le mie informazioni personali (età, genere, peso)',
     privacy_description: 'Controlla quali informazioni gli altri utenti possono vedere quando visitano il tuo profilo',
+    no_routine_shared: 'Nessuna routine condivisa ancora.',
+    no_workouts_yet: 'Nessun allenamento registrato ancora.',
+    no_data_for_chart: 'Nessun dato disponibile per il grafico.',
   },
 };

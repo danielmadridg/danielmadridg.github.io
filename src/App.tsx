@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, Link } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -10,8 +10,10 @@ import Progress from './pages/Progress';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Friends from './pages/Friends';
+import UsernamePrompt from './components/UsernamePrompt';
 import { Dumbbell, LineChart, Settings as SettingsIcon, Users } from 'lucide-react';
 import clsx from 'clsx';
+import { useSEO } from './hooks/useSEO';
 
 import './App.css';
 
@@ -36,10 +38,13 @@ export const useWorkout = () => {
 
 const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const hideNav = location.pathname === '/onboarding' || location.pathname === '/login';
+  const hideNav = location.pathname === '/onboarding' || location.pathname === '/login' || location.pathname === '/set-username';
   const { isWorkoutActive, handleCancelWorkout } = useWorkout();
   const { t } = useLanguage();
   const [showBackConfirm, setShowBackConfirm] = useState(false);
+
+  // Update SEO tags on route change
+  useSEO();
 
   // Handle back button - intercept page unload
   useEffect(() => {
@@ -488,6 +493,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requireRoutine?: boo
     return <Navigate to="/login" replace />;
   }
 
+  // Check if user needs to set username first
+  if (!state.username) {
+    return <Navigate to="/set-username" replace />;
+  }
+
   if (requireRoutine && state.routine.length === 0) {
     return <Navigate to="/onboarding" replace />;
   }
@@ -560,6 +570,30 @@ const OnboardingRoute: React.FC = () => {
   return <Onboarding />;
 };
 
+const UsernameRoute: React.FC = () => {
+  const { user } = useAuth();
+  const { state, isLoaded } = useStore();
+  const navigate = useNavigate();
+
+  if (!isLoaded) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If user already has a username, redirect to onboarding or home
+  if (state.username) {
+    if (state.routine.length === 0) {
+      return <Navigate to="/onboarding" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
+  return <UsernamePrompt onComplete={() => navigate('/onboarding')} />;
+};
+
 const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isWorkoutActive, setWorkoutActive] = useState(false);
   const [handleCancelWorkout, setHandleCancelWorkout] = useState<(() => void) | undefined>(undefined);
@@ -599,6 +633,9 @@ const InnerContent: React.FC = () => {
       <Routes>
       <Route path="/login" element={
         user ? <Navigate to="/" replace /> : <Login />
+      } />
+      <Route path="/set-username" element={
+        <UsernameRoute />
       } />
       <Route path="/onboarding" element={
         <OnboardingRoute />

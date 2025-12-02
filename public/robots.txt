@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /private/
+
+Sitemap: https://prodegi.vercel.app/sitemap.xml
+
+# Crawl delay to be respectful to server
+Crawl-delay: 1

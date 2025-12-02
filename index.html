@@ -2,15 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO Meta Tags -->
+    <title>Prodegi - Gym Tracker with Progressive Overload</title>
+    <meta name="description" content="Prodegi is a free gym tracking app that helps you track workouts, manage routines, and achieve progressive overload. Track exercises, personal records, and share your fitness journey with friends." />
+    <meta name="keywords" content="gym tracker, workout tracker, progressive overload, fitness app, exercise tracking, strength training, personal records" />
+    <meta name="author" content="Prodegi" />
+    <meta name="theme-color" content="#CC8E51" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://prodegi.vercel.app/" />
+    <meta property="og:title" content="Prodegi - Gym Tracker with Progressive Overload" />
+    <meta property="og:description" content="Free gym tracking app with progressive overload, routines, and social features to track your fitness journey." />
+    <meta property="og:image" content="https://prodegi.vercel.app/prodegilogo.png" />
+    <meta property="og:site_name" content="Prodegi" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://prodegi.vercel.app/" />
+    <meta name="twitter:title" content="Prodegi - Gym Tracker with Progressive Overload" />
+    <meta name="twitter:description" content="Free gym tracking app with progressive overload, routines, and social features." />
+    <meta name="twitter:image" content="https://prodegi.vercel.app/prodegilogo.png" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://prodegi.vercel.app/" />
+
+    <!-- Icons and Manifest -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" sizes="512x512" href="/prodegilogo.png" />
     <link rel="apple-touch-icon-precomposed" sizes="512x512" href="/prodegilogo.png" />
+
+    <!-- Apple Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Prodegi" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prodegi</title>
     <!-- Start Single Page Apps for GitHub Pages -->
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
@@ -31,6 +61,61 @@
       }(window.location))
     </script>
     <!-- End Single Page Apps for GitHub Pages -->
+
+    <!-- Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Prodegi",
+      "description": "Free gym tracking app with progressive overload, routines, and social features",
+      "url": "https://prodegi.vercel.app",
+      "applicationCategory": "HealthApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/OnlineOnly"
+      },
+      "image": "https://prodegi.vercel.app/prodegilogo.png",
+      "operatingSystem": "Web",
+      "inLanguage": "en"
+    }
+    </script>
+
+    <!-- FAQ Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Prodegi?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Prodegi is a free gym tracking app designed to help you track your workouts and achieve progressive overload. It allows you to manage routines, track personal records, and share your fitness journey with friends."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Prodegi free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, Prodegi is completely free to use. There are no hidden fees or premium subscriptions required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I track multiple exercises?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, Prodegi allows you to track unlimited exercises with sets, reps, and weights. You can organize them into custom routines for different days."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

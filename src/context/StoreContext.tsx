@@ -21,6 +21,7 @@ type Action =
   | { type: 'CLEAR_HISTORY' }
   | { type: 'LOAD_DATA'; payload: UserState }
   | { type: 'SET_UNIT_PREFERENCE'; payload: 'kg' | 'lbs' }
+  | { type: 'SET_USERNAME'; payload: string | undefined }
   | { type: 'SET_NAME'; payload: string | undefined }
   | { type: 'SET_WEIGHT'; payload: number | undefined }
   | { type: 'SET_AGE'; payload: number | undefined }
@@ -85,6 +86,8 @@ function reducer(state: UserState, action: Action): UserState {
       return action.payload;
     case 'SET_UNIT_PREFERENCE':
       return { ...state, unitPreference: action.payload };
+    case 'SET_USERNAME':
+      return { ...state, username: action.payload };
     case 'SET_NAME':
       return { ...state, name: action.payload };
     case 'SET_WEIGHT':
@@ -150,6 +153,7 @@ interface StoreContextType {
   clearHistory: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
   setUnitPreference: (unit: 'kg' | 'lbs') => void;
+  setUsername: (username: string | undefined) => void;
   setName: (name: string | undefined) => void;
   setWeight: (weight: number | undefined) => void;
   setAge: (age: number | undefined) => void;
@@ -170,12 +174,13 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isLoaded, setIsLoaded] = React.useState(false);
 
   // Load data on mount or when user changes
   useEffect(() => {
     const loadData = async () => {
+      if (authLoading) return;
       console.log('[StoreContext] Loading data, user:', user?.uid);
       setIsLoaded(false);
 
@@ -225,15 +230,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setIsLoaded(true);
         }
       } else {
-        // User logged out - keep local state from before logout, don't clear it
-        // Just mark as loaded without changing state
-        console.log('[StoreContext] User logged out, keeping local state');
+        // User logged out - clear local state
+        console.log('[StoreContext] User logged out, clearing local state');
+        localStorage.removeItem('prodegi_data');
+        dispatch({ type: 'CLEAR_DATA' });
         setIsLoaded(true);
       }
     };
 
     loadData();
-  }, [user]);
+  }, [user, authLoading]);
 
   // Save data whenever state changes
   useEffect(() => {
@@ -273,35 +279,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const syncPublicProfile = async () => {
       try {
-        // Get username from user's displayName or email
-        let username = user.displayName || user.email?.split('@')[0] || 'user';
+        // If user doesn't have a username set, skip sync (they need to choose one first)
+        if (!state.username) {
+          console.log('[StoreContext] No username set, skipping public profile sync');
+          return;
+        }
+
+        // If user signed in with Google and doesn't have a name set, use their Google display name
+        if (user.displayName && !state.name) {
+          console.log('[StoreContext] Setting name from Google displayName:', user.displayName);
+          dispatch({ type: 'SET_NAME', payload: user.displayName });
+        }
+
+        console.log('[StoreContext] Syncing public profile for:', user.uid, 'username:', state.username);
         
         // Try to update/create profile
         try {
           await updatePublicProfile(
             user.uid,
-            username,
+            state.username,
             state,
             user.displayName || undefined,
             user.photoURL || undefined
           );
+          console.log('[StoreContext] Public profile created/updated successfully');
         } catch (error: any) {
-          // If username is taken (and it's not our own), try appending a random number
-          if (error.message === 'Username is already taken') {
-            const randomSuffix = Math.floor(Math.random() * 10000).toString();
-            username = `${username}${randomSuffix}`;
-            console.log('[StoreContext] Username taken, trying:', username);
-            
-            await updatePublicProfile(
-              user.uid,
-              username,
-              state,
-              user.displayName || undefined,
-              user.photoURL || undefined
-            );
-          } else {
-            throw error;
-          }
+          // If username is taken (and it's not our own), this shouldn't happen
+          // because we validate availability before setting the username
+          console.error('[StoreContext] Error updating public profile:', error);
+          throw error;
         }
         console.log('[StoreContext] Public profile synced');
       } catch (error) {
@@ -320,6 +326,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     state.gender,
     state.weight,
     state.history.length,
+    state.routine.length,
     user,
     isLoaded
   ]);
@@ -347,6 +354,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const setUnitPreference = (unit: 'kg' | 'lbs') => dispatch({ type: 'SET_UNIT_PREFERENCE', payload: unit });
+  const setUsername = (username: string | undefined) => dispatch({ type: 'SET_USERNAME', payload: username });
   const setName = (name: string | undefined) => dispatch({ type: 'SET_NAME', payload: name });
   const setWeight = (weight: number | undefined) => dispatch({ type: 'SET_WEIGHT', payload: weight });
   const setAge = (age: number | undefined) => dispatch({ type: 'SET_AGE', payload: age });
@@ -364,7 +372,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setSharePersonalInfo = (share: boolean) => dispatch({ type: 'SET_SHARE_PERSONAL_INFO', payload: share });
 
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, setName, setWeight, setAge, setGender, addPersonalRecord, addPREntry, editPREntry, deletePREntry, deletePersonalRecord, setShareProfile, setShareStats, setSharePersonalRecords, setSharePersonalInfo, isLoaded }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, setUsername, setName, setWeight, setAge, setGender, addPersonalRecord, addPREntry, editPREntry, deletePREntry, deletePersonalRecord, setShareProfile, setShareStats, setSharePersonalRecords, setSharePersonalInfo, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

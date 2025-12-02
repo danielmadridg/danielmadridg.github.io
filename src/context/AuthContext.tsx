@@ -31,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
+      localStorage.removeItem('prodegi_data');
     } catch (error) {
       logger.error('Error signing out:', error);
       throw error;

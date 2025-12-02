@@ -147,8 +147,8 @@ export async function getPublicStats(userId: string): Promise<PublicStats | null
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing stats
-  if (!userData.shareStats) {
+  // Check if user allows sharing stats (default to true if undefined)
+  if (userData.shareStats === false) {
     return null;
   }
 
@@ -196,8 +196,8 @@ export async function getPublicPersonalRecords(userId: string): Promise<PublicPe
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing personal records
-  if (!userData.sharePersonalRecords) {
+  // Check if user allows sharing personal records (default to true if undefined)
+  if (userData.sharePersonalRecords === false) {
     return [];
   }
 
@@ -230,8 +230,8 @@ export async function getPublicRoutine(userId: string): Promise<{ dayName: strin
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing stats (routine is part of stats)
-  if (!userData.shareStats) {
+  // Check if user allows sharing stats (routine is part of stats) - default to true if undefined
+  if (userData.shareStats === false) {
     return [];
   }
 
@@ -256,8 +256,8 @@ export async function getPublicWorkoutHistory(userId: string): Promise<any[]> {
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing stats
-  if (!userData.shareStats) {
+  // Check if user allows sharing stats (default to true if undefined)
+  if (userData.shareStats === false) {
     return [];
   }
 

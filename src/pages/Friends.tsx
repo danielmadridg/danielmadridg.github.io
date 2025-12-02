@@ -1,7 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Search, User, TrendingUp, Calendar, Dumbbell, Lock, Users } from 'lucide-react';
+import { Search, User, TrendingUp, Lock, Users } from 'lucide-react';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 import { searchUsersByUsername, getPublicPersonalRecords, getPublicRoutine, getPublicWorkoutHistory } from '../utils/publicProfile';
 import type { PublicProfile, PublicPersonalRecord } from '../types';
 import { useStore } from '../context/StoreContext';
@@ -31,8 +54,13 @@ const Friends: React.FC = () => {
     setIsSearching(true);
     try {
       const results = await searchUsersByUsername(searchTerm);
-      // Filter out current user
-      setSearchResults(results.filter(profile => profile.userId !== user?.uid));
+      console.log('[Friends] Search results:', results);
+      // Filter out current user and profiles that have shareProfile disabled
+      const filtered = results.filter(profile => 
+        profile.userId !== user?.uid && profile.shareProfile !== false
+      );
+      console.log('[Friends] Filtered results:', filtered);
+      setSearchResults(filtered);
     } catch (error) {
       console.error('Error searching users:', error);
     } finally {
@@ -158,6 +186,46 @@ const Friends: React.FC = () => {
   };
 
   const unitPreference = state.unitPreference || 'kg';
+
+  const chartData = React.useMemo(() => {
+    if (!profileWorkouts || profileWorkouts.length === 0) return null;
+
+    // Sort oldest to newest for chart
+    const sortedWorkouts = [...profileWorkouts].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    const labels = sortedWorkouts.map(w => {
+      const date = new Date(w.date);
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    });
+
+    const data = sortedWorkouts.map(w => {
+      return w.exercises.reduce((total: number, ex: any) => {
+        const weight = convertWeight(ex.weight, 'kg', unitPreference);
+        const reps = ex.sets.reduce((a: number, b: number) => a + b, 0);
+        return total + (weight * reps);
+      }, 0);
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: `${t('total_volume')} (${unitPreference} × reps)`,
+          data,
+          borderColor: '#C8956B',
+          backgroundColor: 'rgba(200, 149, 107, 0.2)',
+          tension: 0.3,
+          pointBackgroundColor: '#C8956B',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#C8956B',
+          fill: true,
+        }
+      ]
+    };
+  }, [profileWorkouts, unitPreference, t]);
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -538,109 +606,8 @@ const Friends: React.FC = () => {
                 </div>
 
                 {/* Stats Cards */}
-                {selectedProfile.shareStats && (
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: '1rem'
-                  }}>
-                    <div style={{
-                      background: 'var(--surface-color)',
-                      borderRadius: '12px',
-                      padding: '1.5rem',
-                      border: '1px solid rgba(200, 149, 107, 0.2)'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        marginBottom: '0.75rem'
-                      }}>
-                        <Dumbbell size={20} color="var(--primary-color)" />
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                          {t('total_workouts')}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                        {selectedProfile.totalWorkouts ?? 0}
-                      </div>
-                    </div>
-
-                    <div style={{
-                      background: 'var(--surface-color)',
-                      borderRadius: '12px',
-                      padding: '1.5rem',
-                      border: '1px solid rgba(200, 149, 107, 0.2)'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        marginBottom: '0.75rem'
-                      }}>
-                        <TrendingUp size={20} color="var(--primary-color)" />
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                          {t('total_volume')}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                        {(selectedProfile.totalVolume ?? 0).toLocaleString()}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                        {unitPreference} × reps
-                      </div>
-                    </div>
-
-                    <div style={{
-                      background: 'var(--surface-color)',
-                      borderRadius: '12px',
-                      padding: '1.5rem',
-                      border: '1px solid rgba(200, 149, 107, 0.2)'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        marginBottom: '0.75rem'
-                      }}>
-                        <Dumbbell size={20} color="var(--primary-color)" />
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                          {t('exercises_count')}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                        {selectedProfile.exerciseCount ?? 0}
-                      </div>
-                    </div>
-
-                    {selectedProfile.lastWorkoutDate && (
-                      <div style={{
-                        background: 'var(--surface-color)',
-                        borderRadius: '12px',
-                        padding: '1.5rem',
-                        border: '1px solid rgba(200, 149, 107, 0.2)'
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.75rem',
-                          marginBottom: '0.75rem'
-                        }}>
-                          <Calendar size={20} color="var(--primary-color)" />
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            {t('last_workout')}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-                          {formatDate(selectedProfile.lastWorkoutDate)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Routine */}
-                {selectedProfile.shareStats && profileRoutine.length > 0 && (
+                {selectedProfile.shareStats && (
                   <div style={{
                     background: 'var(--surface-color)',
                     borderRadius: '12px',
@@ -661,126 +628,76 @@ const Friends: React.FC = () => {
                       }}>
                         {t('routine')}
                       </h3>
-                      <button
-                        onClick={handleCopyRoutine}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          background: 'rgba(200, 149, 107, 0.2)',
-                          color: 'var(--primary-color)',
-                          border: '1px solid var(--primary-color)',
-                          borderRadius: '6px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                          fontSize: '0.85rem',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(200, 149, 107, 0.3)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
-                        }}
-                      >
-                        {t('copy_routine')}
-                      </button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {profileRoutine.map((day, index) => (
-                        <div key={index}>
-                          <div style={{
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--primary-color)',
-                            marginBottom: '0.5rem'
-                          }}>
-                            {day.dayName}
-                          </div>
-                          <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.5rem'
-                          }}>
-                            {day.exercises.map((exercise, exIndex) => (
-                              <span
-                                key={exIndex}
-                                style={{
-                                  padding: '0.4rem 0.75rem',
-                                  background: 'rgba(200, 149, 107, 0.1)',
-                                  borderRadius: '6px',
-                                  fontSize: '0.85rem',
-                                  color: 'var(--text-primary)'
-                                }}
-                              >
-                                {exercise}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Personal Records */}
-                {selectedProfile.sharePersonalRecords && profilePRs.length > 0 && (
-                  <div style={{
-                    background: 'var(--surface-color)',
-                    borderRadius: '12px',
-                    padding: '1.5rem',
-                    border: '1px solid rgba(200, 149, 107, 0.2)'
-                  }}>
-                    <h3 style={{
-                      fontSize: '1.1rem',
-                      fontWeight: '600',
-                      color: 'var(--text-primary)',
-                      marginBottom: '1rem'
-                    }}>
-                      {t('personal_records')}
-                    </h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-                      {profilePRs.map((pr, index) => (
-                        <div
-                          key={index}
+                      {profileRoutine.length > 0 && (
+                        <button
+                          onClick={handleCopyRoutine}
                           style={{
-                            padding: '1rem',
-                            background: 'rgba(200, 149, 107, 0.05)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(200, 149, 107, 0.15)'
+                            padding: '0.5rem 1rem',
+                            background: 'rgba(200, 149, 107, 0.2)',
+                            color: 'var(--primary-color)',
+                            border: '1px solid var(--primary-color)',
+                            borderRadius: '6px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(200, 149, 107, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
                           }}
                         >
-                          <div style={{
-                            fontSize: '0.95rem',
-                            fontWeight: '500',
-                            color: 'var(--text-primary)',
-                            marginBottom: '0.75rem',
-                            textAlign: 'center'
-                          }}>
-                            {pr.exerciseName}
-                          </div>
-                          <div style={{
-                            fontSize: '1.75rem',
-                            fontWeight: '700',
-                            color: 'var(--primary-color)',
-                            textAlign: 'center',
-                            marginBottom: '0.5rem'
-                          }}>
-                            {pr.maxWeight}
-                          </div>
-                          <div style={{
-                            fontSize: '0.8rem',
-                            color: 'var(--text-secondary)',
-                            textAlign: 'center'
-                          }}>
-                            {unitPreference} • {formatDate(pr.date)}
-                          </div>
-                        </div>
-                      ))}
+                          {t('copy_routine')}
+                        </button>
+                      )}
                     </div>
+                    {profileRoutine.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {profileRoutine.map((day, index) => (
+                          <div key={index}>
+                            <div style={{
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              color: 'var(--primary-color)',
+                              marginBottom: '0.5rem'
+                            }}>
+                              {day.dayName}
+                            </div>
+                            <div style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '0.5rem'
+                            }}>
+                              {day.exercises.map((exercise, exIndex) => (
+                                <span
+                                  key={exIndex}
+                                  style={{
+                                    padding: '0.4rem 0.75rem',
+                                    background: 'rgba(200, 149, 107, 0.1)',
+                                    borderRadius: '6px',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-primary)'
+                                  }}
+                                >
+                                  {exercise}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        {t('no_routine_shared') || "No routine shared yet."}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Workout History */}
-                {selectedProfile.shareStats && profileWorkouts.length > 0 && (
+                {/* Recent Workouts */}
+                {selectedProfile.shareStats && (
                   <div style={{
                     background: 'var(--surface-color)',
                     borderRadius: '12px',
@@ -795,106 +712,247 @@ const Friends: React.FC = () => {
                     }}>
                       {t('workout_history')}
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {profileWorkouts.slice(0, 10).map((workout, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            padding: '1rem',
-                            background: 'rgba(200, 149, 107, 0.05)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(200, 149, 107, 0.15)'
-                          }}
-                        >
-                          <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: '0.75rem'
-                          }}>
-                            <div>
-                              <div style={{
-                                fontSize: '0.95rem',
-                                fontWeight: '600',
-                                color: 'var(--text-primary)'
-                              }}>
-                                {formatDate(workout.date)}
+                    {profileWorkouts.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {profileWorkouts.slice(0, 5).map((workout, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              padding: '1rem',
+                              background: 'rgba(200, 149, 107, 0.05)',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(200, 149, 107, 0.15)'
+                            }}
+                          >
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginBottom: '0.75rem'
+                            }}>
+                              <div>
+                                <div style={{
+                                  fontSize: '0.95rem',
+                                  fontWeight: '600',
+                                  color: 'var(--text-primary)'
+                                }}>
+                                  {formatDate(workout.date)}
+                                </div>
+                                <div style={{
+                                  fontSize: '0.85rem',
+                                  color: 'var(--text-secondary)',
+                                  marginTop: '0.25rem'
+                                }}>
+                                  {workout.exercises.length} exercises
+                                </div>
                               </div>
-                              <div style={{
-                                fontSize: '0.85rem',
-                                color: 'var(--text-secondary)',
-                                marginTop: '0.25rem'
-                              }}>
-                                {workout.exercises.length} exercises
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handleCopyWorkout(index)}
-                              style={{
-                                padding: '0.5rem 1rem',
-                                background: 'rgba(200, 149, 107, 0.2)',
-                                color: 'var(--primary-color)',
-                                border: '1px solid var(--primary-color)',
-                                borderRadius: '6px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(200, 149, 107, 0.3)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
-                              }}
-                            >
-                              Copy
-                            </button>
-                          </div>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '0.75rem'
-                          }}>
-                            {workout.exercises.map((exercise: any, exIndex: number) => (
-                              <div
-                                key={exIndex}
+                              <button
+                                onClick={() => handleCopyWorkout(index)}
                                 style={{
-                                  padding: '0.75rem',
-                                  background: 'rgba(200, 149, 107, 0.1)',
+                                  padding: '0.5rem 1rem',
+                                  background: 'rgba(200, 149, 107, 0.2)',
+                                  color: 'var(--primary-color)',
+                                  border: '1px solid var(--primary-color)',
                                   borderRadius: '6px',
-                                  fontSize: '0.85rem'
+                                  fontWeight: '500',
+                                  cursor: 'pointer',
+                                  fontSize: '0.85rem',
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(200, 149, 107, 0.3)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
                                 }}
                               >
-                                <div style={{
-                                  fontWeight: '500',
-                                  color: 'var(--text-primary)',
-                                  marginBottom: '0.25rem'
-                                }}>
-                                  {exercise.exerciseId}
+                                Copy
+                              </button>
+                            </div>
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                              gap: '0.75rem'
+                            }}>
+                              {workout.exercises.map((exercise: any, exIndex: number) => (
+                                <div
+                                  key={exIndex}
+                                  style={{
+                                    padding: '0.75rem',
+                                    background: 'rgba(200, 149, 107, 0.1)',
+                                    borderRadius: '6px',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  <div style={{
+                                    fontWeight: '500',
+                                    color: 'var(--text-primary)',
+                                    marginBottom: '0.25rem'
+                                  }}>
+                                    {exercise.exerciseId}
+                                  </div>
+                                  <div style={{
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '0.8rem'
+                                  }}>
+                                    {exercise.weight} {unitPreference} × {exercise.sets.join(', ')} reps
+                                  </div>
                                 </div>
-                                <div style={{
-                                  color: 'var(--text-secondary)',
-                                  fontSize: '0.8rem'
-                                }}>
-                                  {exercise.weight} {unitPreference} × {exercise.sets.join(', ')} reps
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      {profileWorkouts.length > 10 && (
-                        <div style={{
-                          textAlign: 'center',
-                          padding: '1rem',
-                          color: 'var(--text-secondary)',
-                          fontSize: '0.9rem'
-                        }}>
-                          Showing 10 of {profileWorkouts.length} workouts
-                        </div>
-                      )}
-                    </div>
+                        ))}
+                        {profileWorkouts.length > 5 && (
+                          <div style={{
+                            textAlign: 'center',
+                            padding: '1rem',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.9rem'
+                          }}>
+                            Showing 5 of {profileWorkouts.length} workouts
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        {t('no_workouts_yet') || "No workouts recorded yet."}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Progress Chart */}
+                {selectedProfile.shareStats && (
+                  <div style={{
+                    background: 'var(--surface-color)',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    border: '1px solid rgba(200, 149, 107, 0.2)'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.1rem',
+                      fontWeight: '600',
+                      color: 'var(--text-primary)',
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <TrendingUp size={20} color="var(--primary-color)" />
+                      {t('progress')}
+                    </h3>
+                    {chartData ? (
+                      <div style={{ height: '300px', width: '100%' }}>
+                        <Line
+                          data={chartData}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: {
+                                display: false
+                              },
+                              tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                borderColor: 'rgba(200, 149, 107, 0.3)',
+                                borderWidth: 1
+                              }
+                            },
+                            scales: {
+                              y: {
+                                grid: {
+                                  color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                  color: 'var(--text-secondary)'
+                                }
+                              },
+                              x: {
+                                grid: {
+                                  display: false
+                                },
+                                ticks: {
+                                  color: 'var(--text-secondary)',
+                                  maxTicksLimit: 8
+                                }
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        {t('no_data_for_chart') || "No data available for chart."}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Personal Records */}
+                {selectedProfile.sharePersonalRecords && (
+                  <div style={{
+                    background: 'var(--surface-color)',
+                    borderRadius: '12px',
+                    padding: '1.5rem',
+                    border: '1px solid rgba(200, 149, 107, 0.2)'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.1rem',
+                      fontWeight: '600',
+                      color: 'var(--text-primary)',
+                      marginBottom: '1rem'
+                    }}>
+                      {t('personal_records')}
+                    </h3>
+                    {profilePRs.length > 0 ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+                        {profilePRs.map((pr, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              padding: '1rem',
+                              background: 'rgba(200, 149, 107, 0.05)',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(200, 149, 107, 0.15)'
+                            }}
+                          >
+                            <div style={{
+                              fontSize: '0.95rem',
+                              fontWeight: '500',
+                              color: 'var(--text-primary)',
+                              marginBottom: '0.75rem',
+                              textAlign: 'center'
+                            }}>
+                              {pr.exerciseName}
+                            </div>
+                            <div style={{
+                              fontSize: '1.75rem',
+                              fontWeight: '700',
+                              color: 'var(--primary-color)',
+                              textAlign: 'center',
+                              marginBottom: '0.5rem'
+                            }}>
+                              {pr.maxWeight}
+                            </div>
+                            <div style={{
+                              fontSize: '0.8rem',
+                              color: 'var(--text-secondary)',
+                              textAlign: 'center'
+                            }}>
+                              {unitPreference} • {formatDate(pr.date)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        {t('no_personal_records') || "No personal records yet."}
+                      </div>
+                    )}
                   </div>
                 )}
 

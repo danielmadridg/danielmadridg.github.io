@@ -9,6 +9,7 @@ import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ACCESS_KEY_LENGTH, ACCESS_KEY_SEGMENT_LENGTH } from '../utils/constants';
 import { isUsernameAvailable } from '../utils/username';
+import { convertWeight } from '../utils/unitConversion';
 
 // Note: db, doc, getDoc, setDoc are still needed for access key management
 
@@ -501,7 +502,7 @@ const Settings: React.FC = () => {
                   boxSizing: 'border-box'
                 }}>
                   <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('weight')}</span>
-                  <span style={{fontSize: '0.95rem'}}>{state.weight ? `${state.weight} ${currentUnit}` : 'Not set'}</span>
+                  <span style={{fontSize: '0.95rem'}}>{state.weight ? `${Math.round(convertWeight(state.weight, 'kg', currentUnit) * 10) / 10} ${currentUnit}` : 'Not set'}</span>
                 </div>
                 <div style={{
                   padding: '0.75rem',
