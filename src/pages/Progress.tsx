@@ -12,6 +12,7 @@ import {
   Legend,
 } from 'chart.js';
 import { format } from 'date-fns';
+import { Edit, Trash2 } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import './Progress.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -705,56 +706,54 @@ const Progress: React.FC = () => {
                                 <p className="pr-timeline-item-date">
                                   {format(new Date(entry.date), 'MMM d, yyyy')}
                                 </p>
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', justifyContent: 'flex-end' }}>
+                                <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.5rem', justifyContent: 'flex-end' }}>
                                   <button
                                     onClick={() => handleEditPREntry(pr.id, entry)}
                                     title={t('edit')}
                                     style={{
-                                      padding: '0.4rem 0.6rem',
+                                      padding: '0.3rem 0.4rem',
                                       background: 'transparent',
                                       color: 'var(--primary-color)',
                                       border: 'none',
                                       cursor: 'pointer',
-                                      fontSize: '1.1rem',
                                       transition: 'all 0.2s',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
-                                      opacity: 0.7
+                                      opacity: 0.6
                                     }}
                                     onMouseEnter={(e) => {
                                       e.currentTarget.style.opacity = '1';
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.opacity = '0.7';
+                                      e.currentTarget.style.opacity = '0.6';
                                     }}
                                   >
-                                    ✏️
+                                    <Edit size={16} />
                                   </button>
                                   <button
                                     onClick={() => handleDeletePREntry(pr.id, entry.id)}
                                     title={t('delete_personal_record')}
                                     style={{
-                                      padding: '0.4rem 0.6rem',
+                                      padding: '0.3rem 0.4rem',
                                       background: 'transparent',
                                       color: '#f44336',
                                       border: 'none',
                                       cursor: 'pointer',
-                                      fontSize: '1.1rem',
                                       transition: 'all 0.2s',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
-                                      opacity: 0.7
+                                      opacity: 0.6
                                     }}
                                     onMouseEnter={(e) => {
                                       e.currentTarget.style.opacity = '1';
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.opacity = '0.7';
+                                      e.currentTarget.style.opacity = '0.6';
                                     }}
                                   >
-                                    🗑️
+                                    <Trash2 size={16} />
                                   </button>
                                 </div>
                               </div>
