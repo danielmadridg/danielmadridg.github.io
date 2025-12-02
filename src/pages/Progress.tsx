@@ -136,6 +136,12 @@ const Progress: React.FC = () => {
     setPrFormData({ name: '', weight: '', date: format(new Date(), 'yyyy-MM-dd') });
   };
 
+  const handleQuickAddPREntry = (exerciseName: string) => {
+    setPrFormData({ name: exerciseName, weight: '', date: format(new Date(), 'yyyy-MM-dd') });
+    setShowPRForm(true);
+    setEditingPR(null);
+  };
+
   // Exercise history data
   const exerciseHistory = useMemo(() => {
     if (!selectedExerciseId) return [];
@@ -541,28 +547,58 @@ const Progress: React.FC = () => {
                               {format(new Date(currentPR.date), 'MMM d, yyyy')}
                             </p>
                           </div>
-                      <button
-                        onClick={() => handleDeletePR(pr.id)}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          background: 'transparent',
-                          color: '#f44336',
-                          border: '1px solid #f44336',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontWeight: '500',
-                          fontSize: '0.85rem',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(244, 67, 54, 0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent';
-                        }}
-                      >
-                        {t('delete_personal_record')}
-                      </button>
+                          <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0 }}>
+                            <button
+                              onClick={() => handleQuickAddPREntry(pr.exerciseName)}
+                              style={{
+                                padding: '0.5rem 1rem',
+                                background: 'var(--primary-color)',
+                                color: '#0a0a0a',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '1rem',
+                                transition: 'all 0.2s',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minWidth: '44px',
+                                minHeight: '44px'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = '0.8';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.opacity = '1';
+                              }}
+                              title="Add new entry"
+                            >
+                              +
+                            </button>
+                            <button
+                              onClick={() => handleDeletePR(pr.id)}
+                              style={{
+                                padding: '0.5rem 1rem',
+                                background: 'transparent',
+                                color: '#f44336',
+                                border: '1px solid #f44336',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '500',
+                                fontSize: '0.85rem',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(244, 67, 54, 0.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                              }}
+                            >
+                              {t('delete_personal_record')}
+                            </button>
+                          </div>
                     </div>
 
                     {/* Stats */}
