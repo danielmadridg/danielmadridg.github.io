@@ -15,6 +15,10 @@ export const translations: Record<Language, Translations> = {
     logout: 'Logout',
     settings: 'Settings',
     workout: 'Workout',
+    friends: 'Friends',
+    follow: 'Follow',
+    unfollow: 'Unfollow',
+    copy_routine: 'Copy Routine',
 
     // Home Page
     greeting_morning: 'Good morning',
@@ -123,6 +127,7 @@ export const translations: Record<Language, Translations> = {
 
     // Messages
     username_updated: '✓ Username updated successfully',
+    profile_updated: '✓ Personal information updated successfully',
     back_during_workout: 'Are you sure you want to leave? You can resume your workout later.',
     pause_workout: 'Pause Workout',
     cancel_workout: 'Cancel Workout',
@@ -195,6 +200,28 @@ export const translations: Record<Language, Translations> = {
     day: 'day',
     an_exercise: 'an exercise',
     a_day: 'a day',
+
+    // Friends Page
+    search_connect_friends: 'Search and connect with other Prodegi users',
+    search_by_username: 'Search by username...',
+    searching: 'Searching',
+    no_users_found: 'No users found',
+    search_users_hint: 'Type at least 2 characters to search for users',
+    loading: 'Loading',
+    years_old: 'years old',
+    total_workouts: 'Total Workouts',
+    last_workout: 'Last Workout',
+    exercises_count: 'Unique Exercises',
+    joined: 'Joined',
+    routine: 'Routine',
+    workout_history: 'Workout History',
+    profile_private: 'This profile is private',
+    privacy_settings: 'Privacy Settings',
+    share_profile: 'Share my profile with other users',
+    share_stats: 'Share my workout statistics',
+    share_personal_records: 'Share my personal records',
+    share_personal_info: 'Share my personal information (age, gender, weight)',
+    privacy_description: 'Control what information other users can see when they view your profile',
   },
   es: {
     // Common
@@ -206,6 +233,10 @@ export const translations: Record<Language, Translations> = {
     logout: 'Cerrar sesión',
     settings: 'Configuración',
     workout: 'Entrenamiento',
+    friends: 'Amigos',
+    follow: 'Seguir',
+    unfollow: 'Dejar de seguir',
+    copy_routine: 'Copiar Rutina',
 
     // Home Page
     greeting_morning: 'Buenos días',
@@ -314,6 +345,7 @@ export const translations: Record<Language, Translations> = {
 
     // Messages
     username_updated: '✓ Nombre de usuario actualizado exitosamente',
+    profile_updated: '✓ Información personal actualizada exitosamente',
     back_during_workout: '¿Estás seguro de que deseas irte? Puedes reanudar tu entrenamiento más tarde.',
     pause_workout: 'Pausar entrenamiento',
     cancel_workout: 'Cancelar entrenamiento',
@@ -386,6 +418,28 @@ export const translations: Record<Language, Translations> = {
     day: 'día',
     an_exercise: 'un ejercicio',
     a_day: 'un día',
+
+    // Friends Page
+    search_connect_friends: 'Busca y conecta con otros usuarios de Prodegi',
+    search_by_username: 'Buscar por nombre de usuario...',
+    searching: 'Buscando',
+    no_users_found: 'No se encontraron usuarios',
+    search_users_hint: 'Escribe al menos 2 caracteres para buscar usuarios',
+    loading: 'Cargando',
+    years_old: 'años',
+    total_workouts: 'Entrenamientos Totales',
+    last_workout: 'Último Entrenamiento',
+    exercises_count: 'Ejercicios Únicos',
+    joined: 'Se unió',
+    routine: 'Rutina',
+    workout_history: 'Historial de Entrenamientos',
+    profile_private: 'Este perfil es privado',
+    privacy_settings: 'Configuración de Privacidad',
+    share_profile: 'Compartir mi perfil con otros usuarios',
+    share_stats: 'Compartir mis estadísticas de entrenamiento',
+    share_personal_records: 'Compartir mis récords personales',
+    share_personal_info: 'Compartir mi información personal (edad, género, peso)',
+    privacy_description: 'Controla qué información pueden ver otros usuarios cuando visitan tu perfil',
   },
   fr: {
     // Common
@@ -397,6 +451,10 @@ export const translations: Record<Language, Translations> = {
     logout: 'Déconnexion',
     settings: 'Paramètres',
     workout: 'Entraînement',
+    friends: 'Amis',
+    follow: 'Suivre',
+    unfollow: 'Ne plus suivre',
+    copy_routine: 'Copier la routine',
 
     // Home Page
     greeting_morning: 'Bonjour',
@@ -505,6 +563,7 @@ export const translations: Record<Language, Translations> = {
 
     // Messages
     username_updated: '✓ Nom d\'utilisateur mis à jour avec succès',
+    profile_updated: '✓ Informations personnelles mises à jour avec succès',
     back_during_workout: 'Êtes-vous sûr de vouloir partir? Vous pouvez reprendre votre entraînement plus tard.',
     pause_workout: 'Pause entraînement',
     cancel_workout: 'Annuler entraînement',
@@ -577,6 +636,28 @@ export const translations: Record<Language, Translations> = {
     day: 'jour',
     an_exercise: 'un exercice',
     a_day: 'un jour',
+
+    // Friends Page
+    search_connect_friends: 'Rechercher et se connecter avec d\'autres utilisateurs de Prodegi',
+    search_by_username: 'Rechercher par nom d\'utilisateur...',
+    searching: 'Recherche en cours',
+    no_users_found: 'Aucun utilisateur trouvé',
+    search_users_hint: 'Tapez au moins 2 caractères pour rechercher des utilisateurs',
+    loading: 'Chargement',
+    years_old: 'ans',
+    total_workouts: 'Entraînements Totaux',
+    last_workout: 'Dernier Entraînement',
+    exercises_count: 'Exercices Uniques',
+    joined: 'Inscrit',
+    routine: 'Routine',
+    workout_history: 'Historique des Entraînements',
+    profile_private: 'Ce profil est privé',
+    privacy_settings: 'Paramètres de Confidentialité',
+    share_profile: 'Partager mon profil avec d\'autres utilisateurs',
+    share_stats: 'Partager mes statistiques d\'entraînement',
+    share_personal_records: 'Partager mes records personnels',
+    share_personal_info: 'Partager mes informations personnelles (âge, genre, poids)',
+    privacy_description: 'Contrôlez les informations que les autres utilisateurs peuvent voir lorsqu\'ils consultent votre profil',
   },
   it: {
     // Common
@@ -588,6 +669,10 @@ export const translations: Record<Language, Translations> = {
     logout: 'Esci',
     settings: 'Impostazioni',
     workout: 'Allenamento',
+    friends: 'Amici',
+    follow: 'Segui',
+    unfollow: 'Smetti di seguire',
+    copy_routine: 'Copia Routine',
 
     // Home Page
     greeting_morning: 'Buongiorno',
@@ -696,6 +781,7 @@ export const translations: Record<Language, Translations> = {
 
     // Messages
     username_updated: '✓ Nome utente aggiornato con successo',
+    profile_updated: '✓ Informazioni personali aggiornate con successo',
     back_during_workout: 'Sei sicuro di voler andare? Puoi riprendere il tuo allenamento in seguito.',
     pause_workout: 'Pausa allenamento',
     cancel_workout: 'Annulla allenamento',
@@ -768,5 +854,27 @@ export const translations: Record<Language, Translations> = {
     day: 'giorno',
     an_exercise: 'un esercizio',
     a_day: 'un giorno',
+
+    // Friends Page
+    search_connect_friends: 'Cerca e connettiti con altri utenti di Prodegi',
+    search_by_username: 'Cerca per nome utente...',
+    searching: 'Ricerca in corso',
+    no_users_found: 'Nessun utente trovato',
+    search_users_hint: 'Digita almeno 2 caratteri per cercare utenti',
+    loading: 'Caricamento',
+    years_old: 'anni',
+    total_workouts: 'Allenamenti Totali',
+    last_workout: 'Ultimo Allenamento',
+    exercises_count: 'Esercizi Unici',
+    joined: 'Iscritto',
+    routine: 'Routine',
+    workout_history: 'Storico Allenamenti',
+    profile_private: 'Questo profilo è privato',
+    privacy_settings: 'Impostazioni Privacy',
+    share_profile: 'Condividi il mio profilo con altri utenti',
+    share_stats: 'Condividi le mie statistiche di allenamento',
+    share_personal_records: 'Condividi i miei record personali',
+    share_personal_info: 'Condividi le mie informazioni personali (età, genere, peso)',
+    privacy_description: 'Controlla quali informazioni gli altri utenti possono vedere quando visitano il tuo profilo',
   },
 };

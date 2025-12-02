@@ -9,7 +9,8 @@ import Onboarding from './pages/Onboarding';
 import Progress from './pages/Progress';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
-import { Dumbbell, LineChart, Settings as SettingsIcon } from 'lucide-react';
+import Friends from './pages/Friends';
+import { Dumbbell, LineChart, Settings as SettingsIcon, Users } from 'lucide-react';
 import clsx from 'clsx';
 
 import './App.css';
@@ -158,6 +159,24 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/progress' ? 500 : 400 }}>{t('progress')}</span>
           </Link>
           <Link
+            to="/friends"
+            className={clsx('nav-item', location.pathname === '/friends' && 'active')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.75rem 1.5rem',
+              textDecoration: 'none',
+              color: location.pathname === '/friends' ? '#C8956B' : '#6a6a6a',
+              transition: 'all 0.2s',
+              borderRadius: '8px',
+              background: location.pathname === '/friends' ? 'rgba(200, 149, 107, 0.1)' : 'transparent'
+            }}
+          >
+            <Users size={22} />
+            <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/friends' ? 500 : 400 }}>{t('friends')}</span>
+          </Link>
+          <Link
             to="/settings"
             className={clsx('nav-item', location.pathname === '/settings' && 'active')}
             style={{
@@ -260,6 +279,25 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         >
           <LineChart size={20} />
           <span>{t('progress')}</span>
+        </Link>
+        <Link
+          to="/friends"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.25rem',
+            padding: '0.5rem 1rem',
+            textDecoration: 'none',
+            color: location.pathname === '/friends' ? '#C8956B' : '#6a6a6a',
+            transition: 'all 0.2s',
+            fontSize: '0.7rem',
+            flex: 1
+          }}
+        >
+          <Users size={20} />
+          <span>{t('friends')}</span>
         </Link>
         <Link
           to="/settings"
@@ -573,6 +611,11 @@ const InnerContent: React.FC = () => {
       <Route path="/progress" element={
         <ProtectedRoute>
           <Progress />
+        </ProtectedRoute>
+      } />
+      <Route path="/friends" element={
+        <ProtectedRoute>
+          <Friends />
         </ProtectedRoute>
       } />
       <Route path="/settings" element={

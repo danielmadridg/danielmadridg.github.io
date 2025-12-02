@@ -1,18 +1,59 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users collection - only authenticated users can read their own or access via cloud functions
-    // Access key searches happen via cloud functions, not direct client reads
+    // Users collection - private user data
     match /users/{userId} {
-      // Only allow reading own user document
-      allow read: if request.auth.uid == userId;
-      // Only allow writing own user document
+      allow read: if true;
       allow write: if request.auth.uid == userId;
+      
+      // Friends subcollection - nested inside users
+      match /friends/{friendId} {
+        allow create, write: if request.auth.uid == userId;
+        allow read: if request.auth.uid == userId;
+        allow delete: if request.auth.uid == userId;
+      }
     }
 
-    // Verification codes - only server can write, only accessible via cloud functions
+    // Usernames collection - for uniqueness enforcement
+    // Document ID is the lowercase username, value is the userId
+    match /usernames/{username} {
+      allow read: if true;
+      // Only allow create if username doesn't exist yet
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      // Only allow update/delete by the owner
+      allow update, delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+
+    // Public profiles collection
+    match /publicProfiles/{userId} {
+      allow read: if true;
+      allow create, update: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // Friend requests collection
+    match /friendRequests/{requestId} {
+      allow create: if request.auth != null && 
+        request.resource.data.from == request.auth.uid &&
+        request.resource.data.to != request.auth.uid &&
+        request.resource.data.status == 'pending';
+      
+      allow read: if request.auth != null && 
+        (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      
+      allow update: if request.auth != null && 
+        resource.data.to == request.auth.uid &&
+        request.resource.data.status in ['accepted', 'rejected'];
+      
+      allow delete: if request.auth != null && 
+        resource.data.from == request.auth.uid;
+    }
+
+    // Verification codes
     match /verificationCodes/{email} {
-      allow read, write: if false; // All access through Cloud Functions only
+      allow read, write: if false;
     }
   }
 }

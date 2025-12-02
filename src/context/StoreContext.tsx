@@ -3,6 +3,7 @@ import type { UserState, RoutineDay, WorkoutSession, ExerciseResult, PersonalRec
 import { useAuth } from './AuthContext';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { updatePublicProfile } from '../utils/publicProfile';
 
 // Initial State
 const initialState: UserState = {
@@ -20,11 +21,19 @@ type Action =
   | { type: 'CLEAR_HISTORY' }
   | { type: 'LOAD_DATA'; payload: UserState }
   | { type: 'SET_UNIT_PREFERENCE'; payload: 'kg' | 'lbs' }
+  | { type: 'SET_NAME'; payload: string | undefined }
+  | { type: 'SET_WEIGHT'; payload: number | undefined }
+  | { type: 'SET_AGE'; payload: number | undefined }
+  | { type: 'SET_GENDER'; payload: 'male' | 'female' | 'other' | undefined }
   | { type: 'ADD_PERSONAL_RECORD'; payload: PersonalRecord }
   | { type: 'ADD_PR_ENTRY'; payload: { prId: string; entry: any } }
   | { type: 'EDIT_PR_ENTRY'; payload: { prId: string; entry: any } }
   | { type: 'DELETE_PR_ENTRY'; payload: { prId: string; entryId: string } }
-  | { type: 'DELETE_PERSONAL_RECORD'; payload: string };
+  | { type: 'DELETE_PERSONAL_RECORD'; payload: string }
+  | { type: 'SET_SHARE_PROFILE'; payload: boolean }
+  | { type: 'SET_SHARE_STATS'; payload: boolean }
+  | { type: 'SET_SHARE_PERSONAL_RECORDS'; payload: boolean }
+  | { type: 'SET_SHARE_PERSONAL_INFO'; payload: boolean };
 
 // Migration function to handle legacy PR data
 function migrateUserState(state: UserState): UserState {
@@ -76,6 +85,14 @@ function reducer(state: UserState, action: Action): UserState {
       return action.payload;
     case 'SET_UNIT_PREFERENCE':
       return { ...state, unitPreference: action.payload };
+    case 'SET_NAME':
+      return { ...state, name: action.payload };
+    case 'SET_WEIGHT':
+      return { ...state, weight: action.payload };
+    case 'SET_AGE':
+      return { ...state, age: action.payload };
+    case 'SET_GENDER':
+      return { ...state, gender: action.payload };
     case 'ADD_PERSONAL_RECORD':
       return { ...state, personalRecords: [...(state.personalRecords || []), action.payload] };
     case 'ADD_PR_ENTRY':
@@ -110,6 +127,14 @@ function reducer(state: UserState, action: Action): UserState {
         ...state,
         personalRecords: (state.personalRecords || []).filter(pr => pr.id !== action.payload)
       };
+    case 'SET_SHARE_PROFILE':
+      return { ...state, shareProfile: action.payload };
+    case 'SET_SHARE_STATS':
+      return { ...state, shareStats: action.payload };
+    case 'SET_SHARE_PERSONAL_RECORDS':
+      return { ...state, sharePersonalRecords: action.payload };
+    case 'SET_SHARE_PERSONAL_INFO':
+      return { ...state, sharePersonalInfo: action.payload };
     default:
       return state;
   }
@@ -125,11 +150,19 @@ interface StoreContextType {
   clearHistory: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
   setUnitPreference: (unit: 'kg' | 'lbs') => void;
+  setName: (name: string | undefined) => void;
+  setWeight: (weight: number | undefined) => void;
+  setAge: (age: number | undefined) => void;
+  setGender: (gender: 'male' | 'female' | 'other' | undefined) => void;
   addPersonalRecord: (pr: PersonalRecord) => void;
   addPREntry: (prId: string, entry: any) => void;
   editPREntry: (prId: string, entry: any) => void;
   deletePREntry: (prId: string, entryId: string) => void;
   deletePersonalRecord: (prId: string) => void;
+  setShareProfile: (share: boolean) => void;
+  setShareStats: (share: boolean) => void;
+  setSharePersonalRecords: (share: boolean) => void;
+  setSharePersonalInfo: (share: boolean) => void;
   isLoaded: boolean;
 }
 
@@ -234,6 +267,63 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     saveData();
   }, [state, user, isLoaded]);
 
+  // Sync public profile when relevant data changes
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    const syncPublicProfile = async () => {
+      try {
+        // Get username from user's displayName or email
+        let username = user.displayName || user.email?.split('@')[0] || 'user';
+        
+        // Try to update/create profile
+        try {
+          await updatePublicProfile(
+            user.uid,
+            username,
+            state,
+            user.displayName || undefined,
+            user.photoURL || undefined
+          );
+        } catch (error: any) {
+          // If username is taken (and it's not our own), try appending a random number
+          if (error.message === 'Username is already taken') {
+            const randomSuffix = Math.floor(Math.random() * 10000).toString();
+            username = `${username}${randomSuffix}`;
+            console.log('[StoreContext] Username taken, trying:', username);
+            
+            await updatePublicProfile(
+              user.uid,
+              username,
+              state,
+              user.displayName || undefined,
+              user.photoURL || undefined
+            );
+          } else {
+            throw error;
+          }
+        }
+        console.log('[StoreContext] Public profile synced');
+      } catch (error) {
+        console.error('[StoreContext] Error syncing public profile:', error);
+      }
+    };
+
+    syncPublicProfile();
+  }, [
+    state.shareProfile,
+    state.shareStats,
+    state.sharePersonalRecords,
+    state.sharePersonalInfo,
+    state.name,
+    state.age,
+    state.gender,
+    state.weight,
+    state.history.length,
+    user,
+    isLoaded
+  ]);
+
   const setRoutine = (routine: RoutineDay[]) => dispatch({ type: 'SET_ROUTINE', payload: routine });
   const addSession = (session: WorkoutSession) => dispatch({ type: 'ADD_SESSION', payload: session });
   const editSession = (session: WorkoutSession) => dispatch({ type: 'EDIT_SESSION', payload: session });
@@ -257,6 +347,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const setUnitPreference = (unit: 'kg' | 'lbs') => dispatch({ type: 'SET_UNIT_PREFERENCE', payload: unit });
+  const setName = (name: string | undefined) => dispatch({ type: 'SET_NAME', payload: name });
+  const setWeight = (weight: number | undefined) => dispatch({ type: 'SET_WEIGHT', payload: weight });
+  const setAge = (age: number | undefined) => dispatch({ type: 'SET_AGE', payload: age });
+  const setGender = (gender: 'male' | 'female' | 'other' | undefined) => dispatch({ type: 'SET_GENDER', payload: gender });
 
   const addPersonalRecord = (pr: PersonalRecord) => dispatch({ type: 'ADD_PERSONAL_RECORD', payload: pr });
   const addPREntry = (prId: string, entry: any) => dispatch({ type: 'ADD_PR_ENTRY', payload: { prId, entry } });
@@ -264,8 +358,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deletePREntry = (prId: string, entryId: string) => dispatch({ type: 'DELETE_PR_ENTRY', payload: { prId, entryId } });
   const deletePersonalRecord = (prId: string) => dispatch({ type: 'DELETE_PERSONAL_RECORD', payload: prId });
 
+  const setShareProfile = (share: boolean) => dispatch({ type: 'SET_SHARE_PROFILE', payload: share });
+  const setShareStats = (share: boolean) => dispatch({ type: 'SET_SHARE_STATS', payload: share });
+  const setSharePersonalRecords = (share: boolean) => dispatch({ type: 'SET_SHARE_PERSONAL_RECORDS', payload: share });
+  const setSharePersonalInfo = (share: boolean) => dispatch({ type: 'SET_SHARE_PERSONAL_INFO', payload: share });
+
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, addPersonalRecord, addPREntry, editPREntry, deletePREntry, deletePersonalRecord, isLoaded }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, setName, setWeight, setAge, setGender, addPersonalRecord, addPREntry, editPREntry, deletePREntry, deletePersonalRecord, setShareProfile, setShareStats, setSharePersonalRecords, setSharePersonalInfo, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

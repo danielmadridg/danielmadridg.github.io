@@ -609,21 +609,6 @@ const Progress: React.FC = () => {
                       ? (currentWeight - previousWeight).toFixed(1)
                       : null;
 
-                    // Calculate average days between improvements
-                    let avgDaysBetweenImprovement = null;
-                    if (sortedEntries.length > 1) {
-                      const improvements = [];
-                      for (let i = 0; i < sortedEntries.length - 1; i++) {
-                        const curr = new Date(sortedEntries[i].date).getTime();
-                        const prev = new Date(sortedEntries[i + 1].date).getTime();
-                        const daysDiff = (curr - prev) / (1000 * 60 * 60 * 24);
-                        if (daysDiff > 0) improvements.push(daysDiff);
-                      }
-                      if (improvements.length > 0) {
-                        avgDaysBetweenImprovement = (improvements.reduce((a, b) => a + b, 0) / improvements.length / 30).toFixed(1);
-                      }
-                    }
-
                     // Calculate average weight gain per month
                     let avgWeightGainPerMonth = null;
                     if (sortedEntries.length > 1) {
@@ -737,12 +722,6 @@ const Progress: React.FC = () => {
                         <div style={{ padding: '0.75rem', background: 'rgba(200, 149, 107, 0.1)', borderRadius: '6px', border: '1px solid rgba(200, 149, 107, 0.3)' }}>
                           <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('total_entries')}</p>
                           <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>{sortedEntries.length}</p>
-                        </div>
-                      )}
-                      {avgDaysBetweenImprovement && (
-                        <div style={{ padding: '0.75rem', background: 'rgba(33, 150, 243, 0.1)', borderRadius: '6px', border: '1px solid rgba(33, 150, 243, 0.3)' }}>
-                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('avg_improvement_frequency')}</p>
-                          <p style={{ margin: 0, color: '#2196F3', fontWeight: 'bold' }}>~{avgDaysBetweenImprovement} months</p>
                         </div>
                       )}
                     </div>

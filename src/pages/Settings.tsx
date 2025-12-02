@@ -8,9 +8,12 @@ import ProfilePictureEditor from '../components/ProfilePictureEditor';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ACCESS_KEY_LENGTH, ACCESS_KEY_SEGMENT_LENGTH } from '../utils/constants';
+import { isUsernameAvailable } from '../utils/username';
+
+// Note: db, doc, getDoc, setDoc are still needed for access key management
 
 const Settings: React.FC = () => {
-  const { clearData, clearHistory, state, setUnitPreference } = useStore();
+  const { clearData, clearHistory, state, setUnitPreference, setName, setWeight, setAge, setGender, setShareProfile, setShareStats, setSharePersonalRecords, setSharePersonalInfo } = useStore();
   const { signOut, deleteAccount, user, updateProfile } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
@@ -23,14 +26,17 @@ const Settings: React.FC = () => {
   const [clearHistoryConfirmText, setClearHistoryConfirmText] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessageType, setSuccessMessageType] = useState<'username' | 'profile'>('username');
   const [accessKey, setAccessKey] = useState<string | null>(null);
   const [loadingKey, setLoadingKey] = useState(true);
   const [keyCopied, setKeyCopied] = useState(false);
   const [showAccessKeyWarning, setShowAccessKeyWarning] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [weight, setWeight] = useState<number | string>(state.weight || '');
-  const [age, setAge] = useState<number | string>(state.age || '');
-  const [gender, setGender] = useState<'male' | 'female' | 'other' | ''>(state.gender || '');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [nameInput, setNameInput] = useState<string>(state.name || '');
+  const [weightInput, setWeightInput] = useState<number | string>(state.weight || '');
+  const [ageInput, setAgeInput] = useState<number | string>(state.age || '');
+  const [genderInput, setGenderInput] = useState<'male' | 'female' | 'other' | ''>(state.gender || '');
   const currentUnit = state.unitPreference || 'kg';
 
   useEffect(() => {
@@ -167,30 +173,55 @@ const Settings: React.FC = () => {
   };
 
   const handleUpdateDisplayName = async () => {
-    if (newDisplayName.trim() === '') {
-      alert('Please enter a name.');
+    const trimmedName = newDisplayName.trim();
+    
+    if (trimmedName === '') {
+      alert('Please enter a username.');
       return;
     }
-    if (!/^[a-zA-Z]+$/.test(newDisplayName.trim())) {
-      alert('Name can only contain letters (A-Z). No spaces or special characters allowed.');
+
+    // Allow letters and numbers for usernames
+    if (!/^[a-zA-Z0-9]+$/.test(trimmedName)) {
+      alert('Username can only contain letters and numbers. No spaces or special characters allowed.');
       return;
     }
-    try {
-      await updateProfile({ displayName: newDisplayName.trim() });
+
+    // If username hasn't changed, just close dialog
+    if (user?.displayName === trimmedName) {
       setShowEditNameDialog(false);
+      setUsernameError(null);
+      return;
+    }
+
+    try {
+      // Check if username is available
+      const available = await isUsernameAvailable(trimmedName);
+      if (!available) {
+        setUsernameError('Username is already taken');
+        return;
+      }
+
+      await updateProfile({ displayName: trimmedName });
+      setShowEditNameDialog(false);
+      setUsernameError(null);
+      setSuccessMessageType('username');
       setShowSuccessMessage(true);
       // Auto-hide success message after 3 seconds
       setTimeout(() => {
         setShowSuccessMessage(false);
       }, 3000);
     } catch (error) {
+      console.error('Error updating username:', error);
       alert('Failed to update username.');
     }
   };
 
   const handleUpdateProfile = async () => {
-    const weightNum = weight ? parseFloat(weight.toString()) : undefined;
-    const ageNum = age ? parseFloat(age.toString()) : undefined;
+    // Update personal info (name, weight, age, gender)
+    const weightNum = weightInput ? parseFloat(weightInput.toString()) : undefined;
+    const ageNum = ageInput ? parseFloat(ageInput.toString()) : undefined;
+    const genderVal = genderInput || undefined;
+    const nameVal = nameInput.trim() || undefined;
 
     if (weightNum !== undefined && (weightNum < 0 || !Number.isFinite(weightNum))) {
       alert('Please enter a valid weight.');
@@ -202,15 +233,16 @@ const Settings: React.FC = () => {
     }
 
     try {
-      if (!user) return;
-      const userDocRef = doc(db, 'users', user.uid);
-      await setDoc(userDocRef, {
-        weight: weightNum,
-        age: ageNum,
-        gender: gender || undefined
-      }, { merge: true });
+      // Update state through StoreContext
+      setName(nameVal);
+      setWeight(weightNum);
+      setAge(ageNum);
+      setGender(genderVal as 'male' | 'female' | 'other' | undefined);
+
       setShowEditProfile(false);
+      setSuccessMessageType('profile');
       setShowSuccessMessage(true);
+      // Auto-hide success message after 3 seconds
       setTimeout(() => {
         setShowSuccessMessage(false);
       }, 3000);
@@ -229,81 +261,180 @@ const Settings: React.FC = () => {
         <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>{t('profile')}</h2>
 
         <div style={{marginBottom: '1.5rem'}}>
-          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>{t('username')}</label>
+          <label style={{fontSize: '0.9rem', margin: 0, marginBottom: '0.75rem', display: 'block'}}>Name & Username</label>
 
           {!showEditNameDialog ? (
             // Display mode
             <div style={{
               display: 'flex',
               gap: '0.75rem',
-              alignItems: 'stretch',
-              flexDirection: isMobile ? 'column' : 'row'
+              alignItems: 'flex-start',
+              marginBottom: '1rem',
+              flexWrap: isMobile ? 'wrap' : 'nowrap'
             }}>
-              <span style={{
-                flex: 1,
-                padding: '0.75rem',
-                background: 'var(--surface-color)',
-                borderRadius: '6px',
-                minHeight: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '1rem',
-                border: '1px solid #252525'
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: '0.75rem',
+                flex: 1
               }}>
-                {user?.displayName || 'Not set'}
-              </span>
-              <button
-                className="btn-secondary"
-                onClick={() => setShowEditNameDialog(true)}
-                style={{
-                  minHeight: '44px',
-                  padding: '0.75rem 1.25rem',
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'var(--surface-color)',
+                  borderRadius: '6px',
+                  height: '60px',
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   justifyContent: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.95rem',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                <Edit size={18} />
-                {isMobile && <span>Edit Username</span>}
-              </button>
+                  border: '1px solid #252525',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>Name</span>
+                  <span style={{fontSize: '0.95rem'}}>{state.name || 'Not set'}</span>
+                </div>
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'var(--surface-color)',
+                  borderRadius: '6px',
+                  height: '60px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  border: '1px solid #252525',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>Username</span>
+                  <span style={{fontSize: '0.95rem'}}>{user?.displayName || 'Not set'}</span>
+                </div>
+              </div>
+              {!showEditNameDialog && (
+                <button
+                  className="btn-secondary"
+                  onClick={() => setShowEditNameDialog(true)}
+                  style={{
+                    height: '60px',
+                    padding: '0.5rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.8rem',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}
+                >
+                  <Edit size={14} />
+                  {!isMobile && 'Edit'}
+                </button>
+              )}
             </div>
           ) : (
             // Edit mode
             <>
-              <input
-                type="text"
-                name="username"
-                id="username-input"
-                value={newDisplayName}
-                onChange={(e) => {
-                  const filtered = e.target.value.replace(/[^a-zA-Z]/g, '');
-                  setNewDisplayName(filtered);
-                }}
-                placeholder="Your username"
-                spellCheck={false}
-                autoFocus
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                inputMode="text"
-                data-form-type="other"
-                style={{
-                  width: '100%',
-                  marginBottom: '0.75rem',
-                  padding: '0.75rem',
-                  minHeight: '44px',
-                  boxSizing: 'border-box',
-                  fontSize: '16px',
-                  background: '#2a2a2a'
-                }}
-              />
-              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
+              <div style={{marginBottom: '1rem'}}>
+                <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>Name</label>
+                <input
+                  type="text"
+                  value={nameInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length > 0) {
+                      setNameInput(value.charAt(0).toUpperCase() + value.slice(1));
+                    } else {
+                      setNameInput(value);
+                    }
+                  }}
+                  placeholder="Your name"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    fontSize: '16px',
+                    background: '#2a2a2a'
+                  }}
+                />
+              </div>
+              <div style={{marginBottom: '1rem'}}>
+                <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>Username</label>
+                <input
+                  type="text"
+                  name="username"
+                  id="username-input"
+                  value={newDisplayName}
+                  onChange={(e) => {
+                    const filtered = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                    setNewDisplayName(filtered);
+                  }}
+                  placeholder="Your username"
+                  spellCheck={false}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  inputMode="text"
+                  data-form-type="other"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    fontSize: '16px',
+                    background: '#2a2a2a'
+                  }}
+                />
+                {usernameError && (
+                  <p style={{color: '#ff4444', fontSize: '0.8rem', marginTop: '0.5rem', marginBottom: 0}}>
+                    {usernameError}
+                  </p>
+                )}
+              </div>
+              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row', marginBottom: '1rem'}}>
                 <button
                   className="btn-primary"
-                  onClick={handleUpdateDisplayName}
+                  onClick={async () => {
+                    // Save both name and username sequentially
+                    // First validate username if it changed
+                    const trimmedUsername = newDisplayName.trim();
+                    const usernameChanged = user?.displayName !== trimmedUsername;
+
+                    if (usernameChanged) {
+                      if (trimmedUsername === '') {
+                        alert('Please enter a username.');
+                        return;
+                      }
+                      if (!/^[a-zA-Z0-9]+$/.test(trimmedUsername)) {
+                        alert('Username can only contain letters and numbers.');
+                        return;
+                      }
+                      
+                      try {
+                        const available = await isUsernameAvailable(trimmedUsername);
+                        if (!available) {
+                          setUsernameError('Username is already taken');
+                          return; // Stop here, don't save name either
+                        }
+                      } catch (error) {
+                        console.error('Error checking username:', error);
+                        return;
+                      }
+                    }
+
+                    // If we get here, username is valid or hasn't changed
+                    // Update profile name first
+                    await handleUpdateProfile();
+                    
+                    // Then update username if changed
+                    if (usernameChanged) {
+                      await handleUpdateDisplayName();
+                    } else {
+                      // If only name changed, we still want to close dialog and show success
+                      setShowEditNameDialog(false);
+                      setUsernameError(null);
+                      setSuccessMessageType('username');
+                      setShowSuccessMessage(true);
+                      setTimeout(() => setShowSuccessMessage(false), 3000);
+                    }
+                  }}
                   style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
                 >
                   Save
@@ -312,6 +443,8 @@ const Settings: React.FC = () => {
                   className="btn-secondary"
                   onClick={() => {
                     setShowEditNameDialog(false);
+                    setUsernameError(null);
+                    setNameInput(state.name || '');
                     setNewDisplayName(user?.displayName || '');
                   }}
                   style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
@@ -322,9 +455,9 @@ const Settings: React.FC = () => {
             </>
           )}
 
-          {showSuccessMessage && !showEditNameDialog && (
+          {showSuccessMessage && !showEditNameDialog && successMessageType === 'username' && (
             <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
-              ✓ Username updated successfully
+              {t('username_updated')}
             </p>
           )}
         </div>
@@ -339,91 +472,106 @@ const Settings: React.FC = () => {
         </div>
 
         <div style={{marginTop: '1.5rem'}}>
-          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Personal Information</label>
+          <label style={{fontSize: '0.9rem', margin: 0, marginBottom: '0.75rem', display: 'block'}}>Personal Information</label>
 
           {!showEditProfile ? (
             // Display mode
             <div style={{
               display: 'flex',
               gap: '0.75rem',
-              alignItems: 'stretch',
-              flexDirection: isMobile ? 'column' : 'row',
-              marginBottom: '1rem'
+              alignItems: 'flex-start',
+              marginBottom: '1rem',
+              flexWrap: isMobile ? 'wrap' : 'nowrap'
             }}>
               <div style={{
-                flex: 1,
-                padding: '0.75rem',
-                background: 'var(--surface-color)',
-                borderRadius: '6px',
-                minHeight: '44px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                border: '1px solid #252525'
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gap: '0.75rem',
+                flex: 1
               }}>
-                <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('weight')}</span>
-                <span style={{fontSize: '1rem'}}>{state.weight ? `${state.weight} ${currentUnit}` : 'Not set'}</span>
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'var(--surface-color)',
+                  borderRadius: '6px',
+                  height: '60px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  border: '1px solid #252525',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('weight')}</span>
+                  <span style={{fontSize: '0.95rem'}}>{state.weight ? `${state.weight} ${currentUnit}` : 'Not set'}</span>
+                </div>
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'var(--surface-color)',
+                  borderRadius: '6px',
+                  height: '60px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  border: '1px solid #252525',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('age')}</span>
+                  <span style={{fontSize: '0.95rem'}}>{state.age ? `${state.age} years` : 'Not set'}</span>
+                </div>
+                <div style={{
+                  padding: '0.75rem',
+                  background: 'var(--surface-color)',
+                  borderRadius: '6px',
+                  height: '60px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  border: '1px solid #252525',
+                  boxSizing: 'border-box'
+                }}>
+                  <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('gender')}</span>
+                  <span style={{fontSize: '0.95rem'}}>
+                    {state.gender ? t(state.gender) : 'Not set'}
+                  </span>
+                </div>
               </div>
-              <div style={{
-                flex: 1,
-                padding: '0.75rem',
-                background: 'var(--surface-color)',
-                borderRadius: '6px',
-                minHeight: '44px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                border: '1px solid #252525'
-              }}>
-                <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('age')}</span>
-                <span style={{fontSize: '1rem'}}>{state.age ? `${state.age} years` : 'Not set'}</span>
-              </div>
-              <div style={{
-                flex: 1,
-                padding: '0.75rem',
-                background: 'var(--surface-color)',
-                borderRadius: '6px',
-                minHeight: '44px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                border: '1px solid #252525'
-              }}>
-                <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('gender')}</span>
-                <span style={{fontSize: '1rem'}}>
-                  {state.gender ? t(state.gender) : 'Not set'}
-                </span>
-              </div>
+              {!showEditProfile && (
+                <button
+                  className="btn-secondary"
+                  onClick={() => setShowEditProfile(true)}
+                  style={{
+                    height: '60px',
+                    padding: '0.5rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    fontSize: '0.8rem',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}
+                >
+                  <Edit size={14} />
+                  {!isMobile && 'Edit Info'}
+                </button>
+              )}
             </div>
           ) : null}
 
-          {!showEditProfile ? (
-            <button
-              className="btn-secondary"
-              onClick={() => setShowEditProfile(true)}
-              style={{
-                minHeight: '44px',
-                padding: '0.75rem 1.25rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                fontSize: '0.95rem',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              <Edit size={18} />
-              {isMobile && <span>Edit Info</span>}
-            </button>
-          ) : (
+          {showSuccessMessage && !showEditProfile && successMessageType === 'profile' && (
+            <p style={{marginTop: '0.75rem', color: '#4CAF50', fontSize: '0.9rem', fontWeight: '500', margin: '0.75rem 0 0 0'}}>
+              {t('profile_updated')}
+            </p>
+          )}
+
+          {showEditProfile ? (
             // Edit mode
             <>
               <div style={{marginBottom: '1rem'}}>
                 <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>{t('weight')} ({currentUnit})</label>
                 <input
                   type="number"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
+                  value={weightInput}
+                  onChange={(e) => setWeightInput(e.target.value)}
                   placeholder={`Your weight in ${currentUnit}`}
                   min="0"
                   step="0.1"
@@ -442,8 +590,8 @@ const Settings: React.FC = () => {
                 <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>{t('age')}</label>
                 <input
                   type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
+                  value={ageInput}
+                  onChange={(e) => setAgeInput(e.target.value)}
                   placeholder="Your age"
                   min="0"
                   max="150"
@@ -462,8 +610,8 @@ const Settings: React.FC = () => {
               <div style={{marginBottom: '1rem'}}>
                 <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>{t('gender')}</label>
                 <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other' | '')}
+                  value={genderInput}
+                  onChange={(e) => setGenderInput(e.target.value as 'male' | 'female' | 'other' | '')}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -495,9 +643,9 @@ const Settings: React.FC = () => {
                   className="btn-secondary"
                   onClick={() => {
                     setShowEditProfile(false);
-                    setWeight(state.weight || '');
-                    setAge(state.age || '');
-                    setGender(state.gender || '');
+                    setWeightInput(state.weight || '');
+                    setAgeInput(state.age || '');
+                    setGenderInput(state.gender || '');
                   }}
                   style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
                 >
@@ -505,7 +653,7 @@ const Settings: React.FC = () => {
                 </button>
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -623,14 +771,14 @@ const Settings: React.FC = () => {
             </div>
 
             {/* Indicator dots */}
-            <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'center'}}>
+            <div style={{display: 'flex', gap: isMobile ? '0.2rem' : '0.5rem', justifyContent: 'center'}}>
               {['en', 'es', 'fr', 'it'].map((lang) => (
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang as any)}
                   style={{
-                    width: '10px',
-                    height: '10px',
+                    width: isMobile ? '6px' : '10px',
+                    height: isMobile ? '6px' : '10px',
                     borderRadius: '50%',
                     border: 'none',
                     background: language === lang ? 'var(--primary-color)' : '#555',
@@ -647,6 +795,252 @@ const Settings: React.FC = () => {
           <Edit style={{width: '18px', height: '18px', flexShrink: 0}}/>
           {t('edit_routine')}
         </button>
+      </div>
+
+      {/* Privacy Settings Section */}
+      <div className="card" style={{marginBottom: '1rem'}}>
+        <h2 style={{marginTop: '0', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '600'}}>{t('privacy_settings')}</h2>
+        
+        <p style={{color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: '1.5'}}>
+          {t('privacy_description')}
+        </p>
+
+        {/* Share Profile */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1rem',
+          background: 'var(--surface-color)',
+          borderRadius: '8px',
+          marginBottom: '0.75rem',
+          border: '1px solid #252525'
+        }}>
+          <div style={{flex: 1, paddingRight: '1rem'}}>
+            <div style={{fontSize: '0.95rem', fontWeight: '500', marginBottom: '0.25rem'}}>
+              {t('share_profile')}
+            </div>
+            <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
+              Allow other users to find and view your profile
+            </div>
+          </div>
+          <label style={{
+            position: 'relative',
+            display: 'inline-block',
+            width: '50px',
+            height: '28px',
+            flexShrink: 0
+          }}>
+            <input
+              type="checkbox"
+              checked={state.shareProfile ?? true}
+              onChange={(e) => setShareProfile(e.target.checked)}
+              style={{opacity: 0, width: 0, height: 0}}
+            />
+            <span style={{
+              position: 'absolute',
+              cursor: 'pointer',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: state.shareProfile ?? true ? 'var(--primary-color)' : '#555',
+              transition: '0.3s',
+              borderRadius: '28px'
+            }}>
+              <span style={{
+                position: 'absolute',
+                content: '',
+                height: '20px',
+                width: '20px',
+                left: state.shareProfile ?? true ? '26px' : '4px',
+                bottom: '4px',
+                background: 'white',
+                transition: '0.3s',
+                borderRadius: '50%'
+              }} />
+            </span>
+          </label>
+        </div>
+
+        {/* Share Stats */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1rem',
+          background: 'var(--surface-color)',
+          borderRadius: '8px',
+          marginBottom: '0.75rem',
+          border: '1px solid #252525',
+          opacity: state.shareProfile ?? true ? 1 : 0.5
+        }}>
+          <div style={{flex: 1, paddingRight: '1rem'}}>
+            <div style={{fontSize: '0.95rem', fontWeight: '500', marginBottom: '0.25rem'}}>
+              {t('share_stats')}
+            </div>
+            <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
+              Share workout statistics and routine
+            </div>
+          </div>
+          <label style={{
+            position: 'relative',
+            display: 'inline-block',
+            width: '50px',
+            height: '28px',
+            flexShrink: 0
+          }}>
+            <input
+              type="checkbox"
+              checked={state.shareStats ?? true}
+              onChange={(e) => setShareStats(e.target.checked)}
+              disabled={!(state.shareProfile ?? true)}
+              style={{opacity: 0, width: 0, height: 0}}
+            />
+            <span style={{
+              position: 'absolute',
+              cursor: state.shareProfile ?? true ? 'pointer' : 'not-allowed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: state.shareStats ?? true ? 'var(--primary-color)' : '#555',
+              transition: '0.3s',
+              borderRadius: '28px'
+            }}>
+              <span style={{
+                position: 'absolute',
+                content: '',
+                height: '20px',
+                width: '20px',
+                left: state.shareStats ?? true ? '26px' : '4px',
+                bottom: '4px',
+                background: 'white',
+                transition: '0.3s',
+                borderRadius: '50%'
+              }} />
+            </span>
+          </label>
+        </div>
+
+        {/* Share Personal Records */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1rem',
+          background: 'var(--surface-color)',
+          borderRadius: '8px',
+          marginBottom: '0.75rem',
+          border: '1px solid #252525',
+          opacity: state.shareProfile ?? true ? 1 : 0.5
+        }}>
+          <div style={{flex: 1, paddingRight: '1rem'}}>
+            <div style={{fontSize: '0.95rem', fontWeight: '500', marginBottom: '0.25rem'}}>
+              {t('share_personal_records')}
+            </div>
+            <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
+              Share your personal records with others
+            </div>
+          </div>
+          <label style={{
+            position: 'relative',
+            display: 'inline-block',
+            width: '50px',
+            height: '28px',
+            flexShrink: 0
+          }}>
+            <input
+              type="checkbox"
+              checked={state.sharePersonalRecords ?? true}
+              onChange={(e) => setSharePersonalRecords(e.target.checked)}
+              disabled={!(state.shareProfile ?? true)}
+              style={{opacity: 0, width: 0, height: 0}}
+            />
+            <span style={{
+              position: 'absolute',
+              cursor: state.shareProfile ?? true ? 'pointer' : 'not-allowed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: state.sharePersonalRecords ?? true ? 'var(--primary-color)' : '#555',
+              transition: '0.3s',
+              borderRadius: '28px'
+            }}>
+              <span style={{
+                position: 'absolute',
+                content: '',
+                height: '20px',
+                width: '20px',
+                left: state.sharePersonalRecords ?? true ? '26px' : '4px',
+                bottom: '4px',
+                background: 'white',
+                transition: '0.3s',
+                borderRadius: '50%'
+              }} />
+            </span>
+          </label>
+        </div>
+
+        {/* Share Personal Info */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '1rem',
+          background: 'var(--surface-color)',
+          borderRadius: '8px',
+          border: '1px solid #252525',
+          opacity: state.shareProfile ?? true ? 1 : 0.5
+        }}>
+          <div style={{flex: 1, paddingRight: '1rem'}}>
+            <div style={{fontSize: '0.95rem', fontWeight: '500', marginBottom: '0.25rem'}}>
+              {t('share_personal_info')}
+            </div>
+            <div style={{fontSize: '0.8rem', color: 'var(--text-secondary)'}}>
+              Share age, gender, and weight
+            </div>
+          </div>
+          <label style={{
+            position: 'relative',
+            display: 'inline-block',
+            width: '50px',
+            height: '28px',
+            flexShrink: 0
+          }}>
+            <input
+              type="checkbox"
+              checked={state.sharePersonalInfo ?? false}
+              onChange={(e) => setSharePersonalInfo(e.target.checked)}
+              disabled={!(state.shareProfile ?? true)}
+              style={{opacity: 0, width: 0, height: 0}}
+            />
+            <span style={{
+              position: 'absolute',
+              cursor: state.shareProfile ?? true ? 'pointer' : 'not-allowed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: state.sharePersonalInfo ?? false ? 'var(--primary-color)' : '#555',
+              transition: '0.3s',
+              borderRadius: '28px'
+            }}>
+              <span style={{
+                position: 'absolute',
+                content: '',
+                height: '20px',
+                width: '20px',
+                left: state.sharePersonalInfo ?? false ? '26px' : '4px',
+                bottom: '4px',
+                background: 'white',
+                transition: '0.3s',
+                borderRadius: '50%'
+              }} />
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* PWA Access Key Section */}

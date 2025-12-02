@@ -5,7 +5,6 @@ import {
   getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile,
   signInWithCustomToken
 } from 'firebase/auth';
 import { setDoc, doc, getDoc } from 'firebase/firestore';
@@ -18,8 +17,9 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import VerificationCodeInput from '../components/VerificationCodeInput';
 import { isPWA } from '../utils/pwa';
+import { validateUsername } from '../utils/usernameValidation';
 
-type LoginStep = 'credentials' | 'verification';
+type LoginStep = 'credentials' | 'verification' | 'google_username';
 
 const Login: React.FC = () => {
   const { t } = useLanguage();
@@ -28,15 +28,17 @@ const Login: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [usernameErrors, setUsernameErrors] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
   const [accessKey, setAccessKey] = useState('');
+  const [googleUsername, setGoogleUsername] = useState('');
+  const [googleUsernameErrors, setGoogleUsernameErrors] = useState<string[]>([]);
   const inPWA = isPWA();
 
   // Redirect if user is already logged in
@@ -98,6 +100,28 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setUsername(newUsername);
+    if (isSignUp && newUsername.trim()) {
+      const validation = validateUsername(newUsername);
+      setUsernameErrors(validation.errors);
+    } else if (!isSignUp || !newUsername.trim()) {
+      setUsernameErrors([]);
+    }
+  };
+
+  const handleGoogleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setGoogleUsername(newUsername);
+    if (newUsername.trim()) {
+      const validation = validateUsername(newUsername);
+      setGoogleUsernameErrors(validation.errors);
+    } else {
+      setGoogleUsernameErrors([]);
+    }
+  };
+
   const isMobileDevice = () => {
     return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   };
@@ -116,14 +140,28 @@ const Login: React.FC = () => {
       // We reverted from signInWithRedirect because it was causing issues in PWA mode
       // (returning to login screen without user)
       try {
-        await signInWithPopup(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
+
+        // Check if this is a new user by checking Firestore
+        const userDocRef = doc(db, 'users', result.user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+          // New Google user - need to ask for username
+          console.log('[Login] New Google user, asking for username');
+          setCurrentStep('google_username');
+          setLoading(false);
+          return;
+        }
+
+        // Existing user - will be navigated automatically by useEffect
       } catch (popupErr: any) {
         console.error('[Login] Popup error:', popupErr);
         // If popup fails, we could try redirect, but let's be careful about loops.
         // For now, let's just throw it so the user sees the error.
         // If it's a popup blocked error, we can suggest the user to allow popups.
         if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/cancelled-popup-request') {
-             // Optional: You could enable redirect here as a last resort, 
+             // Optional: You could enable redirect here as a last resort,
              // but if redirect is broken in PWA, it's better to fail and let user know.
              // Let's try redirect ONLY if it's explicitly blocked, but log it clearly.
              console.log('[Login] Popup blocked, attempting redirect fallback...');
@@ -141,6 +179,66 @@ const Login: React.FC = () => {
     } finally {
       // Always stop loading if we finished (success or error)
       // Unless we triggered a redirect (which returns early above)
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!googleUsername.trim()) {
+      setError(t('error_enter_username'));
+      return;
+    }
+
+    // Validate username format
+    const validation = validateUsername(googleUsername.trim());
+    if (!validation.valid) {
+      setGoogleUsernameErrors(validation.errors);
+      setError(validation.errors[0]);
+      return;
+    }
+
+    if (!auth.currentUser) {
+      setError('User not authenticated');
+      return;
+    }
+
+    try {
+      setError(null);
+      setLoading(true);
+
+      // Check username availability
+      try {
+        const isAvailable = await checkUsernameAvailability(googleUsername.trim());
+        if (!isAvailable) {
+          setError(t('error_username_taken'));
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setError('Failed to validate username. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Save user data to Firestore
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      await setDoc(userDocRef, {
+        uid: auth.currentUser.uid,
+        username: googleUsername.trim(),
+        email: auth.currentUser.email,
+        name: auth.currentUser.displayName || '',
+        createdAt: new Date().toISOString()
+      });
+
+      console.log('[Login] Google user profile created with username');
+      setGoogleUsername('');
+      // Navigation will happen automatically via useEffect
+    } catch (err: any) {
+      console.error('[Login] Error saving Google user:', err);
+      setError('Failed to complete signup. Please try again.');
       setLoading(false);
     }
   };
@@ -174,7 +272,7 @@ const Login: React.FC = () => {
       setLoading(true);
 
       const sendCodeFn = httpsCallable(functions, 'sendVerificationCode');
-      const result = await sendCodeFn({ email, name: name || email.split('@')[0] });
+      const result = await sendCodeFn({ email, name: email.split('@')[0] });
       const data = result.data as { success: boolean; error?: string };
 
       if (data.success) {
@@ -219,7 +317,15 @@ const Login: React.FC = () => {
         setError(t('error_enter_username'));
         return;
       }
-      
+
+      // Validate username format
+      const usernameValidation = validateUsername(username.trim());
+      if (!usernameValidation.valid) {
+        setUsernameErrors(usernameValidation.errors);
+        setError(usernameValidation.errors[0]);
+        return;
+      }
+
       // Check username uniqueness
       try {
         setLoading(true);
@@ -291,7 +397,6 @@ const Login: React.FC = () => {
               uid: userCredential.user.uid,
               username: username.trim(),
               email: email,
-              name: name,
               createdAt: new Date().toISOString()
             });
           } catch (err) {
@@ -309,10 +414,6 @@ const Login: React.FC = () => {
           } catch (err) {
             console.error('Error ensuring email is saved:', err);
           }
-
-          await updateProfile(userCredential.user, {
-            displayName: name
-          });
 
           // Removed alert to prevent PWA black screen/crash issues.
           // The progressive overload message can be shown in the onboarding flow instead.
@@ -385,6 +486,130 @@ const Login: React.FC = () => {
       setLoading(false);
     }
   };
+
+  if (currentStep === 'google_username') {
+    return (
+      <div style={{
+        display: 'flex',
+        minHeight: '100vh',
+        background: '#000',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '450px',
+          padding: '2.5rem 2rem',
+          borderRadius: '0',
+          border: '1px solid #333',
+          background: '#000'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            marginBottom: '1rem',
+            color: '#fff',
+            marginTop: 0
+          }}>
+            Choose your Username
+          </h2>
+          <p style={{
+            color: '#888',
+            marginBottom: '1.5rem',
+            fontSize: '0.9rem'
+          }}>
+            Your Google name ({auth.currentUser?.displayName}) will be saved. Choose a unique username to identify your account.
+          </p>
+
+          {error && (
+            <div style={{
+              padding: '0.75rem',
+              marginBottom: '1rem',
+              background: '#ff444420',
+              border: '1px solid #ff4444',
+              borderRadius: '6px',
+              color: '#ff4444',
+              fontSize: '0.85rem'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleGoogleUsernameSubmit}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                marginBottom: '0.5rem',
+                color: '#ccc',
+                fontSize: '0.9rem'
+              }}>
+                <User size={16} />
+                Username
+              </label>
+              <input
+                type="text"
+                value={googleUsername}
+                onChange={handleGoogleUsernameChange}
+                required
+                disabled={loading}
+                spellCheck="false"
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  background: '#2a2a2a',
+                  border: `1px solid ${googleUsernameErrors.length > 0 && googleUsername.length > 0 ? '#f44336' : '#333'}`,
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+                placeholder="Choose a username"
+              />
+              {googleUsername.length > 0 && (
+                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                  {googleUsernameErrors.length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#f44336' }}>
+                      {googleUsernameErrors.map((err, idx) => (
+                        <li key={idx}>{err}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ margin: 0, color: '#4CAF50' }}>Username looks good!</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'var(--primary-color)',
+                color: '#000',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'all 0.2s',
+                boxSizing: 'border-box'
+              }}
+            >
+              {loading ? t('please_wait') : 'Complete Signup'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (currentStep === 'verification') {
     return (
@@ -649,45 +874,12 @@ const Login: React.FC = () => {
                   fontSize: '0.9rem'
                 }}>
                   <User size={16} />
-                  {t('name')}
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  disabled={loading}
-                  spellCheck="false"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: '#2a2a2a',
-                    border: '1px solid #333',
-                    borderRadius: '6px',
-                    color: '#fff',
-                    fontSize: '1rem',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                  placeholder={t('your_name')}
-                />
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem',
-                  color: '#ccc',
-                  fontSize: '0.9rem'
-                }}>
-                  <User size={16} />
                   Username
                 </label>
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={handleUsernameChange}
                   required
                   disabled={loading}
                   spellCheck="false"
@@ -695,7 +887,7 @@ const Login: React.FC = () => {
                     width: '100%',
                     padding: '0.75rem',
                     background: '#2a2a2a',
-                    border: '1px solid #333',
+                    border: `1px solid ${isSignUp && usernameErrors.length > 0 && username.length > 0 ? '#f44336' : '#333'}`,
                     borderRadius: '6px',
                     color: '#fff',
                     fontSize: '1rem',
@@ -704,6 +896,19 @@ const Login: React.FC = () => {
                   }}
                   placeholder="Username"
                 />
+                {isSignUp && username.length > 0 && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                    {usernameErrors.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#f44336' }}>
+                        {usernameErrors.map((err, idx) => (
+                          <li key={idx}>{err}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p style={{ margin: 0, color: '#4CAF50' }}>Username looks good!</p>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}

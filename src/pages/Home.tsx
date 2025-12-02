@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useStore } from '../context/StoreContext';
-import { useAuth } from '../context/AuthContext';
 import { useWorkout } from '../App';
 import { useLanguage } from '../context/LanguageContext';
 import type { ExerciseResult, WorkoutSession } from '../types';
@@ -15,7 +14,6 @@ import './Home.css';
 
 const Home: React.FC = () => {
   const { state, addSession, editSession, getExerciseHistory } = useStore();
-  const { user } = useAuth();
   const { setWorkoutActive, setHandleCancelWorkout } = useWorkout();
   const { t, language } = useLanguage();
   const [selectedDayId, setSelectedDayId] = useState<string>('');
@@ -288,30 +286,25 @@ const Home: React.FC = () => {
     setWorkoutActive(false);
   };
 
-  const getUserName = () => {
-    if (user?.displayName) {
-      return user.displayName.split(' ')[0]; // Get first name
-    }
-    return 'there';
-  };
-
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    const name = getUserName();
 
     // Time-based greetings
-    let timeGreetings: string[] = [];
+    let timeGreeting = '';
     if (hour >= 5 && hour < 12) {
-      timeGreetings = [`${t('greeting_morning')}, ${name}`];
+      timeGreeting = t('greeting_morning');
     } else if (hour >= 12 && hour < 18) {
-      timeGreetings = [`${t('greeting_afternoon')}, ${name}`];
+      timeGreeting = t('greeting_afternoon');
     } else {
-      timeGreetings = [`${t('greeting_evening')}, ${name}`];
+      timeGreeting = t('greeting_evening');
     }
 
-    // Return random greeting
-    return timeGreetings[Math.floor(Math.random() * timeGreetings.length)];
-  }, [user?.displayName, t]);
+    // Add name if available
+    if (state.name) {
+      return `${timeGreeting}, ${state.name}`;
+    }
+    return timeGreeting;
+  }, [state.name, t]);
 
   if (activeWorkout && selectedDay) {
     return (
