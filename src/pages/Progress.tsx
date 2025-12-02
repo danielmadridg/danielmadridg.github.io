@@ -706,12 +706,12 @@ const Progress: React.FC = () => {
                                 <p className="pr-timeline-item-date">
                                   {format(new Date(entry.date), 'MMM d, yyyy')}
                                 </p>
-                                <div style={{ display: 'flex', gap: '0.25rem', marginTop: '0.5rem', justifyContent: 'flex-end' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', justifyContent: 'flex-end' }}>
                                   <button
                                     onClick={() => handleEditPREntry(pr.id, entry)}
                                     title={t('edit')}
                                     style={{
-                                      padding: '0.3rem 0.4rem',
+                                      padding: '0.4rem 0.5rem',
                                       background: 'transparent',
                                       color: 'var(--primary-color)',
                                       border: 'none',
@@ -729,13 +729,13 @@ const Progress: React.FC = () => {
                                       e.currentTarget.style.opacity = '0.6';
                                     }}
                                   >
-                                    <Edit size={16} />
+                                    <Edit size={20} />
                                   </button>
                                   <button
                                     onClick={() => handleDeletePREntry(pr.id, entry.id)}
                                     title={t('delete_personal_record')}
                                     style={{
-                                      padding: '0.3rem 0.4rem',
+                                      padding: '0.4rem 0.5rem',
                                       background: 'transparent',
                                       color: '#f44336',
                                       border: 'none',
@@ -753,7 +753,7 @@ const Progress: React.FC = () => {
                                       e.currentTarget.style.opacity = '0.6';
                                     }}
                                   >
-                                    <Trash2 size={16} />
+                                    <Trash2 size={20} />
                                   </button>
                                 </div>
                               </div>
