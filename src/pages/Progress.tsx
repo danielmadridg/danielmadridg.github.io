@@ -46,21 +46,6 @@ const Progress: React.FC = () => {
   const [dateError, setDateError] = useState<string>('');
   const [weightError, setWeightError] = useState<string>('');
 
-  // Calculate minimum date for PR form (oldest entry in the selected PR)
-  const getMinDateForPR = () => {
-    if (!prFormData.name) return '';
-    const pr = state.personalRecords?.find(p => p.exerciseName === prFormData.name);
-    if (!pr || !Array.isArray(pr.entries) || pr.entries.length === 0) return '';
-
-    const oldestEntry = pr.entries.reduce((oldest, current) => {
-      const oldestTime = new Date(oldest.date).getTime();
-      const currentTime = new Date(current.date).getTime();
-      return currentTime < oldestTime ? current : oldest;
-    });
-
-    return format(new Date(oldestEntry.date), 'yyyy-MM-dd');
-  };
-
   // Get the maximum weight from previous PR entries (when not editing)
   const getMinWeightForPR = () => {
     if (!prFormData.name || editingPR) return 0; // No restriction when editing
@@ -505,7 +490,6 @@ const Progress: React.FC = () => {
                     type="date"
                     value={prFormData.date}
                     onChange={(e) => setPrFormData({ ...prFormData, date: e.target.value })}
-                    min={getMinDateForPR() || undefined}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
