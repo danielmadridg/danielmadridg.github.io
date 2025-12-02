@@ -210,13 +210,13 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </a>
           </p>
           <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.75rem', color: '#555', lineHeight: '1.4' }}>
-            This site is protected by reCAPTCHA and the Google{' '}
+            {t('recaptcha_protected')}{' '}
             <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'underline' }}>
-              Privacy Policy
-            </a>{' '}and{' '}
+              {t('privacy_policy')}
+            </a>{' '}{t('and')}{' '}
             <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'underline' }}>
-              Terms of Service
-            </a>{' '}apply.
+              {t('terms_of_service')}
+            </a>{' '}{t('apply')}
           </p>
         </footer>
       </div>

@@ -191,7 +191,7 @@ const Settings: React.FC = () => {
       <h1>{t('settings')}</h1>
 
       <div className="card" style={{marginBottom: '1rem'}}>
-        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>Profile</h2>
+        <h2 style={{marginTop: '0', marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '600'}}>{t('profile')}</h2>
 
         <div style={{marginBottom: '1.5rem'}}>
           <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>{t('username')}</label>

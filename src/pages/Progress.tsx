@@ -12,10 +12,12 @@ import {
   Legend,
 } from 'chart.js';
 import { format } from 'date-fns';
+import { es, fr, it } from 'date-fns/locale';
 import { Edit, Trash2 } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import './Progress.css';
 import { useLanguage } from '../context/LanguageContext';
+import { convertWeight } from '../utils/unitConversion';
 import type { PersonalRecord } from '../types';
 
 ChartJS.register(
@@ -29,8 +31,19 @@ ChartJS.register(
 );
 
 const Progress: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { state, getExerciseHistory, addPersonalRecord, addPREntry, editPREntry, deletePREntry, deletePersonalRecord } = useStore();
+  
+  // ... (other state hooks)
+
+  const getDateLocale = () => {
+    switch (language) {
+      case 'es': return es;
+      case 'fr': return fr;
+      case 'it': return it;
+      default: return undefined;
+    }
+  };
   const [viewMode, setViewMode] = useState<'exercise' | 'day' | 'personal_records'>('exercise');
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth <= 768);
   const [showPRForm, setShowPRForm] = useState(false);
@@ -224,8 +237,8 @@ const Progress: React.FC = () => {
     labels: exerciseHistory.map(h => format(new Date(h.date), 'MMM d')),
     datasets: [
       {
-        label: t('weight_kg'),
-        data: exerciseHistory.map(h => h.result.weight),
+        label: `${t('weight_label')} (${state.unitPreference || 'kg'})`,
+        data: exerciseHistory.map(h => convertWeight(h.result.weight, 'kg', state.unitPreference || 'kg')),
         borderColor: '#C8956B',
         backgroundColor: 'rgba(200, 149, 107, 0.2)',
         tension: 0.3,
@@ -233,10 +246,10 @@ const Progress: React.FC = () => {
         borderWidth: 2,
       },
       {
-        label: t('volume_kg_reps'),
+        label: `${t('volume_label')} (${state.unitPreference || 'kg'} * reps)`,
         data: exerciseHistory.map(h => {
           const totalReps = h.result.sets.reduce((a, b) => a + b, 0);
-          return h.result.weight * totalReps;
+          return convertWeight(h.result.weight, 'kg', state.unitPreference || 'kg') * totalReps;
         }),
         borderColor: '#03dac6',
         backgroundColor: 'rgba(3, 218, 198, 0.2)',
@@ -251,8 +264,15 @@ const Progress: React.FC = () => {
     labels: dayHistory.map(h => format(new Date(h.date), 'MMM d')),
     datasets: [
       {
-        label: t('total_volume_kg_reps'),
-        data: dayHistory.map(h => h.totalVolume),
+        label: `${t('total_volume')} (${state.unitPreference || 'kg'} * reps)`,
+        data: dayHistory.map(h => {
+           // Recalculate volume in correct unit
+           return h.exercises.reduce((total, ex) => {
+             const weightInUnit = convertWeight(ex.weight, 'kg', state.unitPreference || 'kg');
+             const volume = weightInUnit * ex.sets.reduce((a, b) => a + b, 0);
+             return total + volume;
+           }, 0);
+        }),
         borderColor: '#C8956B',
         backgroundColor: 'rgba(200, 149, 107, 0.2)',
         tension: 0.3,
@@ -260,8 +280,8 @@ const Progress: React.FC = () => {
         borderWidth: 2,
       },
       {
-        label: t('average_weight_kg'),
-        data: dayHistory.map(h => h.avgWeight),
+        label: `${t('average_weight')} (${state.unitPreference || 'kg'})`,
+        data: dayHistory.map(h => convertWeight(h.avgWeight, 'kg', state.unitPreference || 'kg')),
         borderColor: '#03dac6',
         backgroundColor: 'rgba(3, 218, 198, 0.2)',
         tension: 0.3,
@@ -578,9 +598,15 @@ const Progress: React.FC = () => {
                     const currentPR = sortedEntries[0];
                     if (!currentPR || !currentPR.weight) return null;
 
+                    const currentWeight = convertWeight(currentPR.weight, 'kg', state.unitPreference || 'kg');
                     const previousPR = sortedEntries[1];
-                    const improvement = previousPR && currentPR.weight && previousPR.weight
-                      ? ((currentPR.weight - previousPR.weight) / previousPR.weight * 100).toFixed(1)
+                    const previousWeight = previousPR ? convertWeight(previousPR.weight, 'kg', state.unitPreference || 'kg') : 0;
+
+                    const improvement = previousPR && currentWeight && previousWeight
+                      ? ((currentWeight - previousWeight) / previousWeight * 100).toFixed(1)
+                      : null;
+                    const improvementWeight = previousPR && currentWeight && previousWeight
+                      ? (currentWeight - previousWeight).toFixed(1)
                       : null;
 
                     // Calculate average days between improvements
@@ -598,6 +624,27 @@ const Progress: React.FC = () => {
                       }
                     }
 
+                    // Calculate average weight gain per month
+                    let avgWeightGainPerMonth = null;
+                    if (sortedEntries.length > 1) {
+                      const newest = sortedEntries[0];
+                      const oldest = sortedEntries[sortedEntries.length - 1];
+                      
+                      const newestWeight = convertWeight(newest.weight, 'kg', state.unitPreference || 'kg');
+                      const oldestWeight = convertWeight(oldest.weight, 'kg', state.unitPreference || 'kg');
+                      
+                      const weightDiff = newestWeight - oldestWeight;
+                      const dateDiff = new Date(newest.date).getTime() - new Date(oldest.date).getTime();
+                      const months = dateDiff / (1000 * 60 * 60 * 24 * 30.44);
+                      
+                      if (months > 0) {
+                        avgWeightGainPerMonth = (weightDiff / months).toFixed(1);
+                      } else if (months === 0 && weightDiff !== 0) {
+                         // Handle case where multiple entries on same day or very close
+                         avgWeightGainPerMonth = weightDiff.toFixed(1); 
+                      }
+                    }
+
                     return (
                       <div key={pr.id} style={{
                         padding: '1.5rem',
@@ -610,10 +657,10 @@ const Progress: React.FC = () => {
                           <div>
                             <h3 style={{ margin: '0 0 0.5rem 0' }}>{pr.exerciseName}</h3>
                             <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--primary-color)', marginBottom: '0.5rem' }}>
-                              {currentPR.weight.toFixed(1)} {state.unitPreference || 'kg'}
+                              {currentWeight.toFixed(1)} {state.unitPreference || 'kg'}
                             </div>
                             <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                              {format(new Date(currentPR.date), 'MMM d, yyyy')}
+                              {format(new Date(currentPR.date), 'MMM d, yyyy', { locale: getDateLocale() })}
                             </p>
                           </div>
                           <div style={{ display: 'flex', gap: '0.75rem', flexShrink: 0 }}>
@@ -674,37 +721,45 @@ const Progress: React.FC = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                       {improvement !== null && (
                         <div style={{ padding: '0.75rem', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '6px', border: '1px solid rgba(76, 175, 80, 0.3)' }}>
-                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Last improvement</p>
-                          <p style={{ margin: 0, color: '#4CAF50', fontWeight: 'bold' }}>+{improvement}%</p>
+                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('last_improvement')}</p>
+                          <p style={{ margin: 0, color: '#4CAF50', fontWeight: 'bold' }}>
+                            +{improvement}% <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>(+{improvementWeight} {state.unitPreference || 'kg'})</span>
+                          </p>
+                        </div>
+                      )}
+                      {avgWeightGainPerMonth !== null && (
+                        <div style={{ padding: '0.75rem', background: 'rgba(156, 39, 176, 0.1)', borderRadius: '6px', border: '1px solid rgba(156, 39, 176, 0.3)' }}>
+                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('avg_weight_gain_month', { unit: state.unitPreference || 'kg' })}</p>
+                          <p style={{ margin: 0, color: '#9c27b0', fontWeight: 'bold' }}>{Number(avgWeightGainPerMonth) > 0 ? '+' : ''}{avgWeightGainPerMonth}</p>
                         </div>
                       )}
                       {sortedEntries.length > 0 && (
                         <div style={{ padding: '0.75rem', background: 'rgba(200, 149, 107, 0.1)', borderRadius: '6px', border: '1px solid rgba(200, 149, 107, 0.3)' }}>
-                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Total entries</p>
+                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('total_entries')}</p>
                           <p style={{ margin: 0, color: 'var(--primary-color)', fontWeight: 'bold' }}>{sortedEntries.length}</p>
                         </div>
                       )}
                       {avgDaysBetweenImprovement && (
                         <div style={{ padding: '0.75rem', background: 'rgba(33, 150, 243, 0.1)', borderRadius: '6px', border: '1px solid rgba(33, 150, 243, 0.3)' }}>
-                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Avg improvement frequency</p>
+                          <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('avg_improvement_frequency')}</p>
                           <p style={{ margin: 0, color: '#2196F3', fontWeight: 'bold' }}>~{avgDaysBetweenImprovement} months</p>
                         </div>
                       )}
                     </div>
 
                     {/* Entry history timeline */}
-                    {sortedEntries.length > 1 && (
+                    {sortedEntries.length > 0 && (
                       <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #333' }}>
-                        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: '500', color: 'var(--text-secondary)' }}>History ({sortedEntries.length} entries)</p>
+                        <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: '500', color: 'var(--text-secondary)' }}>{t('history_entries', { count: sortedEntries.length })}</p>
                         <div className="pr-timeline">
                           {sortedEntries.map(entry => (
                             <div key={entry.id} className="pr-timeline-item">
                               <div className="pr-timeline-item-content">
                                 <div className="pr-timeline-item-weight">
-                                  {entry.weight.toFixed(1)} {state.unitPreference || 'kg'}
+                                  {convertWeight(entry.weight, 'kg', state.unitPreference || 'kg').toFixed(1)} {state.unitPreference || 'kg'}
                                 </div>
                                 <p className="pr-timeline-item-date">
-                                  {format(new Date(entry.date), 'MMM d, yyyy')}
+                                  {format(new Date(entry.date), 'MMM d, yyyy', { locale: getDateLocale() })}
                                 </p>
                                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', justifyContent: 'flex-end' }}>
                                   <button
