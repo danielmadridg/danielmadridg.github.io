@@ -483,17 +483,30 @@ const Progress: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {[...(state.personalRecords || [])]
                 .filter(pr => {
-                  // Handle legacy PRs that don't have entries property
-                  const entries = pr.entries || [];
+                  // Validate PR structure
+                  if (!pr || !pr.exerciseName) return false;
+                  const entries = Array.isArray(pr.entries) ? pr.entries : [];
                   return entries.length > 0;
                 })
                 .map(pr => {
                   try {
-                    const entries = pr.entries || [];
-                    const sortedEntries = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    // Validate entries array
+                    const entries = Array.isArray(pr.entries) ? pr.entries : [];
+                    if (!entries || entries.length === 0) return null;
+
+                    const sortedEntries = [...entries].sort((a, b) => {
+                      const aTime = a && a.date ? new Date(a.date).getTime() : 0;
+                      const bTime = b && b.date ? new Date(b.date).getTime() : 0;
+                      return bTime - aTime;
+                    });
+
                     const currentPR = sortedEntries[0];
+                    if (!currentPR || !currentPR.weight) return null;
+
                     const previousPR = sortedEntries[1];
-                    const improvement = previousPR ? ((currentPR.weight - previousPR.weight) / previousPR.weight * 100).toFixed(1) : null;
+                    const improvement = previousPR && currentPR.weight && previousPR.weight
+                      ? ((currentPR.weight - previousPR.weight) / previousPR.weight * 100).toFixed(1)
+                      : null;
 
                     // Calculate average days between improvements
                     let avgDaysBetweenImprovement = null;

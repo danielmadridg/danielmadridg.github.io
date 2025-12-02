@@ -26,6 +26,36 @@ type Action =
   | { type: 'DELETE_PR_ENTRY'; payload: { prId: string; entryId: string } }
   | { type: 'DELETE_PERSONAL_RECORD'; payload: string };
 
+// Migration function to handle legacy PR data
+function migrateUserState(state: UserState): UserState {
+  if (!state.personalRecords) return state;
+
+  const migratedPRs = state.personalRecords
+    .map((pr: any) => {
+      // If PR already has entries array, it's already migrated
+      if (Array.isArray(pr.entries)) {
+        return pr;
+      }
+      // If PR has old structure (with weight, date), convert to new structure
+      if (pr.weight && pr.date) {
+        return {
+          id: pr.id,
+          exerciseName: pr.exerciseName,
+          entries: [{
+            id: pr.id,
+            weight: pr.weight,
+            date: pr.date
+          }]
+        };
+      }
+      // Invalid PR, skip it
+      return null;
+    })
+    .filter((pr: any) => pr !== null && pr.entries && pr.entries.length > 0);
+
+  return { ...state, personalRecords: migratedPRs };
+}
+
 // Reducer
 function reducer(state: UserState, action: Action): UserState {
   switch (action.type) {
@@ -124,16 +154,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
           if (docSnap.exists()) {
             const data = docSnap.data() as UserState;
-            console.log('[StoreContext] Loaded from Firestore:', data);
-            dispatch({ type: 'LOAD_DATA', payload: data });
+            const migratedData = migrateUserState(data);
+            console.log('[StoreContext] Loaded from Firestore:', migratedData);
+            dispatch({ type: 'LOAD_DATA', payload: migratedData });
           } else {
             console.log('[StoreContext] No Firestore data, checking localStorage');
             // If no data in Firestore, check if we have local data to migrate
             const localData = localStorage.getItem('prodegi_data');
             if (localData) {
                  const parsed = JSON.parse(localData);
-                 console.log('[StoreContext] Migrating localStorage to Firestore:', parsed);
-                 dispatch({ type: 'LOAD_DATA', payload: parsed });
+                 const migratedData = migrateUserState(parsed);
+                 console.log('[StoreContext] Migrating localStorage to Firestore:', migratedData);
+                 dispatch({ type: 'LOAD_DATA', payload: migratedData });
             }
           }
           // Only set isLoaded to true if we successfully queried Firestore (found data or confirmed no data)
@@ -145,8 +177,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           if (localData) {
             try {
               const parsed = JSON.parse(localData);
-              console.log('[StoreContext] Firestore failed, loaded from localStorage fallback:', parsed);
-              dispatch({ type: 'LOAD_DATA', payload: parsed });
+              const migratedData = migrateUserState(parsed);
+              console.log('[StoreContext] Firestore failed, loaded from localStorage fallback:', migratedData);
+              dispatch({ type: 'LOAD_DATA', payload: migratedData });
             } catch (parseErr) {
               console.error("Failed to parse local data:", parseErr);
               dispatch({ type: 'CLEAR_DATA' });
