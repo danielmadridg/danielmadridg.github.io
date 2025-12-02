@@ -43,6 +43,7 @@ const Progress: React.FC = () => {
 
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
   const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [dateError, setDateError] = useState<string>('');
 
   // Calculate minimum date for PR form (oldest entry in the selected PR)
   const getMinDateForPR = () => {
@@ -81,6 +82,8 @@ const Progress: React.FC = () => {
   };
 
   const handleAddPR = () => {
+    setDateError('');
+
     if (!prFormData.name || !prFormData.weight || !prFormData.date) {
       alert('Please fill in all fields');
       return;
@@ -102,7 +105,7 @@ const Progress: React.FC = () => {
         const oldestDate = new Date(oldestEntry.date).getTime();
 
         if (newDate < oldestDate) {
-          alert('Cannot add a date earlier than the oldest entry');
+          setDateError('Cannot choose a date before the oldest entry');
           return;
         }
       }
@@ -170,6 +173,7 @@ const Progress: React.FC = () => {
     setShowPRForm(false);
     setEditingPR(null);
     setQuickAddMode(false);
+    setDateError('');
     setPrFormData({ name: '', weight: '', date: format(new Date(), 'yyyy-MM-dd') });
   };
 
@@ -471,13 +475,18 @@ const Progress: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '0.75rem',
-                      border: '1px solid #333',
+                      border: dateError ? '1px solid #f44336' : '1px solid #333',
                       borderRadius: '6px',
                       background: 'var(--surface-color)',
                       color: 'var(--text-color)',
                       boxSizing: 'border-box'
                     }}
                   />
+                  {dateError && (
+                    <p style={{ color: '#f44336', fontSize: '0.85rem', margin: '0.5rem 0 0 0' }}>
+                      {dateError}
+                    </p>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
