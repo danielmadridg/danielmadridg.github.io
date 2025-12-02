@@ -505,7 +505,7 @@ const Progress: React.FC = () => {
                     type="date"
                     value={prFormData.date}
                     onChange={(e) => setPrFormData({ ...prFormData, date: e.target.value })}
-                    min={getMinDateForPR()}
+                    min={getMinDateForPR() || undefined}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
