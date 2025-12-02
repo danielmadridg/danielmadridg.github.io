@@ -27,6 +27,10 @@ const Settings: React.FC = () => {
   const [loadingKey, setLoadingKey] = useState(true);
   const [keyCopied, setKeyCopied] = useState(false);
   const [showAccessKeyWarning, setShowAccessKeyWarning] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [weight, setWeight] = useState<number | string>(state.weight || '');
+  const [age, setAge] = useState<number | string>(state.age || '');
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | ''>(state.gender || '');
   const currentUnit = state.unitPreference || 'kg';
 
   useEffect(() => {
@@ -184,6 +188,37 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleUpdateProfile = async () => {
+    const weightNum = weight ? parseFloat(weight.toString()) : undefined;
+    const ageNum = age ? parseFloat(age.toString()) : undefined;
+
+    if (weightNum !== undefined && (weightNum < 0 || !Number.isFinite(weightNum))) {
+      alert('Please enter a valid weight.');
+      return;
+    }
+    if (ageNum !== undefined && (ageNum < 0 || !Number.isFinite(ageNum))) {
+      alert('Please enter a valid age.');
+      return;
+    }
+
+    try {
+      if (!user) return;
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, {
+        weight: weightNum,
+        age: ageNum,
+        gender: gender || undefined
+      }, { merge: true });
+      setShowEditProfile(false);
+      setShowSuccessMessage(true);
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+    } catch (error) {
+      alert('Failed to update profile information.');
+    }
+  };
+
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
 
   return (
@@ -301,6 +336,176 @@ const Settings: React.FC = () => {
             onSave={(photoURL) => updateProfile({ photoURL })}
             compact={true}
           />
+        </div>
+
+        <div style={{marginTop: '1.5rem'}}>
+          <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem'}}>Personal Information</label>
+
+          {!showEditProfile ? (
+            // Display mode
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              alignItems: 'stretch',
+              flexDirection: isMobile ? 'column' : 'row',
+              marginBottom: '1rem'
+            }}>
+              <div style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: 'var(--surface-color)',
+                borderRadius: '6px',
+                minHeight: '44px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                border: '1px solid #252525'
+              }}>
+                <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('weight')}</span>
+                <span style={{fontSize: '1rem'}}>{state.weight ? `${state.weight} ${currentUnit}` : 'Not set'}</span>
+              </div>
+              <div style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: 'var(--surface-color)',
+                borderRadius: '6px',
+                minHeight: '44px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                border: '1px solid #252525'
+              }}>
+                <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('age')}</span>
+                <span style={{fontSize: '1rem'}}>{state.age ? `${state.age} years` : 'Not set'}</span>
+              </div>
+              <div style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: 'var(--surface-color)',
+                borderRadius: '6px',
+                minHeight: '44px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                border: '1px solid #252525'
+              }}>
+                <span style={{fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>{t('gender')}</span>
+                <span style={{fontSize: '1rem'}}>
+                  {state.gender ? t(state.gender) : 'Not set'}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          {!showEditProfile ? (
+            <button
+              className="btn-secondary"
+              onClick={() => setShowEditProfile(true)}
+              style={{
+                minHeight: '44px',
+                padding: '0.75rem 1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                fontSize: '0.95rem',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Edit size={18} />
+              {isMobile && <span>Edit Info</span>}
+            </button>
+          ) : (
+            // Edit mode
+            <>
+              <div style={{marginBottom: '1rem'}}>
+                <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>{t('weight')} ({currentUnit})</label>
+                <input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  placeholder={`Your weight in ${currentUnit}`}
+                  min="0"
+                  step="0.1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    fontSize: '16px',
+                    background: '#2a2a2a'
+                  }}
+                />
+              </div>
+
+              <div style={{marginBottom: '1rem'}}>
+                <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>{t('age')}</label>
+                <input
+                  type="number"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="Your age"
+                  min="0"
+                  max="150"
+                  step="1"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    fontSize: '16px',
+                    background: '#2a2a2a'
+                  }}
+                />
+              </div>
+
+              <div style={{marginBottom: '1rem'}}>
+                <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem'}}>{t('gender')}</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other' | '')}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    minHeight: '44px',
+                    boxSizing: 'border-box',
+                    fontSize: '16px',
+                    background: '#2a2a2a',
+                    color: '#fff',
+                    border: '1px solid #252525',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <option value="">{t('select_day')}</option>
+                  <option value="male">{t('male')}</option>
+                  <option value="female">{t('female')}</option>
+                  <option value="other">{t('other')}</option>
+                </select>
+              </div>
+
+              <div style={{display: 'flex', gap: '0.5rem', flexDirection: isMobile ? 'column' : 'row'}}>
+                <button
+                  className="btn-primary"
+                  onClick={handleUpdateProfile}
+                  style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
+                >
+                  Save
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowEditProfile(false);
+                    setWeight(state.weight || '');
+                    setAge(state.age || '');
+                    setGender(state.gender || '');
+                  }}
+                  style={{flex: 1, height: '44px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0}}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

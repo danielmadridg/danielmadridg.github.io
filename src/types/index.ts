@@ -48,4 +48,7 @@ export interface UserState {
   history: WorkoutSession[];
   unitPreference?: 'kg' | 'lbs';
   personalRecords?: PersonalRecord[];
+  weight?: number;
+  age?: number;
+  gender?: 'male' | 'female' | 'other';
 }
