@@ -705,52 +705,56 @@ const Progress: React.FC = () => {
                                 <p className="pr-timeline-item-date">
                                   {format(new Date(entry.date), 'MMM d, yyyy')}
                                 </p>
-                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', justifyContent: 'flex-end' }}>
                                   <button
                                     onClick={() => handleEditPREntry(pr.id, entry)}
+                                    title={t('edit')}
                                     style={{
-                                      flex: 1,
-                                      padding: '0.4rem 0.8rem',
+                                      padding: '0.4rem 0.6rem',
                                       background: 'transparent',
                                       color: 'var(--primary-color)',
-                                      border: '1px solid var(--primary-color)',
-                                      borderRadius: '4px',
+                                      border: 'none',
                                       cursor: 'pointer',
-                                      fontWeight: '500',
-                                      fontSize: '0.8rem',
-                                      transition: 'all 0.2s'
+                                      fontSize: '1.1rem',
+                                      transition: 'all 0.2s',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      opacity: 0.7
                                     }}
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
+                                      e.currentTarget.style.opacity = '1';
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.background = 'transparent';
+                                      e.currentTarget.style.opacity = '0.7';
                                     }}
                                   >
-                                    {t('edit')}
+                                    ✏️
                                   </button>
                                   <button
                                     onClick={() => handleDeletePREntry(pr.id, entry.id)}
+                                    title={t('delete_personal_record')}
                                     style={{
-                                      flex: 1,
-                                      padding: '0.4rem 0.8rem',
+                                      padding: '0.4rem 0.6rem',
                                       background: 'transparent',
                                       color: '#f44336',
-                                      border: '1px solid #f44336',
-                                      borderRadius: '4px',
+                                      border: 'none',
                                       cursor: 'pointer',
-                                      fontWeight: '500',
-                                      fontSize: '0.8rem',
-                                      transition: 'all 0.2s'
+                                      fontSize: '1.1rem',
+                                      transition: 'all 0.2s',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      opacity: 0.7
                                     }}
                                     onMouseEnter={(e) => {
-                                      e.currentTarget.style.background = 'rgba(244, 67, 54, 0.1)';
+                                      e.currentTarget.style.opacity = '1';
                                     }}
                                     onMouseLeave={(e) => {
-                                      e.currentTarget.style.background = 'transparent';
+                                      e.currentTarget.style.opacity = '0.7';
                                     }}
                                   >
-                                    Delete
+                                    🗑️
                                   </button>
                                 </div>
                               </div>
