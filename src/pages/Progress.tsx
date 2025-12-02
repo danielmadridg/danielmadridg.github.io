@@ -44,6 +44,7 @@ const Progress: React.FC = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
   const [selectedDayId, setSelectedDayId] = useState<string>('');
   const [dateError, setDateError] = useState<string>('');
+  const [weightError, setWeightError] = useState<string>('');
 
   // Calculate minimum date for PR form (oldest entry in the selected PR)
   const getMinDateForPR = () => {
@@ -58,6 +59,20 @@ const Progress: React.FC = () => {
     });
 
     return format(new Date(oldestEntry.date), 'yyyy-MM-dd');
+  };
+
+  // Get the maximum weight from previous PR entries (when not editing)
+  const getMinWeightForPR = () => {
+    if (!prFormData.name || editingPR) return 0; // No restriction when editing
+    const pr = state.personalRecords?.find(p => p.exerciseName === prFormData.name);
+    if (!pr || !Array.isArray(pr.entries) || pr.entries.length === 0) return 0;
+
+    // Get the maximum weight from all entries
+    const maxWeight = pr.entries.reduce((max, current) => {
+      return current.weight > max ? current.weight : max;
+    }, 0);
+
+    return maxWeight;
   };
 
   // Detect window resize for responsive layout
@@ -83,6 +98,7 @@ const Progress: React.FC = () => {
 
   const handleAddPR = () => {
     setDateError('');
+    setWeightError('');
 
     if (!prFormData.name || !prFormData.weight || !prFormData.date) {
       alert('Please fill in all fields');
@@ -92,6 +108,7 @@ const Progress: React.FC = () => {
     // Check if PR with this name already exists
     const existingPR = state.personalRecords?.find(pr => pr.exerciseName === prFormData.name);
     const newDate = new Date(prFormData.date).getTime();
+    const newWeight = parseFloat(prFormData.weight);
 
     // If adding to existing PR, check that date is not earlier than the oldest entry
     if (existingPR && !editingPR) {
@@ -106,6 +123,16 @@ const Progress: React.FC = () => {
 
         if (newDate < oldestDate) {
           setDateError('Cannot choose a date before the oldest entry');
+          return;
+        }
+
+        // Check that weight is not lower than the previous maximum
+        const maxWeight = entries.reduce((max, current) => {
+          return current.weight > max ? current.weight : max;
+        }, 0);
+
+        if (newWeight < maxWeight) {
+          setWeightError(`Weight cannot be lower than the previous PR (${maxWeight})`);
           return;
         }
       }
@@ -174,6 +201,7 @@ const Progress: React.FC = () => {
     setEditingPR(null);
     setQuickAddMode(false);
     setDateError('');
+    setWeightError('');
     setPrFormData({ name: '', weight: '', date: format(new Date(), 'yyyy-MM-dd') });
   };
 
@@ -452,16 +480,22 @@ const Progress: React.FC = () => {
                     onChange={(e) => setPrFormData({ ...prFormData, weight: e.target.value })}
                     placeholder="0"
                     step="0.5"
+                    min={editingPR ? undefined : getMinWeightForPR() || undefined}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
-                      border: '1px solid #333',
+                      border: weightError ? '1px solid #f44336' : '1px solid #333',
                       borderRadius: '6px',
                       background: 'var(--surface-color)',
                       color: 'var(--text-color)',
                       boxSizing: 'border-box'
                     }}
                   />
+                  {weightError && (
+                    <p style={{ color: '#f44336', fontSize: '0.85rem', margin: '0.5rem 0 0 0' }}>
+                      {weightError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
