@@ -44,6 +44,21 @@ const Progress: React.FC = () => {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>('');
   const [selectedDayId, setSelectedDayId] = useState<string>('');
 
+  // Calculate minimum date for PR form (oldest entry in the selected PR)
+  const getMinDateForPR = () => {
+    if (!prFormData.name) return '';
+    const pr = state.personalRecords?.find(p => p.exerciseName === prFormData.name);
+    if (!pr || !Array.isArray(pr.entries) || pr.entries.length === 0) return '';
+
+    const oldestEntry = pr.entries.reduce((oldest, current) => {
+      const oldestTime = new Date(oldest.date).getTime();
+      const currentTime = new Date(current.date).getTime();
+      return currentTime < oldestTime ? current : oldest;
+    });
+
+    return format(new Date(oldestEntry.date), 'yyyy-MM-dd');
+  };
+
   // Detect window resize for responsive layout
   useEffect(() => {
     const handleResize = () => {
@@ -73,6 +88,25 @@ const Progress: React.FC = () => {
 
     // Check if PR with this name already exists
     const existingPR = state.personalRecords?.find(pr => pr.exerciseName === prFormData.name);
+    const newDate = new Date(prFormData.date).getTime();
+
+    // If adding to existing PR, check that date is not earlier than the oldest entry
+    if (existingPR && !editingPR) {
+      const entries = Array.isArray(existingPR.entries) ? existingPR.entries : [];
+      if (entries.length > 0) {
+        const oldestEntry = entries.reduce((oldest, current) => {
+          const oldestTime = new Date(oldest.date).getTime();
+          const currentTime = new Date(current.date).getTime();
+          return currentTime < oldestTime ? current : oldest;
+        });
+        const oldestDate = new Date(oldestEntry.date).getTime();
+
+        if (newDate < oldestDate) {
+          alert('Cannot add a date earlier than the oldest entry');
+          return;
+        }
+      }
+    }
 
     if (editingPR) {
       // Edit existing entry
@@ -433,6 +467,7 @@ const Progress: React.FC = () => {
                     type="date"
                     value={prFormData.date}
                     onChange={(e) => setPrFormData({ ...prFormData, date: e.target.value })}
+                    min={getMinDateForPR()}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
