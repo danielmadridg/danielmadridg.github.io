@@ -34,6 +34,7 @@ const Progress: React.FC = () => {
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== 'undefined' && window.innerWidth <= 768);
   const [showPRForm, setShowPRForm] = useState(false);
   const [editingPR, setEditingPR] = useState<{ prId: string; entryId: string } | null>(null);
+  const [quickAddMode, setQuickAddMode] = useState(false);
   const [prFormData, setPrFormData] = useState({ name: '', weight: '', date: format(new Date(), 'yyyy-MM-dd') });
 
   const allExercises = useMemo(() => {
@@ -106,6 +107,7 @@ const Progress: React.FC = () => {
 
     setPrFormData({ name: '', weight: '', date: format(new Date(), 'yyyy-MM-dd') });
     setShowPRForm(false);
+    setQuickAddMode(false);
   };
 
   const handleEditPREntry = (prId: string, entry: any) => {
@@ -133,6 +135,7 @@ const Progress: React.FC = () => {
   const handleCancelPRForm = () => {
     setShowPRForm(false);
     setEditingPR(null);
+    setQuickAddMode(false);
     setPrFormData({ name: '', weight: '', date: format(new Date(), 'yyyy-MM-dd') });
   };
 
@@ -140,6 +143,7 @@ const Progress: React.FC = () => {
     setPrFormData({ name: exerciseName, weight: '', date: format(new Date(), 'yyyy-MM-dd') });
     setShowPRForm(true);
     setEditingPR(null);
+    setQuickAddMode(true);
   };
 
   // Exercise history data
@@ -374,7 +378,9 @@ const Progress: React.FC = () => {
               borderRadius: '8px',
               border: '1px solid var(--primary-color)'
             }}>
-              <h3 style={{ marginTop: 0 }}>{editingPR ? t('edit_personal_record') : t('add_personal_record')}</h3>
+              <h3 style={{ marginTop: 0 }}>
+                {editingPR ? t('edit_personal_record') : quickAddMode ? `Add entry for ${prFormData.name}` : t('add_personal_record')}
+              </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
@@ -385,16 +391,16 @@ const Progress: React.FC = () => {
                     value={prFormData.name}
                     onChange={(e) => setPrFormData({ ...prFormData, name: e.target.value })}
                     placeholder="e.g. Bench Press"
-                    disabled={editingPR !== null}
+                    disabled={editingPR !== null || quickAddMode}
                     style={{
                       width: '100%',
                       padding: '0.75rem',
                       border: '1px solid #333',
                       borderRadius: '6px',
-                      background: editingPR ? 'rgba(255,255,255,0.05)' : 'var(--surface-color)',
+                      background: (editingPR || quickAddMode) ? 'rgba(255,255,255,0.05)' : 'var(--surface-color)',
                       color: 'var(--text-color)',
                       boxSizing: 'border-box',
-                      cursor: editingPR ? 'not-allowed' : 'text'
+                      cursor: (editingPR || quickAddMode) ? 'not-allowed' : 'text'
                     }}
                   />
                 </div>
