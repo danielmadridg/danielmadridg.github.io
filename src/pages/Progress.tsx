@@ -336,8 +336,9 @@ const Progress: React.FC = () => {
       {/* Chart or Personal Records */}
       {viewMode === 'personal_records' ? (
         <div className="card pr-container">
+          {/* Debug: Ensure content is visible */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h2 style={{ margin: 0 }}>{t('personal_records')}</h2>
+            <h2 style={{ margin: 0, color: 'var(--text-color)' }}>{t('personal_records')}</h2>
             <button
               onClick={() => setShowPRForm(true)}
               style={{
