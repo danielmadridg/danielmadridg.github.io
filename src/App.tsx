@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -39,7 +39,6 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { isWorkoutActive, handleCancelWorkout } = useWorkout();
   const { t } = useLanguage();
   const [showBackConfirm, setShowBackConfirm] = useState(false);
-  const navigate = useNavigate();
 
   // Handle back button - intercept page unload
   useEffect(() => {
@@ -62,17 +61,11 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     };
   }, [isWorkoutActive]);
 
-  const handleBackClick = () => {
-    if (isWorkoutActive) {
-      setShowBackConfirm(true);
-    } else {
-      navigate('/');
-    }
-  };
-
   const handlePauseWorkout = () => {
     setShowBackConfirm(false);
-    navigate('/');
+    if (handleCancelWorkout) {
+      handleCancelWorkout();
+    }
   };
 
   if (hideNav) {
@@ -86,7 +79,11 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {/* Logo */}
         {isWorkoutActive ? (
           <button
-            onClick={handleBackClick}
+            onClick={() => {
+              if (handleCancelWorkout) {
+                handleCancelWorkout();
+              }
+            }}
             style={{
               padding: '1rem 1rem',
               marginBottom: '2rem',

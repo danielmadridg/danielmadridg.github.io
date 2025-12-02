@@ -32,6 +32,25 @@ export const translations: Record<Language, Translations> = {
     weight_label: 'Weight',
     goal: 'Goal',
     set: 'Set',
+    workout_in_progress: 'Workout in Progress',
+    unfinished_workout_for: 'You have an unfinished workout for',
+    unknown_day: 'Unknown Day',
+    resume_workout: 'Resume Workout',
+    delete_workout: 'Delete Workout',
+    confirm_delete_workout: 'Are you sure you want to delete this workout in progress? This action cannot be undone.',
+    back: 'Back',
+    increase_weight: 'Increase weight',
+    deload: 'Deload',
+
+    // Personal Records
+    personal_records: 'Personal Records',
+    add_personal_record: 'Add Personal Record',
+    personal_record_name: 'Exercise / Record Name',
+    personal_record_weight: 'Weight',
+    personal_record_date: 'Date',
+    edit_personal_record: 'Edit Personal Record',
+    delete_personal_record: 'Delete',
+    no_personal_records: 'No personal records yet. Add your first PR!',
 
     // Settings
     username: 'Username',
@@ -184,6 +203,25 @@ export const translations: Record<Language, Translations> = {
     weight_label: 'Peso',
     goal: 'Objetivo',
     set: 'Serie',
+    workout_in_progress: 'Entrenamiento en progreso',
+    unfinished_workout_for: 'Tienes un entrenamiento sin terminar para',
+    unknown_day: 'Día desconocido',
+    resume_workout: 'Reanudar entrenamiento',
+    delete_workout: 'Eliminar entrenamiento',
+    confirm_delete_workout: '¿Estás seguro de que deseas eliminar este entrenamiento en progreso? Esta acción no se puede deshacer.',
+    back: 'Atrás',
+    increase_weight: 'Aumentar peso',
+    deload: 'Decargar',
+
+    // Personal Records
+    personal_records: 'Récords Personales',
+    add_personal_record: 'Agregar Récord Personal',
+    personal_record_name: 'Ejercicio / Nombre del Récord',
+    personal_record_weight: 'Peso',
+    personal_record_date: 'Fecha',
+    edit_personal_record: 'Editar Récord Personal',
+    delete_personal_record: 'Eliminar',
+    no_personal_records: 'Sin récords personales aún. ¡Agrega tu primer PR!',
 
     // Settings
     username: 'Nombre de usuario',
@@ -336,6 +374,25 @@ export const translations: Record<Language, Translations> = {
     weight_label: 'Poids',
     goal: 'Objectif',
     set: 'Série',
+    workout_in_progress: 'Entraînement en cours',
+    unfinished_workout_for: 'Vous avez un entraînement inachevé pour',
+    unknown_day: 'Jour inconnu',
+    resume_workout: 'Reprendre l\'entraînement',
+    delete_workout: 'Supprimer l\'entraînement',
+    confirm_delete_workout: 'Êtes-vous sûr de vouloir supprimer cet entraînement en cours? Cette action ne peut pas être annulée.',
+    back: 'Retour',
+    increase_weight: 'Augmenter le poids',
+    deload: 'Décharger',
+
+    // Personal Records
+    personal_records: 'Records Personnels',
+    add_personal_record: 'Ajouter un Record Personnel',
+    personal_record_name: 'Exercice / Nom du Record',
+    personal_record_weight: 'Poids',
+    personal_record_date: 'Date',
+    edit_personal_record: 'Modifier le Record Personnel',
+    delete_personal_record: 'Supprimer',
+    no_personal_records: 'Aucun record personnel pour le moment. Ajoutez votre premier PR!',
 
     // Settings
     username: 'Nom d\'utilisateur',
@@ -488,6 +545,25 @@ export const translations: Record<Language, Translations> = {
     weight_label: 'Peso',
     goal: 'Obiettivo',
     set: 'Serie',
+    workout_in_progress: 'Allenamento in corso',
+    unfinished_workout_for: 'Hai un allenamento incompiuto per',
+    unknown_day: 'Giorno sconosciuto',
+    resume_workout: 'Riprendi allenamento',
+    delete_workout: 'Elimina allenamento',
+    confirm_delete_workout: 'Sei sicuro di voler eliminare questo allenamento in corso? Questa azione non può essere annullata.',
+    back: 'Indietro',
+    increase_weight: 'Aumenta peso',
+    deload: 'Decarico',
+
+    // Personal Records
+    personal_records: 'Record Personali',
+    add_personal_record: 'Aggiungi Record Personale',
+    personal_record_name: 'Esercizio / Nome del Record',
+    personal_record_weight: 'Peso',
+    personal_record_date: 'Data',
+    edit_personal_record: 'Modifica Record Personale',
+    delete_personal_record: 'Elimina',
+    no_personal_records: 'Nessun record personale ancora. Aggiungi il tuo primo PR!',
 
     // Settings
     username: 'Nome utente',

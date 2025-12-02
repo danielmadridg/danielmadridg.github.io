@@ -31,8 +31,21 @@ export interface WorkoutSession {
   exercises: ExerciseResult[];
 }
 
+export interface PersonalRecordEntry {
+  id: string;
+  weight: number;
+  date: string; // ISO string
+}
+
+export interface PersonalRecord {
+  id: string;
+  exerciseName: string;
+  entries: PersonalRecordEntry[];
+}
+
 export interface UserState {
   routine: RoutineDay[];
   history: WorkoutSession[];
   unitPreference?: 'kg' | 'lbs';
+  personalRecords?: PersonalRecord[];
 }

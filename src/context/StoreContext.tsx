@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useReducer } from 'react';
-import type { UserState, RoutineDay, WorkoutSession, ExerciseResult } from '../types';
+import type { UserState, RoutineDay, WorkoutSession, ExerciseResult, PersonalRecord } from '../types';
 import { useAuth } from './AuthContext';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 const initialState: UserState = {
   routine: [],
   history: [],
+  personalRecords: [],
 };
 
 // Actions
@@ -18,7 +19,12 @@ type Action =
   | { type: 'CLEAR_DATA' }
   | { type: 'CLEAR_HISTORY' }
   | { type: 'LOAD_DATA'; payload: UserState }
-  | { type: 'SET_UNIT_PREFERENCE'; payload: 'kg' | 'lbs' };
+  | { type: 'SET_UNIT_PREFERENCE'; payload: 'kg' | 'lbs' }
+  | { type: 'ADD_PERSONAL_RECORD'; payload: PersonalRecord }
+  | { type: 'ADD_PR_ENTRY'; payload: { prId: string; entry: any } }
+  | { type: 'EDIT_PR_ENTRY'; payload: { prId: string; entry: any } }
+  | { type: 'DELETE_PR_ENTRY'; payload: { prId: string; entryId: string } }
+  | { type: 'DELETE_PERSONAL_RECORD'; payload: string };
 
 // Reducer
 function reducer(state: UserState, action: Action): UserState {
@@ -40,6 +46,40 @@ function reducer(state: UserState, action: Action): UserState {
       return action.payload;
     case 'SET_UNIT_PREFERENCE':
       return { ...state, unitPreference: action.payload };
+    case 'ADD_PERSONAL_RECORD':
+      return { ...state, personalRecords: [...(state.personalRecords || []), action.payload] };
+    case 'ADD_PR_ENTRY':
+      return {
+        ...state,
+        personalRecords: (state.personalRecords || []).map(pr =>
+          pr.id === action.payload.prId
+            ? { ...pr, entries: [...pr.entries, action.payload.entry] }
+            : pr
+        )
+      };
+    case 'EDIT_PR_ENTRY':
+      return {
+        ...state,
+        personalRecords: (state.personalRecords || []).map(pr =>
+          pr.id === action.payload.prId
+            ? { ...pr, entries: pr.entries.map(e => e.id === action.payload.entry.id ? action.payload.entry : e) }
+            : pr
+        )
+      };
+    case 'DELETE_PR_ENTRY':
+      return {
+        ...state,
+        personalRecords: (state.personalRecords || []).map(pr =>
+          pr.id === action.payload.prId
+            ? { ...pr, entries: pr.entries.filter(e => e.id !== action.payload.entryId) }
+            : pr
+        )
+      };
+    case 'DELETE_PERSONAL_RECORD':
+      return {
+        ...state,
+        personalRecords: (state.personalRecords || []).filter(pr => pr.id !== action.payload)
+      };
     default:
       return state;
   }
@@ -55,6 +95,11 @@ interface StoreContextType {
   clearHistory: () => void;
   getExerciseHistory: (exerciseId: string) => { result: ExerciseResult; date: string }[];
   setUnitPreference: (unit: 'kg' | 'lbs') => void;
+  addPersonalRecord: (pr: PersonalRecord) => void;
+  addPREntry: (prId: string, entry: any) => void;
+  editPREntry: (prId: string, entry: any) => void;
+  deletePREntry: (prId: string, entryId: string) => void;
+  deletePersonalRecord: (prId: string) => void;
   isLoaded: boolean;
 }
 
@@ -180,8 +225,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const setUnitPreference = (unit: 'kg' | 'lbs') => dispatch({ type: 'SET_UNIT_PREFERENCE', payload: unit });
 
+  const addPersonalRecord = (pr: PersonalRecord) => dispatch({ type: 'ADD_PERSONAL_RECORD', payload: pr });
+  const addPREntry = (prId: string, entry: any) => dispatch({ type: 'ADD_PR_ENTRY', payload: { prId, entry } });
+  const editPREntry = (prId: string, entry: any) => dispatch({ type: 'EDIT_PR_ENTRY', payload: { prId, entry } });
+  const deletePREntry = (prId: string, entryId: string) => dispatch({ type: 'DELETE_PR_ENTRY', payload: { prId, entryId } });
+  const deletePersonalRecord = (prId: string) => dispatch({ type: 'DELETE_PERSONAL_RECORD', payload: prId });
+
   return (
-    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, isLoaded }}>
+    <StoreContext.Provider value={{ state, setRoutine, addSession, editSession, clearData, clearHistory, getExerciseHistory, setUnitPreference, addPersonalRecord, addPREntry, editPREntry, deletePREntry, deletePersonalRecord, isLoaded }}>
       {children}
     </StoreContext.Provider>
   );

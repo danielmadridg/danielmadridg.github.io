@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { useAuth } from '../context/AuthContext';
 import { useWorkout } from '../App';
@@ -34,7 +33,6 @@ const Home: React.FC = () => {
   } | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const navigate = useNavigate();
 
   // Load saved workout from local storage on mount (but don't activate it)
   useEffect(() => {
@@ -108,8 +106,9 @@ const Home: React.FC = () => {
   }, [state.history, filterByDayId, showAllHistory]);
 
   const handleCancelWorkout = useCallback(() => {
-    setShowCancelConfirm(true);
-  }, []);
+    setActiveWorkout(null);
+    setWorkoutActive(false);
+  }, [setWorkoutActive]);
 
   const confirmCancelWorkout = useCallback(() => {
     setShowCancelConfirm(false);
@@ -117,8 +116,7 @@ const Home: React.FC = () => {
     setSavedWorkout(null);
     setWorkoutActive(false);
     localStorage.removeItem('activeWorkout');
-    navigate('/');
-  }, [setActiveWorkout, setSavedWorkout, setWorkoutActive, navigate]);
+  }, [setWorkoutActive]);
 
   // Update the context with the handleCancelWorkout function
   useEffect(() => {
@@ -321,7 +319,10 @@ const Home: React.FC = () => {
             <div className="workout-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <button
-                        onClick={handleCancelWorkout}
+                        onClick={() => {
+                            setActiveWorkout(null);
+                            setWorkoutActive(false);
+                        }}
                         style={{
                             background: 'none',
                             border: 'none',
@@ -331,9 +332,9 @@ const Home: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center'
                         }}
-                        title="Go back"
+                        title={t('back')}
                     >
-                        ← Back
+                        ← {t('back')}
                     </button>
                 </div>
                 <h2 style={{ margin: 0, flex: 1, textAlign: 'center' }}>{selectedDay.name} {editingSession && '(Editing)'}</h2>
@@ -358,8 +359,8 @@ const Home: React.FC = () => {
                         {lastSession && (
                             <div className="last-session-info">
                                 {t('last_session')}: {convertWeight(lastSession.weight, 'kg', state.unitPreference || 'kg').toFixed(1)} {state.unitPreference || 'kg'} × {lastSession.sets.join(', ')} reps
-                                {lastSession.decision === 'incrementar' && ' → 📈 Increase weight'}
-                                {lastSession.decision === 'deload' && ' → 📉 Deload'}
+                                {lastSession.decision === 'incrementar' && ` → 📈 ${t('increase_weight')}`}
+                                {lastSession.decision === 'deload' && ` → 📉 ${t('deload')}`}
                             </div>
                         )}
 
@@ -422,17 +423,61 @@ const Home: React.FC = () => {
 
       {savedWorkout && !activeWorkout && (
         <div className="card" style={{ marginBottom: '1.5rem', border: '1px solid var(--primary-color)', background: 'rgba(200, 149, 107, 0.1)' }}>
-          <h3 style={{ marginTop: 0, color: 'var(--primary-color)' }}>Workout in Progress</h3>
+          <h3 style={{ marginTop: 0, color: 'var(--primary-color)' }}>{t('workout_in_progress')}</h3>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-            You have an unfinished workout for <strong>{state.routine.find(d => d.id === savedWorkout.dayId)?.name || 'Unknown Day'}</strong>.
+            {t('unfinished_workout_for')} <strong>{state.routine.find(d => d.id === savedWorkout.dayId)?.name || t('unknown_day')}</strong>.
           </p>
-          <button 
-            className="btn-primary" 
-            onClick={handleResumeWorkout}
-            style={{ width: '100%' }}
-          >
-            Resume Workout
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={handleResumeWorkout}
+              style={{
+                flex: 1,
+                minHeight: '44px',
+                padding: '0.75rem 1.5rem',
+                background: 'var(--primary-color)',
+                color: '#0a0a0a',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '1rem',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              {t('resume_workout')}
+            </button>
+            <button
+              onClick={() => {
+                if (confirm(t('confirm_delete_workout'))) {
+                  setSavedWorkout(null);
+                  localStorage.removeItem('activeWorkout');
+                }
+              }}
+              style={{
+                flex: 1,
+                minHeight: '44px',
+                padding: '0.75rem 1.5rem',
+                background: 'transparent',
+                color: '#f44336',
+                border: '1px solid #f44336',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '1rem',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(244, 67, 54, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              {t('delete_workout')}
+            </button>
+          </div>
         </div>
       )}
 
