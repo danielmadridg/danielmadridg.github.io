@@ -1,15 +1,27 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { updateSEO, pageSEOConfig } from '../utils/seo';
+import { updateSEO, pageSEOConfig, updateLanguage, updateBreadcrumbs } from '../utils/seo';
 import type { SEOConfig } from '../utils/seo';
+import { useLanguage } from '../context/LanguageContext';
+import { updateHreflang } from '../utils/advancedSEO';
 
 /**
  * Hook to automatically update SEO tags based on current route
  */
 export const useSEO = (customConfig?: SEOConfig) => {
   const location = useLocation();
+  const { language } = useLanguage();
 
   useEffect(() => {
+    // Update language attribute
+    updateLanguage(language);
+
+    // Update Breadcrumbs
+    updateBreadcrumbs(location.pathname);
+
+    // Update hreflang tags for multilingual support
+    updateHreflang(location.pathname);
+
     if (customConfig) {
       updateSEO(customConfig);
     } else {
@@ -24,5 +36,5 @@ export const useSEO = (customConfig?: SEOConfig) => {
 
     // Scroll to top on route change
     window.scrollTo(0, 0);
-  }, [location, customConfig]);
+  }, [location, customConfig, language]);
 };

@@ -116,3 +116,41 @@ export const pageSEOConfig: Record<string, SEOConfig> = {
     canonicalUrl: `${BASE_URL}/onboarding`,
   },
 };
+
+export const updateLanguage = (lang: string) => {
+  document.documentElement.lang = lang;
+};
+
+export const updateBreadcrumbs = (path: string) => {
+  // Remove existing breadcrumb script
+  const existingScript = document.getElementById('seo-breadcrumbs');
+  if (existingScript) {
+    existingScript.remove();
+  }
+
+  const parts = path.split('/').filter(Boolean);
+  const breadcrumbList = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {
+        '@type': 'ListItem',
+        'position': 1,
+        'name': 'Home',
+        'item': BASE_URL
+      },
+      ...parts.map((part, index) => ({
+        '@type': 'ListItem',
+        'position': index + 2,
+        'name': part.charAt(0).toUpperCase() + part.slice(1),
+        'item': `${BASE_URL}/${parts.slice(0, index + 1).join('/')}`
+      }))
+    ]
+  };
+
+  const script = document.createElement('script');
+  script.id = 'seo-breadcrumbs';
+  script.type = 'application/ld+json';
+  script.text = JSON.stringify(breadcrumbList);
+  document.head.appendChild(script);
+};
