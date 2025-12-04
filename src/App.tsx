@@ -14,6 +14,7 @@ import UsernamePrompt from './components/UsernamePrompt';
 import { Dumbbell, LineChart, Settings as SettingsIcon, Users } from 'lucide-react';
 import clsx from 'clsx';
 import { useSEO } from './hooks/useSEO';
+import './utils/testPublicProfile'; // Debug utility for testing profile sync
 
 import './App.css';
 

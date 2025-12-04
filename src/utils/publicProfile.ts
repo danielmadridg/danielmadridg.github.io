@@ -1,5 +1,5 @@
 import { db } from '../config/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import type { PublicProfile, UserState, PublicStats, PublicPersonalRecord } from '../types';
 import { reserveUsername } from './username';
 
@@ -27,37 +27,30 @@ export async function updatePublicProfile(
 
   const publicProfile: PublicProfile = {
     userId,
-    username: username.toLowerCase(), // Store lowercase for case-insensitive search
+    username: username.toLowerCase(),
     displayName: displayName || username,
     photoURL,
     createdAt,
     updatedAt: new Date().toISOString(),
-    // Privacy settings
     shareProfile: userState.shareProfile ?? true,
     shareStats: userState.shareStats ?? true,
     sharePersonalRecords: userState.sharePersonalRecords ?? true,
     sharePersonalInfo: userState.sharePersonalInfo ?? false,
   };
 
-  // Add personal info if sharing is enabled, otherwise explicitly set to undefined
+  // Add personal info only if sharing is enabled and values exist
+  // Firestore does not support undefined values, so only add fields with actual values
   if (userState.sharePersonalInfo) {
-    publicProfile.name = userState.name;
-    publicProfile.age = userState.age;
-    publicProfile.gender = userState.gender;
-    publicProfile.weight = userState.weight;
-  } else {
-    // Explicitly remove personal info when sharing is disabled
-    publicProfile.name = undefined;
-    publicProfile.age = undefined;
-    publicProfile.gender = undefined;
-    publicProfile.weight = undefined;
+    if (userState.name) publicProfile.name = userState.name;
+    if (userState.age) publicProfile.age = userState.age;
+    if (userState.gender) publicProfile.gender = userState.gender;
+    if (userState.weight) publicProfile.weight = userState.weight;
   }
 
-  // Add stats if sharing is enabled, otherwise clear them
-  if (userState.shareStats) {
+  // Add stats if sharing is enabled (default to true)
+  if (userState.shareStats !== false) {
     publicProfile.totalWorkouts = userState.history?.length || 0;
 
-    // Calculate total volume and exercise count
     let totalVolume = 0;
     const exerciseSet = new Set<string>();
 
@@ -74,18 +67,11 @@ export async function updatePublicProfile(
     publicProfile.exerciseCount = exerciseSet.size;
 
     if (userState.history && userState.history.length > 0) {
-      // Sort by date and get the most recent
       const sortedHistory = [...userState.history].sort((a, b) =>
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
       publicProfile.lastWorkoutDate = sortedHistory[0].date;
     }
-  } else {
-    // Clear stats when sharing is disabled
-    publicProfile.totalWorkouts = undefined;
-    publicProfile.totalVolume = undefined;
-    publicProfile.exerciseCount = undefined;
-    publicProfile.lastWorkoutDate = undefined;
   }
 
   await setDoc(existingProfileRef, publicProfile);
@@ -93,6 +79,8 @@ export async function updatePublicProfile(
 
 /**
  * Search for users by username
+ * Simple approach: fetch all profiles and filter client-side
+ * This is the most reliable and widely used method across platforms
  */
 export async function searchUsersByUsername(searchTerm: string): Promise<PublicProfile[]> {
   if (!searchTerm || searchTerm.trim().length === 0) {
@@ -101,23 +89,37 @@ export async function searchUsersByUsername(searchTerm: string): Promise<PublicP
 
   const searchLower = searchTerm.toLowerCase().trim();
   const profilesRef = collection(db, 'publicProfiles');
-  
-  // Search for usernames that start with the search term
-  const q = query(
-    profilesRef,
-    where('username', '>=', searchLower),
-    where('username', '<=', searchLower + '\uf8ff'),
-    limit(20)
-  );
 
-  const querySnapshot = await getDocs(q);
-  const profiles: PublicProfile[] = [];
+  try {
+    const querySnapshot = await getDocs(profilesRef);
+    const profiles: PublicProfile[] = [];
 
-  querySnapshot.forEach((doc) => {
-    profiles.push(doc.data() as PublicProfile);
-  });
+    querySnapshot.forEach((doc) => {
+      const profile = doc.data() as PublicProfile;
+      if (profile.username && profile.username.toLowerCase().includes(searchLower)) {
+        profiles.push(profile);
+      }
+    });
 
-  return profiles;
+    profiles.sort((a, b) => {
+      const aUsername = a.username?.toLowerCase() || '';
+      const bUsername = b.username?.toLowerCase() || '';
+
+      if (aUsername === searchLower) return -1;
+      if (bUsername === searchLower) return 1;
+
+      if (aUsername.startsWith(searchLower) && !bUsername.startsWith(searchLower)) return -1;
+      if (bUsername.startsWith(searchLower) && !aUsername.startsWith(searchLower)) return 1;
+
+      return aUsername.localeCompare(bUsername);
+    });
+
+    console.log(`[searchUsersByUsername] Found ${profiles.length} profiles for "${searchTerm}"`);
+    return profiles.slice(0, 20);
+  } catch (error) {
+    console.error('[searchUsersByUsername] Error:', error);
+    return [];
+  }
 }
 
 /**
@@ -147,14 +149,12 @@ export async function getPublicStats(userId: string): Promise<PublicStats | null
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing stats (default to true if undefined)
   if (userData.shareStats === false) {
     return null;
   }
 
   const history = userData.history || [];
-  
-  // Calculate total volume
+
   let totalVolume = 0;
   const exerciseSet = new Set<string>();
 
@@ -174,7 +174,7 @@ export async function getPublicStats(userId: string): Promise<PublicStats | null
   };
 
   if (history.length > 0) {
-    const sortedHistory = [...history].sort((a, b) => 
+    const sortedHistory = [...history].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     stats.lastWorkoutDate = sortedHistory[0].date;
@@ -196,16 +196,14 @@ export async function getPublicPersonalRecords(userId: string): Promise<PublicPe
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing personal records (default to true if undefined)
   if (userData.sharePersonalRecords === false) {
     return [];
   }
 
   const personalRecords = userData.personalRecords || [];
-  
+
   return personalRecords.map(pr => {
-    // Get the max weight from all entries
-    const maxEntry = pr.entries.reduce((max, entry) => 
+    const maxEntry = pr.entries.reduce((max, entry) =>
       entry.weight > max.weight ? entry : max
     , pr.entries[0]);
 
@@ -230,7 +228,6 @@ export async function getPublicRoutine(userId: string): Promise<{ dayName: strin
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing stats (routine is part of stats) - default to true if undefined
   if (userData.shareStats === false) {
     return [];
   }
@@ -256,15 +253,30 @@ export async function getPublicWorkoutHistory(userId: string): Promise<any[]> {
 
   const userData = userSnap.data() as UserState;
 
-  // Check if user allows sharing stats (default to true if undefined)
   if (userData.shareStats === false) {
     return [];
   }
 
   const history = userData.history || [];
 
-  // Return workouts sorted by date (newest first)
-  return [...history].sort((a, b) =>
+  // Build a map of exerciseId -> exerciseName from the routine
+  const exerciseNameMap = new Map<string, string>();
+  (userData.routine || []).forEach(day => {
+    day.exercises.forEach(exercise => {
+      exerciseNameMap.set(exercise.id, exercise.name);
+    });
+  });
+
+  // Add exercise names to workout data
+  const enrichedHistory = history.map(session => ({
+    ...session,
+    exercises: session.exercises.map(exercise => ({
+      ...exercise,
+      name: exerciseNameMap.get(exercise.exerciseId) || exercise.exerciseId
+    }))
+  }));
+
+  return enrichedHistory.sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 }

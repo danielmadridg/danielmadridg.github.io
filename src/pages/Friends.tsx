@@ -43,6 +43,7 @@ const Friends: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [following, setFollowing] = useState<PublicProfile[]>([]);
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
   // Search users
   const handleSearch = async () => {
@@ -55,9 +56,9 @@ const Friends: React.FC = () => {
     try {
       const results = await searchUsersByUsername(searchTerm);
       console.log('[Friends] Search results:', results);
-      // Filter out current user and profiles that have shareProfile disabled
-      const filtered = results.filter(profile => 
-        profile.userId !== user?.uid && profile.shareProfile !== false
+      // Filter out current user and only show profiles that have shareProfile enabled (default true)
+      const filtered = results.filter(profile =>
+        profile.userId !== user?.uid && (profile.shareProfile === true || profile.shareProfile === undefined)
       );
       console.log('[Friends] Filtered results:', filtered);
       setSearchResults(filtered);
@@ -74,8 +75,8 @@ const Friends: React.FC = () => {
     setIsLoadingProfile(true);
 
     try {
-      // Load routine if stats are shared
-      if (profile.shareStats) {
+      // Load routine if stats are shared (default to true)
+      if (profile.shareStats !== false) {
         const routine = await getPublicRoutine(profile.userId);
         setProfileRoutine(routine);
 
@@ -87,8 +88,8 @@ const Friends: React.FC = () => {
         setProfileWorkouts([]);
       }
 
-      // Load personal records if sharing is enabled
-      if (profile.sharePersonalRecords) {
+      // Load personal records if sharing is enabled (default to true)
+      if (profile.sharePersonalRecords !== false) {
         const prs = await getPublicPersonalRecords(profile.userId);
         setProfilePRs(prs);
       } else {
@@ -153,45 +154,25 @@ const Friends: React.FC = () => {
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  const handleCopyRoutine = () => {
-    if (!profileRoutine || profileRoutine.length === 0) return;
-
-    const routineText = profileRoutine
-      .map(day => `${day.dayName}:\n${day.exercises.map(ex => `  • ${ex}`).join('\n')}`)
-      .join('\n\n');
-
-    navigator.clipboard.writeText(routineText).then(() => {
-      alert('Routine copied to clipboard!');
-    }).catch(() => {
-      alert('Failed to copy routine');
-    });
-  };
-
-  const handleCopyWorkout = (workoutIndex: number) => {
-    const workout = profileWorkouts[workoutIndex];
-    if (!workout) return;
-
-    const workoutText = `${workout.dayId} - ${formatDate(workout.date)}\n\n${workout.exercises
-      .map(
-        (ex: any) =>
-          `${ex.exerciseId}\nWeight: ${ex.weight} ${unitPreference}\nSets: ${ex.sets.join(', ')}\nDecision: ${ex.decision}`
-      )
-      .join('\n\n')}`;
-
-    navigator.clipboard.writeText(workoutText).then(() => {
-      alert('Workout copied to clipboard!');
-    }).catch(() => {
-      alert('Failed to copy workout');
-    });
-  };
-
   const unitPreference = state.unitPreference || 'kg';
+
+  // Get unique exercise names from profile workouts
+  const exerciseNames = React.useMemo(() => {
+    if (!profileWorkouts || profileWorkouts.length === 0) return [];
+    const exercises = new Set<string>();
+    profileWorkouts.forEach(w => {
+      w.exercises.forEach((ex: any) => {
+        if (ex.name) exercises.add(ex.name);
+      });
+    });
+    return Array.from(exercises).sort();
+  }, [profileWorkouts]);
 
   const chartData = React.useMemo(() => {
     if (!profileWorkouts || profileWorkouts.length === 0) return null;
 
     // Sort oldest to newest for chart
-    const sortedWorkouts = [...profileWorkouts].sort((a, b) => 
+    const sortedWorkouts = [...profileWorkouts].sort((a, b) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
@@ -200,19 +181,36 @@ const Friends: React.FC = () => {
       return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     });
 
-    const data = sortedWorkouts.map(w => {
-      return w.exercises.reduce((total: number, ex: any) => {
-        const weight = convertWeight(ex.weight, 'kg', unitPreference);
-        const reps = ex.sets.reduce((a: number, b: number) => a + b, 0);
-        return total + (weight * reps);
-      }, 0);
-    });
+    let data;
+    let label;
+
+    if (selectedExercise) {
+      // Filter data for selected exercise
+      data = sortedWorkouts.map(w => {
+        const exercise = w.exercises.find((ex: any) => ex.name === selectedExercise);
+        if (!exercise) return 0;
+        const weight = convertWeight(exercise.weight, 'kg', unitPreference);
+        const reps = exercise.sets.reduce((a: number, b: number) => a + b, 0);
+        return weight * reps;
+      });
+      label = `${selectedExercise} (${unitPreference} × reps)`;
+    } else {
+      // Total volume across all exercises
+      data = sortedWorkouts.map(w => {
+        return w.exercises.reduce((total: number, ex: any) => {
+          const weight = convertWeight(ex.weight, 'kg', unitPreference);
+          const reps = ex.sets.reduce((a: number, b: number) => a + b, 0);
+          return total + (weight * reps);
+        }, 0);
+      });
+      label = `${t('total_volume')} (${unitPreference} × reps)`;
+    }
 
     return {
       labels,
       datasets: [
         {
-          label: `${t('total_volume')} (${unitPreference} × reps)`,
+          label,
           data,
           borderColor: '#C8956B',
           backgroundColor: 'rgba(200, 149, 107, 0.2)',
@@ -225,7 +223,7 @@ const Friends: React.FC = () => {
         }
       ]
     };
-  }, [profileWorkouts, unitPreference, t]);
+  }, [profileWorkouts, unitPreference, t, selectedExercise]);
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -628,30 +626,6 @@ const Friends: React.FC = () => {
                       }}>
                         {t('routine')}
                       </h3>
-                      {profileRoutine.length > 0 && (
-                        <button
-                          onClick={handleCopyRoutine}
-                          style={{
-                            padding: '0.5rem 1rem',
-                            background: 'rgba(200, 149, 107, 0.2)',
-                            color: 'var(--primary-color)',
-                            border: '1px solid var(--primary-color)',
-                            borderRadius: '6px',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(200, 149, 107, 0.3)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
-                          }}
-                        >
-                          {t('copy_routine')}
-                        </button>
-                      )}
                     </div>
                     {profileRoutine.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -746,28 +720,6 @@ const Friends: React.FC = () => {
                                   {workout.exercises.length} exercises
                                 </div>
                               </div>
-                              <button
-                                onClick={() => handleCopyWorkout(index)}
-                                style={{
-                                  padding: '0.5rem 1rem',
-                                  background: 'rgba(200, 149, 107, 0.2)',
-                                  color: 'var(--primary-color)',
-                                  border: '1px solid var(--primary-color)',
-                                  borderRadius: '6px',
-                                  fontWeight: '500',
-                                  cursor: 'pointer',
-                                  fontSize: '0.85rem',
-                                  transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'rgba(200, 149, 107, 0.3)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(200, 149, 107, 0.2)';
-                                }}
-                              >
-                                Copy
-                              </button>
                             </div>
                             <div style={{
                               display: 'grid',
@@ -789,7 +741,7 @@ const Friends: React.FC = () => {
                                     color: 'var(--text-primary)',
                                     marginBottom: '0.25rem'
                                   }}>
-                                    {exercise.exerciseId}
+                                    {exercise.name || exercise.exerciseId}
                                   </div>
                                   <div style={{
                                     color: 'var(--text-secondary)',
@@ -829,18 +781,40 @@ const Friends: React.FC = () => {
                     padding: '1.5rem',
                     border: '1px solid rgba(200, 149, 107, 0.2)'
                   }}>
-                    <h3 style={{
-                      fontSize: '1.1rem',
-                      fontWeight: '600',
-                      color: 'var(--text-primary)',
-                      marginBottom: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}>
-                      <TrendingUp size={20} color="var(--primary-color)" />
-                      {t('progress')}
-                    </h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <h3 style={{
+                        fontSize: '1.1rem',
+                        fontWeight: '600',
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <TrendingUp size={20} color="var(--primary-color)" />
+                        {t('progress')}
+                      </h3>
+                      {exerciseNames.length > 0 && (
+                        <select
+                          value={selectedExercise || ''}
+                          onChange={(e) => setSelectedExercise(e.target.value || null)}
+                          style={{
+                            padding: '0.5rem 0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(200, 149, 107, 0.3)',
+                            background: 'var(--bg-color)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit'
+                          }}
+                        >
+                          <option value="">All Exercises (Total Volume)</option>
+                          {exerciseNames.map(name => (
+                            <option key={name} value={name}>{name}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                     {chartData ? (
                       <div style={{ height: '300px', width: '100%' }}>
                         <Line
@@ -868,7 +842,7 @@ const Friends: React.FC = () => {
                                   color: 'rgba(255, 255, 255, 0.1)'
                                 },
                                 ticks: {
-                                  color: 'var(--text-secondary)'
+                                  color: '#FFF'
                                 }
                               },
                               x: {
@@ -876,7 +850,7 @@ const Friends: React.FC = () => {
                                   display: false
                                 },
                                 ticks: {
-                                  color: 'var(--text-secondary)',
+                                  color: '#FFF',
                                   maxTicksLimit: 8
                                 }
                               }
@@ -950,7 +924,7 @@ const Friends: React.FC = () => {
                       </div>
                     ) : (
                       <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
-                        {t('no_personal_records') || "No personal records yet."}
+                        {t('no_personal_records') || "This user doesn't have any PR registered"}
                       </div>
                     )}
                   </div>

@@ -41,6 +41,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteAccount = async () => {
     try {
       if (!user) throw new Error('No user logged in');
+      
+      // Delete public profile and username reservation from Firestore
+      const { db } = await import('../config/firebase');
+      const { doc, deleteDoc, getDoc } = await import('firebase/firestore');
+      
+      // Get the public profile to find the username
+      const publicProfileRef = doc(db, 'publicProfiles', user.uid);
+      const publicProfileSnap = await getDoc(publicProfileRef);
+      
+      if (publicProfileSnap.exists()) {
+        const username = publicProfileSnap.data().username;
+        
+        // Delete username reservation
+        if (username) {
+          const usernameRef = doc(db, 'usernames', username.toLowerCase());
+          await deleteDoc(usernameRef);
+        }
+        
+        // Delete public profile
+        await deleteDoc(publicProfileRef);
+      }
+      
+      // Delete user data
+      const userDataRef = doc(db, 'users', user.uid);
+      await deleteDoc(userDataRef);
+      
+      // Finally, delete the auth account
       await deleteUser(user);
     } catch (error) {
       logger.error('Error deleting account:', error);

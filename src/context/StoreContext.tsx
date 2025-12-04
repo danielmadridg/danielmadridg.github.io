@@ -259,8 +259,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (user) {
         try {
           const docRef = doc(db, "users", user.uid);
-          console.log('[StoreContext] Saving to Firestore for user:', user.uid, 'Data:', state);
-          await setDoc(docRef, state);
+
+          // Create a clean copy of state without undefined values
+          // Firestore doesn't support undefined values
+          // JSON.stringify/parse is a simple way to strip undefined values from nested objects
+          const cleanState = JSON.parse(JSON.stringify(state));
+
+          console.log('[StoreContext] Saving to Firestore for user:', user.uid, 'Data:', cleanState);
+          await setDoc(docRef, cleanState);
           console.log('[StoreContext] Successfully saved to Firestore');
         } catch (e) {
           console.error("[StoreContext] Error saving to Firestore:", e);
@@ -279,9 +285,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const syncPublicProfile = async () => {
       try {
-        // If user doesn't have a username set, skip sync (they need to choose one first)
-        if (!state.username) {
-          console.log('[StoreContext] No username set, skipping public profile sync');
+        // Get username from user's displayName
+        let username = user.displayName || user.email?.split('@')[0] || 'user';
+
+        if (!username) {
+          console.log('[StoreContext] No username available, skipping public profile sync');
           return;
         }
 
@@ -291,23 +299,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           dispatch({ type: 'SET_NAME', payload: user.displayName });
         }
 
-        console.log('[StoreContext] Syncing public profile for:', user.uid, 'username:', state.username);
-        
+        console.log('[StoreContext] Syncing public profile for:', user.uid, 'username:', username);
+
         // Try to update/create profile
         try {
           await updatePublicProfile(
             user.uid,
-            state.username,
+            username,
             state,
             user.displayName || undefined,
             user.photoURL || undefined
           );
           console.log('[StoreContext] Public profile created/updated successfully');
         } catch (error: any) {
-          // If username is taken (and it's not our own), this shouldn't happen
-          // because we validate availability before setting the username
-          console.error('[StoreContext] Error updating public profile:', error);
-          throw error;
+          // If username is taken (and it's not our own), try appending a random number
+          if (error.message === 'Username is already taken') {
+            const randomSuffix = Math.floor(Math.random() * 10000).toString();
+            username = `${username}${randomSuffix}`;
+            console.log('[StoreContext] Username taken, trying:', username);
+
+            await updatePublicProfile(
+              user.uid,
+              username,
+              state,
+              user.displayName || undefined,
+              user.photoURL || undefined
+            );
+          } else {
+            throw error;
+          }
         }
         console.log('[StoreContext] Public profile synced');
       } catch (error) {
@@ -327,7 +347,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     state.weight,
     state.history.length,
     state.routine.length,
-    user,
+    user?.uid,
+    user?.displayName,
+    user?.photoURL,
     isLoaded
   ]);
 

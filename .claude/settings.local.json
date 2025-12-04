@@ -16,7 +16,8 @@
       "Bash(firebase functions:config:get:*)",
       "Bash(git reset:*)",
       "Bash(git checkout:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

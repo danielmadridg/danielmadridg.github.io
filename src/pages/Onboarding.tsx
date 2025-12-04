@@ -71,6 +71,8 @@ const SortableExerciseItem = ({ id, exercise, dayIndex, exIndex, updateExercise,
           spellCheck="false"
           // Stop propagation to prevent drag start when typing immediately
           onPointerDown={(e) => e.stopPropagation()}
+          // Prevent keyboard sensor from interfering with text input
+          onKeyDown={(e) => e.stopPropagation()}
           style={{ flex: 1, minHeight: '44px', boxSizing: 'border-box' }}
         />
         <button 
@@ -92,6 +94,7 @@ const SortableExerciseItem = ({ id, exercise, dayIndex, exIndex, updateExercise,
             onChange={(e) => updateExercise(dayIndex, exIndex, 'sets', e.target.value === '' ? 0 : Number(e.target.value))}
             style={{ width: '100%', boxSizing: 'border-box' }}
             onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
         <div style={{ boxSizing: 'border-box' }}>
@@ -103,6 +106,7 @@ const SortableExerciseItem = ({ id, exercise, dayIndex, exIndex, updateExercise,
             onChange={(e) => updateExercise(dayIndex, exIndex, 'targetReps', e.target.value === '' ? 0 : Number(e.target.value))}
             style={{ width: '100%', boxSizing: 'border-box' }}
             onPointerDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           />
         </div>
       </div>
@@ -189,7 +193,15 @@ const Onboarding: React.FC = () => {
       alert("Please add at least one exercise per day and ensure all exercises have names.");
       return;
     }
-    setRoutine(routine);
+    // Trim leading/trailing spaces from all exercise names while preserving internal spaces
+    const trimmedRoutine = routine.map(day => ({
+      ...day,
+      exercises: day.exercises.map(exercise => ({
+        ...exercise,
+        name: exercise.name.trim()
+      }))
+    }));
+    setRoutine(trimmedRoutine);
     navigate('/');
   };
 
@@ -305,6 +317,7 @@ const Onboarding: React.FC = () => {
               }}
               spellCheck="false"
               autoCorrect="off"
+              onKeyDown={(e) => e.stopPropagation()}
               style={{ fontWeight: 'bold', border: 'none', background: 'transparent', fontSize: '1.3rem', padding: '0.25rem 0.5rem', color: 'var(--primary-color)', flex: 1, outline: 'none', fontFamily: 'Syne', cursor: 'text' }}
             />
             <button

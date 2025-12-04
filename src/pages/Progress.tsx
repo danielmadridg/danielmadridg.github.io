@@ -336,7 +336,7 @@ const Progress: React.FC = () => {
         title: {
           display: false
         },
-        ticks: { color: '#B3B3B3' },
+        ticks: { color: '#FFF' },
         grid: { color: '#333' }
       },
       y1: {
@@ -346,13 +346,13 @@ const Progress: React.FC = () => {
         title: {
           display: false
         },
-        ticks: { color: '#B3B3B3' },
+        ticks: { color: '#FFF' },
         grid: {
           drawOnChartArea: false,
         },
       },
       x: {
-        ticks: { color: '#B3B3B3' },
+        ticks: { color: '#FFF' },
         grid: { color: '#333' }
       }
     }

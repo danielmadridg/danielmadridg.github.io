@@ -8,13 +8,13 @@ import ProfilePictureEditor from '../components/ProfilePictureEditor';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ACCESS_KEY_LENGTH, ACCESS_KEY_SEGMENT_LENGTH } from '../utils/constants';
-import { isUsernameAvailable } from '../utils/username';
+import { isUsernameAvailable, releaseUsername } from '../utils/username';
 import { convertWeight } from '../utils/unitConversion';
 
 // Note: db, doc, getDoc, setDoc are still needed for access key management
 
 const Settings: React.FC = () => {
-  const { clearData, clearHistory, state, setUnitPreference, setName, setWeight, setAge, setGender, setShareProfile, setShareStats, setSharePersonalRecords, setSharePersonalInfo } = useStore();
+  const { clearData, clearHistory, state, setUnitPreference, setUsername, setName, setWeight, setAge, setGender, setShareProfile, setShareStats, setSharePersonalRecords, setSharePersonalInfo } = useStore();
   const { signOut, deleteAccount, user, updateProfile } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
@@ -41,8 +41,8 @@ const Settings: React.FC = () => {
   const currentUnit = state.unitPreference || 'kg';
 
   useEffect(() => {
-    setNewDisplayName(user?.displayName || '');
-  }, [user?.displayName]);
+    setNewDisplayName(state.username || '');
+  }, [state.username]);
 
   useEffect(() => {
     return () => {
@@ -175,20 +175,25 @@ const Settings: React.FC = () => {
 
   const handleUpdateDisplayName = async () => {
     const trimmedName = newDisplayName.trim();
-    
+
     if (trimmedName === '') {
       alert('Please enter a username.');
       return;
     }
 
-    // Allow letters and numbers for usernames
-    if (!/^[a-zA-Z0-9]+$/.test(trimmedName)) {
-      alert('Username can only contain letters and numbers. No spaces or special characters allowed.');
+    // Allow letters only for usernames (matching UsernamePrompt validation)
+    if (!/^[a-zA-Z]+$/.test(trimmedName)) {
+      alert('Username can only contain letters (A-Z). No spaces or special characters allowed.');
+      return;
+    }
+
+    if (trimmedName.length < 3 || trimmedName.length > 20) {
+      alert('Username must be between 3 and 20 characters.');
       return;
     }
 
     // If username hasn't changed, just close dialog
-    if (user?.displayName === trimmedName) {
+    if (state.username === trimmedName) {
       setShowEditNameDialog(false);
       setUsernameError(null);
       return;
@@ -202,7 +207,20 @@ const Settings: React.FC = () => {
         return;
       }
 
-      await updateProfile({ displayName: trimmedName });
+      // Release the old username so others can use it
+      if (state.username && state.username !== trimmedName && user) {
+        await releaseUsername(state.username, user.uid);
+        console.log('[Settings] Released old username:', state.username);
+      }
+
+      // Update Firebase Auth displayName first (this is the source of truth)
+      if (user) {
+        await updateProfile({ displayName: trimmedName });
+        console.log('[Settings] Updated Firebase displayName to:', trimmedName);
+      }
+
+      // Update local state
+      setUsername(trimmedName);
       setShowEditNameDialog(false);
       setUsernameError(null);
       setSuccessMessageType('username');
@@ -305,7 +323,7 @@ const Settings: React.FC = () => {
                   boxSizing: 'border-box'
                 }}>
                   <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.25rem'}}>Username</span>
-                  <span style={{fontSize: '0.95rem'}}>{user?.displayName || 'Not set'}</span>
+                  <span style={{fontSize: '0.95rem'}}>@{state.username || 'Not set'}</span>
                 </div>
               </div>
               {!showEditNameDialog && (
