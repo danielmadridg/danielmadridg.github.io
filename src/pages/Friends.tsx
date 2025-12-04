@@ -463,7 +463,7 @@ const Friends: React.FC = () => {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                Following ({following.length})
+                {t('following')} ({following.length})
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {following.map((profile) => (
@@ -858,7 +858,7 @@ const Friends: React.FC = () => {
                             fontFamily: 'inherit'
                           }}
                         >
-                          <option value="">All Exercises (Total Volume)</option>
+                          <option value="">{t('all_exercises_total_volume')}</option>
                           {exerciseNames.map(name => (
                             <option key={name} value={name}>{name}</option>
                           ))}

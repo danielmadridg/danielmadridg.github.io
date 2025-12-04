@@ -232,6 +232,10 @@ export const translations: Record<Language, Translations> = {
     type_confirm_clear_history: 'Type \"confirm\" to clear your history:',
     german: 'German',
     portuguese: 'Portuguese',
+    following: 'Following',
+    all_exercises_total_volume: 'All Exercises (Total Volume)',
+    exercises: 'exercises',
+    reps: 'reps',
   },
   es: {
     // Common
@@ -460,6 +464,10 @@ export const translations: Record<Language, Translations> = {
     type_confirm_clear_history: 'Escribe \"confirm\" para borrar tu historial:',
     german: 'Alemán',
     portuguese: 'Portugués',
+    following: 'Siguiendo',
+    all_exercises_total_volume: 'Todos los Ejercicios (Volumen Total)',
+    exercises: 'ejercicios',
+    reps: 'reps',
   },
   fr: {
     // Common
@@ -688,6 +696,10 @@ export const translations: Record<Language, Translations> = {
     type_confirm_clear_history: 'Tapez \"confirm\" pour effacer votre historique:',
     german: 'Allemand',
     portuguese: 'Portugais',
+    following: 'Abonnements',
+    all_exercises_total_volume: 'Tous les Exercices (Volume Total)',
+    exercises: 'exercices',
+    reps: 'reps',
   },
   it: {
     // Common
@@ -916,6 +928,10 @@ export const translations: Record<Language, Translations> = {
     type_confirm_clear_history: 'Digita \"confirm\" per cancellare la cronologia:',
     german: 'Tedesco',
     portuguese: 'Portoghese',
+    following: 'Seguiti',
+    all_exercises_total_volume: 'Tutti gli Esercizi (Volume Totale)',
+    exercises: 'esercizi',
+    reps: 'reps',
   },
   de: {
     // Common
@@ -1144,6 +1160,10 @@ export const translations: Record<Language, Translations> = {
     clear_history: 'Verlauf löschen',
     clear_history_warning: 'Dies löscht dauerhaft deinen gesamten Trainingsverlauf. Deine Routine und persönlichen Rekorde sind nicht betroffen. Diese Aktion kann nicht rückgängig gemacht werden.',
     type_confirm_clear_history: 'Gib \"confirm\" ein, um deinen Verlauf zu löschen:',
+    following: 'Folge ich',
+    all_exercises_total_volume: 'Alle Übungen (Gesamtvolumen)',
+    exercises: 'Übungen',
+    reps: 'Wiederholungen',
   },
   pt: {
     // Common
@@ -1372,5 +1392,9 @@ export const translations: Record<Language, Translations> = {
     clear_history: 'Limpar Histórico',
     clear_history_warning: 'Isso excluirá permanentemente todo o seu histórico de treinos. Sua rotina e recordes pessoais não serão afetados. Esta ação não pode ser desfeita.',
     type_confirm_clear_history: 'Digite \"confirm\" para limpar seu histórico:',
+    following: 'Seguindo',
+    all_exercises_total_volume: 'Todos os Exercícios (Volume Total)',
+    exercises: 'exercícios',
+    reps: 'repetições',
   },
 };

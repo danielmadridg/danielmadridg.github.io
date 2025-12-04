@@ -120,24 +120,13 @@ const Onboarding: React.FC = () => {
   const { t } = useLanguage();
 
   // Initialize state from context if available (Edit Mode)
-  const [daysCount, setDaysCount] = useState<number | ''>(state.routine.length || '');
   const [step, setStep] = useState<number>(state.routine.length > 0 ? 2 : 1);
-  const [routine, setRoutineState] = useState<RoutineDay[]>(state.routine.length > 0 ? state.routine : []);
+  const [routine, setRoutineState] = useState<RoutineDay[]>(
+    state.routine.length > 0
+      ? state.routine
+      : [{ id: 'day-1', name: 'Day 1', exercises: [] }]
+  );
   const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-
-  const handleStart = () => {
-    if (!daysCount || daysCount < 1) {
-      alert('Please enter at least 1 day for your routine.');
-      return;
-    }
-    const initialRoutine = Array.from({ length: Number(daysCount) }, (_, i) => ({
-      id: `day-${i + 1}`,
-      name: `Day ${i + 1}`,
-      exercises: []
-    }));
-    setRoutineState(initialRoutine);
-    setStep(2);
-  };
 
   const addExercise = (dayIndex: number) => {
     const newExercise: ExerciseConfig = {
@@ -222,8 +211,12 @@ const Onboarding: React.FC = () => {
         navigate('/');
       }
     } else {
-      // In create mode, go back to step 1
-      setStep(1);
+      // In create mode, go back to previous step or exit
+      if (step === 1) {
+        navigate('/');
+      } else {
+        setStep(step - 1);
+      }
     }
   };
 
@@ -261,25 +254,42 @@ const Onboarding: React.FC = () => {
     return (
       <div className="container" style={{ justifyContent: 'center', alignItems: 'center' }}>
         <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
-          <h1 style={{ textAlign: 'center', marginTop: 0 }}>Welcome to Prodegi</h1>
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>Let's set up your routine.</p>
-          <label style={{ marginTop: '1.5rem' }}>{t('how_many_days')}</label>
-          <input
-            type="number"
-            value={daysCount}
-            onChange={(e) => setDaysCount(e.target.value === '' ? '' : Number(e.target.value))}
-            min={1}
-            max={7}
-            placeholder="3"
-            spellCheck="false"
-            style={{ width: '100%', marginBottom: '1rem', boxSizing: 'border-box' }}
-          />
-          <button className="btn-primary" onClick={handleStart} style={{ marginTop: 0 }}>{t('next')}</button>
+          <h1 style={{ textAlign: 'center', marginTop: 0 }}>Pro Tip</h1>
+          <p style={{
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            marginTop: '0.5rem',
+            fontSize: '0.95rem',
+            lineHeight: '1.6'
+          }}>
+            We strongly recommend taking your sets as close to failure as possible to ensure more accurate progress analysis.
+          </p>
+          <div style={{
+            background: 'rgba(200, 149, 107, 0.1)',
+            border: '1px solid rgba(200, 149, 107, 0.2)',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginTop: '1.5rem',
+            marginBottom: '1.5rem',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)',
+            lineHeight: '1.6'
+          }}>
+            Taking sets close to failure means pushing until you can only complete 1-2 more reps with good form. This helps Prodegi track your true strength and provide accurate progress metrics.
+          </div>
+          <button
+            className="btn-primary"
+            onClick={() => setStep(2)}
+            style={{ marginTop: 0 }}
+          >
+            Got it, let's build my routine
+          </button>
         </div>
       </div>
     );
   }
 
+  // Step 2: Routine builder (default return below)
   return (
     <div className="container" style={{ paddingBottom: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>

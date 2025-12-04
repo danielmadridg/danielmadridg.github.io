@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit, Trash2 } from 'lucide-react';
 import ProfilePictureEditor from '../components/ProfilePictureEditor';
+import Toggle from '../components/Toggle';
 import { db } from '../config/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ACCESS_KEY_LENGTH, ACCESS_KEY_SEGMENT_LENGTH } from '../utils/constants';
@@ -845,43 +846,10 @@ const Settings: React.FC = () => {
               Allow other users to find and view your profile
             </div>
           </div>
-          <label style={{
-            position: 'relative',
-            display: 'inline-block',
-            width: '50px',
-            height: '28px',
-            flexShrink: 0
-          }}>
-            <input
-              type="checkbox"
-              checked={state.shareProfile ?? true}
-              onChange={(e) => setShareProfile(e.target.checked)}
-              style={{opacity: 0, width: 0, height: 0}}
-            />
-            <span style={{
-              position: 'absolute',
-              cursor: 'pointer',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: state.shareProfile ?? true ? 'var(--primary-color)' : '#555',
-              transition: '0.3s',
-              borderRadius: '28px'
-            }}>
-              <span style={{
-                position: 'absolute',
-                content: '',
-                height: '20px',
-                width: '20px',
-                left: state.shareProfile ?? true ? '26px' : '4px',
-                bottom: '4px',
-                background: 'white',
-                transition: '0.3s',
-                borderRadius: '50%'
-              }} />
-            </span>
-          </label>
+          <Toggle
+            checked={state.shareProfile ?? true}
+            onChange={setShareProfile}
+          />
         </div>
 
         {/* Share Stats */}
@@ -904,44 +872,11 @@ const Settings: React.FC = () => {
               Share workout statistics and routine
             </div>
           </div>
-          <label style={{
-            position: 'relative',
-            display: 'inline-block',
-            width: '50px',
-            height: '28px',
-            flexShrink: 0
-          }}>
-            <input
-              type="checkbox"
-              checked={state.shareStats ?? true}
-              onChange={(e) => setShareStats(e.target.checked)}
-              disabled={!(state.shareProfile ?? true)}
-              style={{opacity: 0, width: 0, height: 0}}
-            />
-            <span style={{
-              position: 'absolute',
-              cursor: state.shareProfile ?? true ? 'pointer' : 'not-allowed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: state.shareStats ?? true ? 'var(--primary-color)' : '#555',
-              transition: '0.3s',
-              borderRadius: '28px'
-            }}>
-              <span style={{
-                position: 'absolute',
-                content: '',
-                height: '20px',
-                width: '20px',
-                left: state.shareStats ?? true ? '26px' : '4px',
-                bottom: '4px',
-                background: 'white',
-                transition: '0.3s',
-                borderRadius: '50%'
-              }} />
-            </span>
-          </label>
+          <Toggle
+            checked={state.shareStats ?? true}
+            onChange={setShareStats}
+            disabled={!(state.shareProfile ?? true)}
+          />
         </div>
 
         {/* Share Personal Records */}
@@ -964,44 +899,11 @@ const Settings: React.FC = () => {
               Share your personal records with others
             </div>
           </div>
-          <label style={{
-            position: 'relative',
-            display: 'inline-block',
-            width: '50px',
-            height: '28px',
-            flexShrink: 0
-          }}>
-            <input
-              type="checkbox"
-              checked={state.sharePersonalRecords ?? true}
-              onChange={(e) => setSharePersonalRecords(e.target.checked)}
-              disabled={!(state.shareProfile ?? true)}
-              style={{opacity: 0, width: 0, height: 0}}
-            />
-            <span style={{
-              position: 'absolute',
-              cursor: state.shareProfile ?? true ? 'pointer' : 'not-allowed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: state.sharePersonalRecords ?? true ? 'var(--primary-color)' : '#555',
-              transition: '0.3s',
-              borderRadius: '28px'
-            }}>
-              <span style={{
-                position: 'absolute',
-                content: '',
-                height: '20px',
-                width: '20px',
-                left: state.sharePersonalRecords ?? true ? '26px' : '4px',
-                bottom: '4px',
-                background: 'white',
-                transition: '0.3s',
-                borderRadius: '50%'
-              }} />
-            </span>
-          </label>
+          <Toggle
+            checked={state.sharePersonalRecords ?? true}
+            onChange={setSharePersonalRecords}
+            disabled={!(state.shareProfile ?? true)}
+          />
         </div>
 
         {/* Share Personal Info */}
@@ -1023,44 +925,11 @@ const Settings: React.FC = () => {
               Share age, gender, and weight
             </div>
           </div>
-          <label style={{
-            position: 'relative',
-            display: 'inline-block',
-            width: '50px',
-            height: '28px',
-            flexShrink: 0
-          }}>
-            <input
-              type="checkbox"
-              checked={state.sharePersonalInfo ?? false}
-              onChange={(e) => setSharePersonalInfo(e.target.checked)}
-              disabled={!(state.shareProfile ?? true)}
-              style={{opacity: 0, width: 0, height: 0}}
-            />
-            <span style={{
-              position: 'absolute',
-              cursor: state.shareProfile ?? true ? 'pointer' : 'not-allowed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: state.sharePersonalInfo ?? false ? 'var(--primary-color)' : '#555',
-              transition: '0.3s',
-              borderRadius: '28px'
-            }}>
-              <span style={{
-                position: 'absolute',
-                content: '',
-                height: '20px',
-                width: '20px',
-                left: state.sharePersonalInfo ?? false ? '26px' : '4px',
-                bottom: '4px',
-                background: 'white',
-                transition: '0.3s',
-                borderRadius: '50%'
-              }} />
-            </span>
-          </label>
+          <Toggle
+            checked={state.sharePersonalInfo ?? false}
+            onChange={setSharePersonalInfo}
+            disabled={!(state.shareProfile ?? true)}
+          />
         </div>
       </div>
 

@@ -55,21 +55,17 @@ const Home: React.FC = () => {
     }
   }, [state.routine]);
 
-  // Save active workout to local storage whenever it changes
+  // Save active workout to local storage whenever it changes (but not when editing)
   useEffect(() => {
-    if (activeWorkout) {
+    if (activeWorkout && !editingSession) {
       localStorage.setItem('activeWorkout', JSON.stringify(activeWorkout));
       setSavedWorkout(activeWorkout);
-    } else if (!savedWorkout) {
-      // Only remove if we don't have a saved workout (handled by finish/cancel)
-      // Actually, if activeWorkout becomes null, we might want to keep it in localStorage if it was just closed?
-      // But here activeWorkout becomes null when we finish or cancel.
-      // If we unmount, activeWorkout is lost from state but we want it in localStorage.
-      // This effect runs when activeWorkout changes.
-      // If we finish/cancel, we explicitly remove it.
-      // If we just close the app, this effect doesn't run with null.
+    } else if (!activeWorkout && editingSession) {
+      // When leaving edit mode, clear saved workout
+      setSavedWorkout(null);
+      localStorage.removeItem('activeWorkout');
     }
-  }, [activeWorkout]);
+  }, [activeWorkout, editingSession]);
 
   // Get the appropriate locale for date-fns
   const getDateLocale = () => {
@@ -293,8 +289,10 @@ const Home: React.FC = () => {
 
     editSession(updatedSession);
     setActiveWorkout(null);
+    setSavedWorkout(null);
     setEditingSession(null);
     setWorkoutActive(false);
+    localStorage.removeItem('activeWorkout');
   };
 
   const greeting = useMemo(() => {
