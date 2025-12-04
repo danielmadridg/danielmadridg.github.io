@@ -162,8 +162,8 @@ const Settings: React.FC = () => {
   const handleDeleteAccount = async () => {
     if (deleteConfirmText.toLowerCase() === 'confirm') {
       try {
-        clearData(); // Clear all data first
-        await deleteAccount(); // Then delete the Firebase account
+        // deleteAccount() will handle clearing all data and deleting the Firebase account
+        await deleteAccount();
         navigate('/login');
       } catch (error) {
         alert(t('error_delete_account'));
@@ -727,9 +727,9 @@ const Settings: React.FC = () => {
             <div style={{display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative'}}>
               <button
                 onClick={() => {
-                  const currentIndex = ['en', 'es', 'fr', 'it'].indexOf(language);
-                  const nextIndex = currentIndex === 0 ? 3 : currentIndex - 1;
-                  setLanguage(['en', 'es', 'fr', 'it'][nextIndex] as any);
+                  const currentIndex = ['en', 'es', 'fr', 'it', 'de', 'pt'].indexOf(language);
+                  const nextIndex = currentIndex === 0 ? 5 : currentIndex - 1;
+                  setLanguage(['en', 'es', 'fr', 'it', 'de', 'pt'][nextIndex] as any);
                 }}
                 style={{
                   padding: '0.5rem',
@@ -764,14 +764,16 @@ const Settings: React.FC = () => {
                   {language === 'es' && t('spanish')}
                   {language === 'fr' && t('french')}
                   {language === 'it' && t('italian')}
+                  {language === 'de' && t('german')}
+                  {language === 'pt' && t('portuguese')}
                 </span>
               </div>
 
               <button
                 onClick={() => {
-                  const currentIndex = ['en', 'es', 'fr', 'it'].indexOf(language);
-                  const nextIndex = currentIndex === 3 ? 0 : currentIndex + 1;
-                  setLanguage(['en', 'es', 'fr', 'it'][nextIndex] as any);
+                  const currentIndex = ['en', 'es', 'fr', 'it', 'de', 'pt'].indexOf(language);
+                  const nextIndex = currentIndex === 5 ? 0 : currentIndex + 1;
+                  setLanguage(['en', 'es', 'fr', 'it', 'de', 'pt'][nextIndex] as any);
                 }}
                 style={{
                   padding: '0.5rem',
@@ -791,7 +793,7 @@ const Settings: React.FC = () => {
 
             {/* Indicator dots */}
             <div style={{display: 'flex', gap: isMobile ? '0.2rem' : '0.5rem', justifyContent: 'center'}}>
-              {['en', 'es', 'fr', 'it'].map((lang) => (
+              {['en', 'es', 'fr', 'it', 'de', 'pt'].map((lang) => (
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang as any)}

@@ -114,7 +114,85 @@
 }
 
 /* Mobile specific overrides */
+@media (max-width: 768px) {
+  .workout-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .exercise-card {
+    margin-bottom: 0.75rem;
+  }
+  
+  .last-session-info {
+    font-size: 0.8rem;
+    padding: 0.6rem;
+  }
+  
+  .weight-input {
+    max-width: 100%;
+  }
+  
+  .sets-grid {
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .history-exercise-item {
+    font-size: 0.8rem;
+    padding: 0.4rem 0;
+  }
+  
+  .history-stats {
+    gap: 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
 @media (max-width: 480px) {
+  .workout-header {
+    gap: 0.5rem;
+  }
+  
+  .workout-header h2 {
+    font-size: clamp(1.1rem, 5vw, 1.5rem);
+  }
+  
+  .exercise-header {
+    gap: 0.35rem;
+  }
+  
+  .exercise-header h3 {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
+  
+  .exercise-goal {
+    font-size: 0.8rem;
+  }
+  
+  .last-session-info {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .weight-input-container {
+    margin-bottom: 0.75rem;
+  }
+  
+  .sets-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+  }
+  
+  .set-label {
+    font-size: 0.75rem;
+  }
+  
+  .history-card {
+    padding: 0.75rem;
+  }
+  
   .history-header {
     flex-direction: column;
     align-items: flex-start;
@@ -124,15 +202,71 @@
   .history-header > div {
     width: 100% !important;
     flex-direction: row !important;
+    justify-content: space-between;
+  }
+  
+  .history-day-name {
+    font-size: 0.95rem;
+  }
+  
+  .history-date {
+    font-size: 0.75rem;
   }
 
   .history-exercise-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.35rem 0;
   }
-
-  .sets-grid {
-    grid-template-columns: repeat(3, 1fr); /* Force 3 columns on small screens */
+  
+  .history-stats {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  /* Better textarea for notes on mobile */
+  textarea {
+    font-size: 14px !important;
+    min-height: 70px !important;
+  }
+  
+  /* Improve button layouts */
+  button[style*="gap"] {
+    gap: 0.35rem !important;
   }
 }
+
+/* iPhone X and newer (with notch) */
+@media only screen 
+  and (device-width: 375px) 
+  and (device-height: 812px) 
+  and (-webkit-device-pixel-ratio: 3),
+  only screen 
+  and (device-width: 414px) 
+  and (device-height: 896px) 
+  and (-webkit-device-pixel-ratio: 2),
+  only screen 
+  and (device-width: 414px) 
+  and (device-height: 896px) 
+  and (-webkit-device-pixel-ratio: 3),
+  only screen 
+  and (device-width: 390px) 
+  and (device-height: 844px) 
+  and (-webkit-device-pixel-ratio: 3),
+  only screen 
+  and (device-width: 428px) 
+  and (device-height: 926px) 
+  and (-webkit-device-pixel-ratio: 3) {
+  
+  /* Extra padding for notched iPhones */
+  .container {
+    padding-top: max(1rem, var(--safe-area-inset-top));
+  }
+  
+  .card:first-of-type {
+    margin-top: 0.5rem;
+  }
+}
+

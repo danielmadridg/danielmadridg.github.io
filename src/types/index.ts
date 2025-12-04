@@ -29,6 +29,7 @@ export interface WorkoutSession {
   date: string; // ISO string
   dayId: string;
   exercises: ExerciseResult[];
+  notes?: string;
 }
 
 export interface PersonalRecordEntry {

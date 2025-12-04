@@ -251,32 +251,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    const saveData = async () => {
-      // Always save to localStorage as backup/cache
-      localStorage.setItem('prodegi_data', JSON.stringify(state));
-      console.log('[StoreContext] Saved to localStorage:', state);
+    // Always save to localStorage immediately (instant, no cost)
+    localStorage.setItem('prodegi_data', JSON.stringify(state));
+    console.log('[StoreContext] Saved to localStorage');
 
+    // Debounce Firestore saves to reduce writes (has cost)
+    const firestoreTimeout = setTimeout(async () => {
       if (user) {
         try {
           const docRef = doc(db, "users", user.uid);
-
-          // Create a clean copy of state without undefined values
-          // Firestore doesn't support undefined values
-          // JSON.stringify/parse is a simple way to strip undefined values from nested objects
           const cleanState = JSON.parse(JSON.stringify(state));
 
-          console.log('[StoreContext] Saving to Firestore for user:', user.uid, 'Data:', cleanState);
+          console.log('[StoreContext] Saving to Firestore for user:', user.uid);
           await setDoc(docRef, cleanState);
           console.log('[StoreContext] Successfully saved to Firestore');
         } catch (e) {
           console.error("[StoreContext] Error saving to Firestore:", e);
         }
-      } else {
-        console.log('[StoreContext] Not saving to Firestore (no user logged in)');
       }
-    };
+    }, 1000); // Wait 1 second before saving to Firestore
 
-    saveData();
+    return () => clearTimeout(firestoreTimeout);
   }, [state, user, isLoaded]);
 
   // Sync public profile when relevant data changes

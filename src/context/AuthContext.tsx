@@ -42,11 +42,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) throw new Error('No user logged in');
       
-      // Delete public profile and username reservation from Firestore
+      // Delete all user data from Firestore
       const { db } = await import('../config/firebase');
       const { doc, deleteDoc, getDoc } = await import('firebase/firestore');
       
-      // Get the public profile to find the username
+      console.log('[AuthContext] Starting account deletion for user:', user.uid);
+      
+      // 1. Get the public profile to find the username
       const publicProfileRef = doc(db, 'publicProfiles', user.uid);
       const publicProfileSnap = await getDoc(publicProfileRef);
       
@@ -55,20 +57,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Delete username reservation
         if (username) {
+          console.log('[AuthContext] Deleting username reservation:', username);
           const usernameRef = doc(db, 'usernames', username.toLowerCase());
           await deleteDoc(usernameRef);
         }
         
         // Delete public profile
+        console.log('[AuthContext] Deleting public profile');
         await deleteDoc(publicProfileRef);
       }
       
-      // Delete user data
+      // 2. Delete user data (routine, history, personal records, etc.)
+      console.log('[AuthContext] Deleting user data');
       const userDataRef = doc(db, 'users', user.uid);
       await deleteDoc(userDataRef);
       
-      // Finally, delete the auth account
+      // 3. Clear local storage
+      console.log('[AuthContext] Clearing local storage');
+      localStorage.removeItem('prodegi_data');
+      localStorage.removeItem('activeWorkout');
+      
+      // 4. Finally, delete the Firebase Auth account
+      console.log('[AuthContext] Deleting Firebase Auth account');
       await deleteUser(user);
+      
+      console.log('[AuthContext] Account deletion completed successfully');
     } catch (error) {
       logger.error('Error deleting account:', error);
       throw error;

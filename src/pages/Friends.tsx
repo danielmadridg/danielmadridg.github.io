@@ -117,6 +117,56 @@ const Friends: React.FC = () => {
     }
   }, [user?.uid]);
 
+  // Clean up following list - remove deleted accounts
+  // Use ref to track if cleanup has been done to prevent infinite loops
+  const cleanupDoneRef = React.useRef(false);
+  
+  useEffect(() => {
+    const cleanupFollowing = async () => {
+      if (!user?.uid || following.length === 0 || cleanupDoneRef.current) return;
+
+      try {
+        const { db } = await import('../config/firebase');
+        const { doc, getDoc } = await import('firebase/firestore');
+        
+        console.log('[Friends] Running cleanup check for', following.length, 'profiles');
+        
+        // Batch check all profiles in parallel for better performance
+        const validationPromises = following.map(async (profile) => {
+          const profileRef = doc(db, 'publicProfiles', profile.userId);
+          const profileSnap = await getDoc(profileRef);
+          return { profile, exists: profileSnap.exists() };
+        });
+        
+        const results = await Promise.all(validationPromises);
+        const validProfiles = results
+          .filter(r => r.exists)
+          .map(r => r.profile);
+        
+        const deletedCount = following.length - validProfiles.length;
+        
+        // Update following list if any profiles were removed
+        if (deletedCount > 0) {
+          console.log(`[Friends] Removing ${deletedCount} deleted account(s)`);
+          setFollowing(validProfiles);
+          const storageKey = `following_${user.uid}`;
+          localStorage.setItem(storageKey, JSON.stringify(validProfiles));
+        }
+        
+        // Mark cleanup as done
+        cleanupDoneRef.current = true;
+      } catch (error) {
+        console.error('[Friends] Error cleaning up following list:', error);
+      }
+    };
+
+    // Run cleanup only once when following list is first loaded
+    if (following.length > 0 && !cleanupDoneRef.current) {
+      cleanupFollowing();
+    }
+  }, [following.length, user?.uid]);
+
+
   // Search on enter
   useEffect(() => {
     const delaySearch = setTimeout(() => {

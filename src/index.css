@@ -8,6 +8,12 @@
   --text-secondary: #8a8a8a;
   --danger-color: #cf6679;
   --success-color: #03dac6;
+
+  /* Safe area insets for iPhone notch/home indicator */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  --safe-area-inset-right: env(safe-area-inset-right);
 }
 
 /* Custom Scrollbar */
@@ -128,6 +134,8 @@ select option:checked {
   max-width: 600px;
   margin: 0 auto;
   padding: 1rem;
+  padding-left: max(1rem, var(--safe-area-inset-left));
+  padding-right: max(1rem, var(--safe-area-inset-right));
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -226,9 +234,11 @@ label {
   justify-content: space-around;
   background-color: var(--surface-color);
   padding: 1rem;
+  padding-bottom: calc(1rem + var(--safe-area-inset-bottom));
   position: sticky;
   bottom: 0;
   border-top: 1px solid #333;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .nav-item {
@@ -376,6 +386,37 @@ footer p {
     max-width: 100vw;
     margin-left: -0.5rem;
   }
+
+  /* Better spacing for mobile */
+  .nav-bar {
+    padding: 0.75rem;
+    padding-bottom: calc(0.75rem + var(--safe-area-inset-bottom));
+  }
+
+  /* Improve touch target sizes */
+  .nav-item {
+    padding: 0.5rem;
+    min-width: 60px;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Better card spacing on mobile */
+  .card {
+    border-radius: 12px;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  .container {
+    overflow-x: hidden;
+  }
 }
 
 @media (max-width: 480px) {
@@ -414,7 +455,31 @@ footer p {
   footer {
     margin-left: 0 !important;
     padding: 1rem !important;
+    padding-bottom: calc(1rem + var(--safe-area-inset-bottom)) !important;
     font-size: 0.7rem !important;
+  }
+
+  /* Smaller cards on very small screens */
+  .card {
+    border-radius: 10px;
+    padding: 0.65rem;
+  }
+
+  /* Optimize text sizes for small screens */
+  body {
+    font-size: 13px;
+  }
+
+  /* Better button spacing */
+  .btn-primary,
+  .btn-secondary {
+    margin-top: 0.5rem;
+  }
+
+  /* Improve form field spacing */
+  input + input,
+  select + select {
+    margin-top: 0.5rem;
   }
 }
 

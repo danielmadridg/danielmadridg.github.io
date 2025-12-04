@@ -268,7 +268,7 @@ export async function getPublicWorkoutHistory(userId: string): Promise<any[]> {
   });
 
   // Add exercise names to workout data
-  const enrichedHistory = history.map(session => ({
+  const enrichedHistory = history.map(({ notes, ...session }) => ({
     ...session,
     exercises: session.exercises.map(exercise => ({
       ...exercise,

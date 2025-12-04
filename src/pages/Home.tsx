@@ -22,12 +22,15 @@ const Home: React.FC = () => {
   const [activeWorkout, setActiveWorkout] = useState<{
     dayId: string;
     startTime: string;
+
     exercises: Record<string, { weight: string; reps: string[] }>;
+    notes: string;
   } | null>(null);
   const [savedWorkout, setSavedWorkout] = useState<{
     dayId: string;
     startTime: string;
     exercises: Record<string, { weight: string; reps: string[] }>;
+    notes: string;
   } | null>(null);
   const [editingSession, setEditingSession] = useState<WorkoutSession | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -154,7 +157,9 @@ const Home: React.FC = () => {
     const newWorkout = {
       dayId: selectedDayId,
       startTime: new Date().toISOString(),
-      exercises: initialExercises
+
+      exercises: initialExercises,
+      notes: ''
     };
 
     setActiveWorkout(newWorkout);
@@ -203,7 +208,9 @@ const Home: React.FC = () => {
       id: crypto.randomUUID(),
       date: new Date().toISOString(),
       dayId: activeWorkout.dayId,
-      exercises: results
+
+      exercises: results,
+      notes: activeWorkout.notes
     };
 
     addSession(session);
@@ -231,7 +238,9 @@ const Home: React.FC = () => {
     setActiveWorkout({
       dayId: session.dayId,
       startTime: session.date,
-      exercises
+
+      exercises,
+      notes: session.notes || ''
     });
     setWorkoutActive(true);
   };
@@ -277,7 +286,9 @@ const Home: React.FC = () => {
       id: editingSession.id,
       date: editingSession.date,
       dayId: editingSession.dayId,
-      exercises: results
+
+      exercises: results,
+      notes: activeWorkout.notes
     };
 
     editSession(updatedSession);
@@ -402,6 +413,31 @@ const Home: React.FC = () => {
                     </div>
                 );
             })}
+
+            
+            <div className="card" style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                    {t('workout_notes') || 'Workout Notes'}
+                </label>
+                <textarea
+                    value={activeWorkout.notes}
+                    onChange={(e) => setActiveWorkout({ ...activeWorkout, notes: e.target.value })}
+                    placeholder={t('workout_notes_placeholder') || 'How did it feel? Any pain? Pre-workout?'}
+                    style={{
+                        width: '100%',
+                        minHeight: '80px',
+                        padding: '0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid #333',
+                        background: 'var(--surface-color)',
+                        color: 'var(--text-color)',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                        boxSizing: 'border-box'
+                    }}
+                />
+            </div>
+
             <button className="btn-primary" onClick={editingSession ? handleSaveEdit : handleFinishWorkout}>
                 <Check style={{verticalAlign: 'middle', marginRight: '8px'}}/>
                 {editingSession ? t('save_changes') : t('finish_workout')}
@@ -592,7 +628,22 @@ const Home: React.FC = () => {
                                   </div>
                               );
                           })}
+
                       </div>
+                      
+                      {session.notes && (
+                          <div style={{ 
+                              marginTop: '1rem', 
+                              padding: '0.75rem', 
+                              background: 'rgba(255, 255, 255, 0.05)', 
+                              borderRadius: '6px',
+                              fontSize: '0.9rem',
+                              fontStyle: 'italic',
+                              color: 'var(--text-secondary)'
+                          }}>
+                              "{session.notes}"
+                          </div>
+                      )}
                   </div>
               );
           })}
