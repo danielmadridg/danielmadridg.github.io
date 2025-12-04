@@ -11,21 +11,41 @@ const Toggle: React.FC<ToggleProps> = ({ checked, onChange, disabled = false }) 
 
   useEffect(() => {
     // Detect iOS devices (iPhone, iPad)
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) &&
-                       !/Android|Windows Phone/.test(navigator.userAgent);
-    setIsIOS(isIOSDevice);
+    const isIOSDevice = () => {
+      // Check user agent for iOS indicators
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        return true;
+      }
+      // Check if running in standalone mode (PWA on iOS)
+      if ((navigator as any).standalone === true) {
+        return true;
+      }
+      // Check for iOS platform
+      if (/iPhone|iPad|iPod/.test(navigator.platform)) {
+        return true;
+      }
+      // Check for MacIntel with touch events (iPad on modern Safari)
+      if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) {
+        return true;
+      }
+      return false;
+    };
+
+    setIsIOS(isIOSDevice());
   }, []);
 
   if (isIOS) {
-    // Native iOS-style toggle
+    // Native iOS-style toggle (Apple's exact style)
     return (
       <label style={{
         position: 'relative',
         display: 'inline-block',
-        width: '51px',
-        height: '31px',
-        flexShrink: 0
-      }}>
+        width: '50px',
+        height: '30px',
+        flexShrink: 0,
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none'
+      } as React.CSSProperties}>
         <input
           type="checkbox"
           checked={checked}
@@ -40,21 +60,22 @@ const Toggle: React.FC<ToggleProps> = ({ checked, onChange, disabled = false }) 
           left: 0,
           right: 0,
           bottom: 0,
-          background: checked ? '#34C759' : '#E5E5EA',
-          transition: '0.3s ease',
-          borderRadius: '31px',
+          background: checked ? '#34C759' : '#EBEBF0',
+          transition: 'background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          borderRadius: '15px',
           opacity: disabled ? 0.5 : 1
         }}>
           <span style={{
             position: 'absolute',
-            height: '27px',
-            width: '27px',
+            height: '26px',
+            width: '26px',
             left: checked ? '22px' : '2px',
-            bottom: '2px',
+            top: '50%',
+            transform: 'translateY(-50%)',
             background: 'white',
-            transition: '0.3s ease',
-            borderRadius: '50%',
-            boxShadow: '0 3px 1px 0 rgba(0, 0, 0, 0.04), 0 3px 8px 0 rgba(0, 0, 0, 0.12)'
+            transition: 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            borderRadius: '13px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
           }} />
         </span>
       </label>

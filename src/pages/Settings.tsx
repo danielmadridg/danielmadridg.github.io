@@ -272,6 +272,7 @@ const Settings: React.FC = () => {
   };
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 480;
+  const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   return (
     <div>
@@ -793,14 +794,14 @@ const Settings: React.FC = () => {
             </div>
 
             {/* Indicator dots */}
-            <div style={{display: 'flex', gap: isMobile ? '0.2rem' : '0.5rem', justifyContent: 'center'}}>
+            <div style={{display: 'flex', gap: isIOS ? '0.15rem' : isMobile ? '0.2rem' : '0.5rem', justifyContent: 'center'}}>
               {['en', 'es', 'fr', 'it', 'de', 'pt'].map((lang) => (
                 <button
                   key={lang}
                   onClick={() => setLanguage(lang as any)}
                   style={{
-                    width: isMobile ? '6px' : '10px',
-                    height: isMobile ? '6px' : '10px',
+                    width: isIOS ? '4px' : isMobile ? '6px' : '10px',
+                    height: isIOS ? '4px' : isMobile ? '6px' : '10px',
                     borderRadius: '50%',
                     border: 'none',
                     background: language === lang ? 'var(--primary-color)' : '#555',
