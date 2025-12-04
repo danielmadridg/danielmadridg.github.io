@@ -4,12 +4,7 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
-import Home from './pages/Home';
-import Onboarding from './pages/Onboarding';
-import Progress from './pages/Progress';
-import Settings from './pages/Settings';
-import Login from './pages/Login';
-import Friends from './pages/Friends';
+import { lazyLoad } from './utils/lazyLoad';
 import UsernamePrompt from './components/UsernamePrompt';
 import { Dumbbell, LineChart, Settings as SettingsIcon, Users } from 'lucide-react';
 import clsx from 'clsx';
@@ -17,6 +12,14 @@ import { useSEO } from './hooks/useSEO';
 import './utils/testPublicProfile'; // Debug utility for testing profile sync
 
 import './App.css';
+
+// Lazy load page components - reduces initial bundle size
+const Home = lazyLoad(() => import('./pages/Home'));
+const Onboarding = lazyLoad(() => import('./pages/Onboarding'));
+const Progress = lazyLoad(() => import('./pages/Progress'));
+const Settings = lazyLoad(() => import('./pages/Settings'));
+const Login = lazyLoad(() => import('./pages/Login'));
+const Friends = lazyLoad(() => import('./pages/Friends'));
 
 // reCAPTCHA site key (configure in environment variables)
 const RECAPTCHA_SITE_KEY = '6LesKB0sAAAAAJLdCi4ZO6CcBg9rzPxccGD9zu0M';
@@ -81,8 +84,29 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   return (
     <div className="app-container">
+      {/* Skip to main content link for accessibility */}
+      <a href="#main-content" style={{
+        position: 'absolute',
+        left: '-9999px',
+        zIndex: 999,
+        padding: '1rem',
+        backgroundColor: 'var(--primary-color)',
+        color: '#0a0a0a',
+        textDecoration: 'none',
+        fontWeight: 'bold'
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.left = '0';
+        e.currentTarget.style.top = '0';
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.left = '-9999px';
+      }}
+      >
+        Skip to main content
+      </a>
       {/* Desktop Sidebar - Hidden on mobile via CSS */}
-      <div className="desktop-sidebar">
+      <nav className="desktop-sidebar" aria-label="Main navigation">
         {/* Logo */}
         {isWorkoutActive ? (
           <button
@@ -91,6 +115,7 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 handleCancelWorkout();
               }
             }}
+            aria-label="Cancel workout and go back"
             style={{
               padding: '1rem 1rem',
               marginBottom: '2rem',
@@ -201,10 +226,10 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <span style={{ fontSize: '0.95rem', fontWeight: location.pathname === '/settings' ? 500 : 400 }}>{t('settings')}</span>
           </Link>
         </nav>
-      </div>
+      </nav>
 
       {/* Main Content */}
-      <div className="main-content" id="main-content">
+      <main className="main-content" id="main-content" role="main">
         <div style={{ flex: 1 }}>
           {children}
         </div>
@@ -244,10 +269,10 @@ const LayoutContent: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </a>{' '}{t('apply')}
           </p>
         </footer>
-      </div>
+      </main>
 
       {/* Mobile Bottom Navigation - Shown only on mobile via CSS */}
-      <nav className="mobile-nav">
+      <nav className="mobile-nav" aria-label="Mobile navigation" role="navigation">
         <Link
           to="/"
           style={{

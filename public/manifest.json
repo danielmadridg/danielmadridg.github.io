@@ -10,9 +10,9 @@
   "categories": ["productivity", "health"],
   "icons": [
     {
-      "src": "/prodegilogo.png",
+      "src": "/prodegilogo.webp",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     }
   ]

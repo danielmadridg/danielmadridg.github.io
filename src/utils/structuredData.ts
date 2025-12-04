@@ -34,7 +34,7 @@ export const organizationSchema = {
     priceCurrency: 'USD',
     availability: 'https://schema.org/OnlineOnly',
   },
-  image: 'https://prodegi.vercel.app/prodegilogo.png',
+  image: 'https://prodegi.vercel.app/prodegilogo.webp',
   author: {
     '@type': 'Organization',
     name: 'Prodegi',

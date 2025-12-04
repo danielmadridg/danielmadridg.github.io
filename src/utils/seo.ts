@@ -13,7 +13,7 @@ export interface SEOConfig {
 }
 
 const BASE_URL = 'https://prodegi.vercel.app';
-const DEFAULT_IMAGE = `${BASE_URL}/prodegilogo.png`;
+const DEFAULT_IMAGE = `${BASE_URL}/prodegilogo.webp`;
 
 export const updateSEO = (config: SEOConfig) => {
   const {
